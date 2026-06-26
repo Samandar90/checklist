@@ -1,0 +1,102 @@
+import { NavLink, Outlet } from "react-router-dom";
+import {
+  LayoutDashboard,
+  Building2,
+  Users,
+  BedDouble,
+  Megaphone,
+  ClipboardList,
+  Hotel,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const navItems = [
+  { to: "/", label: "Дашборд", icon: LayoutDashboard },
+  { to: "/branches", label: "Филиалы", icon: Building2 },
+  { to: "/admins", label: "Администраторы", icon: Users },
+  { to: "/rooms", label: "Номера", icon: BedDouble },
+  { to: "/sources", label: "Источники бронирования", icon: Megaphone },
+  { to: "/reports", label: "Ежемесячные отчёты", icon: ClipboardList },
+];
+
+export default function Layout() {
+  return (
+    <div className="flex min-h-screen bg-muted/40">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-border bg-card md:flex">
+        <div className="flex items-center gap-2.5 px-6 py-5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-indigo-500 text-primary-foreground shadow-sm">
+            <Hotel className="h-4.5 w-4.5" />
+          </div>
+          <div className="flex flex-col leading-tight">
+            <span className="text-sm font-semibold text-foreground">Hotel Reports</span>
+            <span className="text-[11px] text-muted-foreground">Система отчётности</span>
+          </div>
+        </div>
+        <nav className="flex flex-1 flex-col gap-1 px-3 py-2">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === "/"}
+              className={({ isActive }) =>
+                cn(
+                  "relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                )
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <span className="absolute left-0 top-1/2 h-4 w-1 -translate-y-1/2 rounded-full bg-primary" />
+                  )}
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </>
+              )}
+            </NavLink>
+          ))}
+        </nav>
+        <div className="px-6 py-4 text-xs text-muted-foreground">
+          Система отчётов сети отелей
+        </div>
+      </aside>
+
+      <div className="flex w-full flex-1 flex-col md:pl-64">
+        <header className="flex items-center justify-between border-b border-border bg-card px-4 py-3 md:hidden">
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-indigo-500 text-primary-foreground">
+              <Hotel className="h-4 w-4" />
+            </div>
+            <span className="text-sm font-semibold">Hotel Reports</span>
+          </div>
+        </header>
+
+        <nav className="flex gap-1 overflow-x-auto border-b border-border bg-card px-3 py-2 md:hidden">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === "/"}
+              className={({ isActive }) =>
+                cn(
+                  "flex shrink-0 items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-medium",
+                  isActive ? "bg-primary/10 text-primary" : "text-muted-foreground"
+                )
+              }
+            >
+              <item.icon className="h-3.5 w-3.5" />
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+
+        <main className="flex-1 p-4 md:p-8">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+}

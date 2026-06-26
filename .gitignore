@@ -1,0 +1,26 @@
+node_modules
+dist
+dist-ssr
+*.local
+
+# Claude Code session/local config
+.claude/
+
+# env files
+.env
+.env.*
+!.env.example
+
+# sqlite database files
+*.db
+*.db-journal
+
+# logs
+*.log
+npm-debug.log*
+
+# editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store

@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Branch {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  admins  Admin[]
+  rooms   Room[]
+  reports MonthlyReport[]
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  fullName  String
+  phone     String
+  branchId  String
+  createdAt DateTime @default(now())
+
+  branch  Branch          @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  reports MonthlyReport[]
+}
+
+model Room {
+  id         String   @id @default(cuid())
+  roomNumber String
+  branchId   String
+  createdAt  DateTime @default(now())
+
+  branch  Branch          @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  reports MonthlyReport[]
+}
+
+model BookingSource {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  reports MonthlyReport[]
+}
+
+model MonthlyReport {
+  id        String   @id @default(cuid())
+  date      DateTime
+  branchId  String
+  adminId   String
+  roomId    String
+  sourceId  String
+  price     Float
+  currency  String
+  notes     String?
+  createdAt DateTime @default(now())
+
+  branch Branch        @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  admin  Admin         @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  room   Room          @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  source BookingSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+}
