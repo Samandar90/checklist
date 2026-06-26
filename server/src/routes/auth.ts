@@ -2,7 +2,7 @@ import { Router } from "express";
 import { prisma } from "../prisma";
 import { comparePassword, hashPassword, signToken } from "../auth";
 import { changePasswordSchema, loginSchema } from "../validation";
-import { authenticate } from "../middleware/auth";
+import { authenticate, requireSuperAdmin } from "../middleware/auth";
 
 const router = Router();
 
@@ -74,7 +74,7 @@ router.get("/me", authenticate, async (req, res, next) => {
   }
 });
 
-router.post("/change-password", authenticate, async (req, res, next) => {
+router.post("/change-password", authenticate, requireSuperAdmin, async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = changePasswordSchema.parse(req.body);
 
