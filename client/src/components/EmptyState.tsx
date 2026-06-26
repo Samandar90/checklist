@@ -10,7 +10,7 @@ export default function EmptyState({
   description?: string;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-card/50 py-16 text-center">
+    <div className="flex animate-fade-in flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border bg-card/50 py-16 text-center">
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-muted-foreground">
         <Icon className="h-5 w-5" />
       </div>

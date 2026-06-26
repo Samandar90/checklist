@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   Building2,
@@ -28,6 +28,7 @@ const adminNavItems = [{ to: "/my-reports", label: "Мои отчёты", icon: 
 
 export default function Layout() {
   const { user, logout } = useAuth();
+  const location = useLocation();
   const navItems = user?.role === "SUPER_ADMIN" ? superAdminNavItems : adminNavItems;
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
 
@@ -142,7 +143,9 @@ export default function Layout() {
         </nav>
 
         <main className="flex-1 p-4 md:p-8">
-          <Outlet />
+          <div key={location.pathname} className="animate-fade-in">
+            <Outlet />
+          </div>
         </main>
       </div>
 

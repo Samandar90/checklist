@@ -10,6 +10,7 @@ import EmptyState from "@/components/EmptyState";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -211,7 +212,7 @@ export default function ReportsPage() {
       {/* Фильтры */}
       <Card className="mb-6">
         <CardContent className="flex flex-wrap items-end gap-3 p-4">
-          <div className="w-36 space-y-1.5">
+          <div className="w-40 space-y-1.5">
             <Label>Месяц</Label>
             <Select
               value={filters.month ?? "all"}
@@ -231,7 +232,7 @@ export default function ReportsPage() {
             </Select>
           </div>
 
-          <div className="w-32 space-y-1.5">
+          <div className="w-28 space-y-1.5">
             <Label>Год</Label>
             <Select
               value={filters.year ?? "all"}
@@ -251,7 +252,7 @@ export default function ReportsPage() {
             </Select>
           </div>
 
-          <div className="w-44 space-y-1.5">
+          <div className="w-56 space-y-1.5">
             <Label>Филиал</Label>
             <Select
               value={filters.branchId ?? "all"}
@@ -271,7 +272,7 @@ export default function ReportsPage() {
             </Select>
           </div>
 
-          <div className="w-44 space-y-1.5">
+          <div className="w-56 space-y-1.5">
             <Label>Администратор</Label>
             <Select
               value={filters.adminId ?? "all"}
@@ -291,7 +292,7 @@ export default function ReportsPage() {
             </Select>
           </div>
 
-          <div className="w-44 space-y-1.5">
+          <div className="w-56 space-y-1.5">
             <Label>Источник</Label>
             <Select
               value={filters.sourceId ?? "all"}
@@ -475,7 +476,7 @@ export default function ReportsPage() {
                     }}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Выберите филиал" />
+                      <SelectValue placeholder="Выбрать" />
                     </SelectTrigger>
                     <SelectContent>
                       {(branches ?? []).map((b) => (
@@ -500,7 +501,7 @@ export default function ReportsPage() {
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Выберите администратора" />
+                      <SelectValue placeholder="Выбрать" />
                     </SelectTrigger>
                     <SelectContent>
                       {filteredAdmins.map((a) => (
@@ -525,7 +526,7 @@ export default function ReportsPage() {
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Выберите номер" />
+                      <SelectValue placeholder="Выбрать" />
                     </SelectTrigger>
                     <SelectContent>
                       {filteredRooms.map((r) => (
@@ -550,7 +551,7 @@ export default function ReportsPage() {
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Выберите источник" />
+                      <SelectValue placeholder="Выбрать" />
                     </SelectTrigger>
                     <SelectContent>
                       {(sources ?? []).map((s) => (
@@ -569,12 +570,12 @@ export default function ReportsPage() {
 
             <div className="space-y-1.5">
               <Label htmlFor="price">Цена</Label>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                min="0"
-                {...form.register("price", { valueAsNumber: true })}
+              <Controller
+                control={form.control}
+                name="price"
+                render={({ field }) => (
+                  <CurrencyInput id="price" value={field.value} onChange={field.onChange} />
+                )}
               />
               {form.formState.errors.price && (
                 <p className="text-xs text-destructive">{form.formState.errors.price.message}</p>

@@ -10,6 +10,7 @@ import EmptyState from "@/components/EmptyState";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -239,7 +240,7 @@ export default function MyReportsPage() {
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Выберите номер" />
+                      <SelectValue placeholder="Выбрать" />
                     </SelectTrigger>
                     <SelectContent>
                       {(rooms ?? []).map((r) => (
@@ -264,7 +265,7 @@ export default function MyReportsPage() {
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Выберите источник" />
+                      <SelectValue placeholder="Выбрать" />
                     </SelectTrigger>
                     <SelectContent>
                       {(sources ?? []).map((s) => (
@@ -283,12 +284,12 @@ export default function MyReportsPage() {
 
             <div className="space-y-1.5">
               <Label htmlFor="price">Цена</Label>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                min="0"
-                {...form.register("price", { valueAsNumber: true })}
+              <Controller
+                control={form.control}
+                name="price"
+                render={({ field }) => (
+                  <CurrencyInput id="price" value={field.value} onChange={field.onChange} />
+                )}
               />
               {form.formState.errors.price && (
                 <p className="text-xs text-destructive">{form.formState.errors.price.message}</p>

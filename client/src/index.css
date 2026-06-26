@@ -70,5 +70,76 @@ body {
 }
 
 .animate-fade-in {
-  animation: fade-in 0.25s ease-out;
+  animation: fade-in 0.3s ease-out;
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes scale-out {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-scale-out {
+  animation: scale-out 0.15s ease-in forwards;
+}
+
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes overlay-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.animate-overlay-in {
+  animation: overlay-in 0.18s ease-out forwards;
+}
+
+.animate-overlay-out {
+  animation: overlay-out 0.15s ease-in forwards;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-pop-in {
+  animation: pop-in 0.15s ease-out;
 }

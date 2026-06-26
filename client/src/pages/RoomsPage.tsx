@@ -185,7 +185,7 @@ export default function RoomsPage() {
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Выберите филиал" />
+                      <SelectValue placeholder="Выбрать" />
                     </SelectTrigger>
                     <SelectContent>
                       {(branches ?? []).map((b) => (
