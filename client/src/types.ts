@@ -41,6 +41,9 @@ export interface BookingSource {
   createdAt: string;
 }
 
+export const paymentMethods = ["Наличные", "Карта", "Терминал"] as const;
+export type PaymentMethod = (typeof paymentMethods)[number];
+
 export interface MonthlyReport {
   id: string;
   date: string;
@@ -50,6 +53,7 @@ export interface MonthlyReport {
   sourceId: string;
   price: number;
   currency: string;
+  paymentMethod: PaymentMethod;
   notes?: string | null;
   createdAt: string;
   branch: Branch;

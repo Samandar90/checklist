@@ -39,6 +39,8 @@ export const sourceSchema = z.object({
   name: z.string().trim().min(1, "Название обязательно"),
 });
 
+export const paymentMethods = ["Наличные", "Карта", "Терминал"] as const;
+
 export const reportSchema = z.object({
   date: z.string().trim().min(1, "Дата обязательна"),
   branchId: z.string().trim().min(1, "Филиал обязателен"),
@@ -47,5 +49,8 @@ export const reportSchema = z.object({
   sourceId: z.string().trim().min(1, "Источник бронирования обязателен"),
   price: z.number({ invalid_type_error: "Цена должна быть числом" }).positive("Цена должна быть положительной"),
   currency: z.string().trim().min(1, "Валюта обязательна"),
+  paymentMethod: z.enum(paymentMethods, {
+    errorMap: () => ({ message: "Выберите способ оплаты" }),
+  }),
   notes: z.string().trim().optional().nullable(),
 });

@@ -37,7 +37,7 @@ import {
   useDeleteReport,
 } from "@/hooks/useReports";
 
-import { MonthlyReport, ReportFilters } from "@/types";
+import { MonthlyReport, ReportFilters, paymentMethods } from "@/types";
 import { getErrorMessage } from "@/lib/api";
 import { formatDate, formatMoney } from "@/lib/utils";
 import { exportReportsToCsv } from "@/lib/csv";
@@ -52,6 +52,7 @@ const reportFormSchema = z.object({
   sourceId: z.string().trim().min(1, "Выберите источник бронирования"),
   price: z.number({ invalid_type_error: "Укажите цену" }).positive("Цена должна быть положительной"),
   currency: z.string().trim().min(1, "Выберите валюту"),
+  paymentMethod: z.enum(paymentMethods, { errorMap: () => ({ message: "Выберите способ оплаты" }) }),
   notes: z.string().trim().optional(),
 });
 type ReportFormValues = z.infer<typeof reportFormSchema>;
@@ -93,6 +94,7 @@ export default function ReportsPage() {
       sourceId: "",
       price: 0,
       currency: "UZS",
+      paymentMethod: "Наличные",
       notes: "",
     },
   });
@@ -124,6 +126,7 @@ export default function ReportsPage() {
       sourceId: "",
       price: 0,
       currency: "UZS",
+      paymentMethod: "Наличные",
       notes: "",
     });
     setDialogOpen(true);
@@ -139,6 +142,7 @@ export default function ReportsPage() {
       sourceId: report.sourceId,
       price: report.price,
       currency: report.currency,
+      paymentMethod: report.paymentMethod,
       notes: report.notes ?? "",
     });
     setDialogOpen(true);
@@ -412,6 +416,7 @@ export default function ReportsPage() {
               <TableHead>Номер</TableHead>
               <TableHead>Источник</TableHead>
               <TableHead>Цена</TableHead>
+              <TableHead>Оплата</TableHead>
               <TableHead>Заметки</TableHead>
               <TableHead className="text-right">Действия</TableHead>
             </TableRow>
@@ -427,6 +432,7 @@ export default function ReportsPage() {
                 <TableCell className="font-medium text-foreground">
                   {formatMoney(report.price, report.currency)}
                 </TableCell>
+                <TableCell>{report.paymentMethod}</TableCell>
                 <TableCell className="max-w-[200px] truncate text-muted-foreground">
                   {report.notes || "-"}
                 </TableCell>
@@ -604,6 +610,31 @@ export default function ReportsPage() {
               />
               {form.formState.errors.currency && (
                 <p className="text-xs text-destructive">{form.formState.errors.currency.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Способ оплаты</Label>
+              <Controller
+                control={form.control}
+                name="paymentMethod"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Выбрать" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {paymentMethods.map((p) => (
+                        <SelectItem key={p} value={p}>
+                          {p}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {form.formState.errors.paymentMethod && (
+                <p className="text-xs text-destructive">{form.formState.errors.paymentMethod.message}</p>
               )}
             </div>
 

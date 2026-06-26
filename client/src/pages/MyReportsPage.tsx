@@ -34,7 +34,7 @@ import {
   useDeleteReport,
 } from "@/hooks/useReports";
 
-import { MonthlyReport } from "@/types";
+import { MonthlyReport, paymentMethods } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { getErrorMessage } from "@/lib/api";
 import { formatDate, formatMoney } from "@/lib/utils";
@@ -48,6 +48,7 @@ const reportFormSchema = z.object({
   sourceId: z.string().trim().min(1, "Выберите источник бронирования"),
   price: z.number({ invalid_type_error: "Укажите цену" }).positive("Цена должна быть положительной"),
   currency: z.string().trim().min(1, "Выберите валюту"),
+  paymentMethod: z.enum(paymentMethods, { errorMap: () => ({ message: "Выберите способ оплаты" }) }),
   notes: z.string().trim().optional(),
 });
 type ReportFormValues = z.infer<typeof reportFormSchema>;
@@ -72,14 +73,30 @@ export default function MyReportsPage() {
 
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportFormSchema),
-    defaultValues: { date: todayIso(), roomId: "", sourceId: "", price: 0, currency: "UZS", notes: "" },
+    defaultValues: {
+      date: todayIso(),
+      roomId: "",
+      sourceId: "",
+      price: 0,
+      currency: "UZS",
+      paymentMethod: "Наличные",
+      notes: "",
+    },
   });
 
   const hasRequiredData = (rooms ?? []).length > 0 && (sources ?? []).length > 0;
 
   function openCreate() {
     setEditing(null);
-    form.reset({ date: todayIso(), roomId: "", sourceId: "", price: 0, currency: "UZS", notes: "" });
+    form.reset({
+      date: todayIso(),
+      roomId: "",
+      sourceId: "",
+      price: 0,
+      currency: "UZS",
+      paymentMethod: "Наличные",
+      notes: "",
+    });
     setDialogOpen(true);
   }
 
@@ -91,6 +108,7 @@ export default function MyReportsPage() {
       sourceId: report.sourceId,
       price: report.price,
       currency: report.currency,
+      paymentMethod: report.paymentMethod,
       notes: report.notes ?? "",
     });
     setDialogOpen(true);
@@ -186,6 +204,7 @@ export default function MyReportsPage() {
               <TableHead>Номер</TableHead>
               <TableHead>Источник</TableHead>
               <TableHead>Цена</TableHead>
+              <TableHead>Оплата</TableHead>
               <TableHead>Заметки</TableHead>
               <TableHead className="text-right">Действия</TableHead>
             </TableRow>
@@ -199,6 +218,7 @@ export default function MyReportsPage() {
                 <TableCell className="font-medium text-foreground">
                   {formatMoney(report.price, report.currency)}
                 </TableCell>
+                <TableCell>{report.paymentMethod}</TableCell>
                 <TableCell className="max-w-[200px] truncate text-muted-foreground">
                   {report.notes || "-"}
                 </TableCell>
@@ -318,6 +338,31 @@ export default function MyReportsPage() {
               />
               {form.formState.errors.currency && (
                 <p className="text-xs text-destructive">{form.formState.errors.currency.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Способ оплаты</Label>
+              <Controller
+                control={form.control}
+                name="paymentMethod"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Выбрать" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {paymentMethods.map((p) => (
+                        <SelectItem key={p} value={p}>
+                          {p}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {form.formState.errors.paymentMethod && (
+                <p className="text-xs text-destructive">{form.formState.errors.paymentMethod.message}</p>
               )}
             </div>
 

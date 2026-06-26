@@ -9,7 +9,7 @@ function escapeCsv(value: string) {
 }
 
 export function exportReportsToCsv(reports: MonthlyReport[], filename = "ежемесячные-отчёты.csv") {
-  const headers = ["Дата", "Филиал", "Администратор", "Номер", "Источник", "Цена", "Валюта", "Заметки"];
+  const headers = ["Дата", "Филиал", "Администратор", "Номер", "Источник", "Цена", "Валюта", "Оплата", "Заметки"];
   const rows = reports.map((r) => [
     formatDate(r.date),
     r.branch.name,
@@ -18,6 +18,7 @@ export function exportReportsToCsv(reports: MonthlyReport[], filename = "еже�
     r.source.name,
     String(r.price),
     r.currency,
+    r.paymentMethod,
     r.notes ?? "",
   ]);
 
