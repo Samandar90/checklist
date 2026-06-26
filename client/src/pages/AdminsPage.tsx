@@ -27,12 +27,24 @@ import { Admin } from "@/types";
 import { getErrorMessage } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
 
-const adminFormSchema = z.object({
+const baseFields = {
   fullName: z.string().trim().min(1, "Укажите ФИО"),
   phone: z.string().trim().min(1, "Укажите телефон"),
   branchId: z.string().trim().min(1, "Выберите филиал"),
+  username: z.string().trim().min(3, "Логин должен быть не короче 3 символов"),
+};
+
+const createFormSchema = z.object({
+  ...baseFields,
+  password: z.string().min(6, "Пароль должен быть не короче 6 символов"),
 });
-type AdminFormValues = z.infer<typeof adminFormSchema>;
+
+const editFormSchema = z.object({
+  ...baseFields,
+  password: z.union([z.string().min(6, "Пароль должен быть не короче 6 символов"), z.literal("")]),
+});
+
+type AdminFormValues = z.infer<typeof createFormSchema>;
 
 export default function AdminsPage() {
   const { data: admins, isLoading } = useAdmins();
@@ -47,26 +59,33 @@ export default function AdminsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Admin | null>(null);
 
   const form = useForm<AdminFormValues>({
-    resolver: zodResolver(adminFormSchema),
-    defaultValues: { fullName: "", phone: "", branchId: "" },
+    resolver: zodResolver(editing ? editFormSchema : createFormSchema),
+    defaultValues: { fullName: "", phone: "", branchId: "", username: "", password: "" },
   });
 
   function openCreate() {
     setEditing(null);
-    form.reset({ fullName: "", phone: "", branchId: "" });
+    form.reset({ fullName: "", phone: "", branchId: "", username: "", password: "" });
     setDialogOpen(true);
   }
 
   function openEdit(admin: Admin) {
     setEditing(admin);
-    form.reset({ fullName: admin.fullName, phone: admin.phone, branchId: admin.branchId });
+    form.reset({
+      fullName: admin.fullName,
+      phone: admin.phone,
+      branchId: admin.branchId,
+      username: admin.username ?? "",
+      password: "",
+    });
     setDialogOpen(true);
   }
 
   async function onSubmit(values: AdminFormValues) {
     try {
       if (editing) {
-        await updateAdmin.mutateAsync({ id: editing.id, data: values });
+        const data = { ...values, password: values.password || undefined };
+        await updateAdmin.mutateAsync({ id: editing.id, data });
         toast.success("Администратор обновлён");
       } else {
         await createAdmin.mutateAsync(values);
@@ -101,7 +120,7 @@ export default function AdminsPage() {
     <div>
       <PageHeader
         title="Администраторы"
-        description="Управляйте администраторами, закреплёнными за филиалами."
+        description="Управляйте администраторами, закреплёнными за филиалами, и их учётными данными."
         action={
           <Button onClick={openCreate} disabled={noBranches}>
             <Plus className="h-4 w-4" /> Добавить администратора
@@ -144,6 +163,7 @@ export default function AdminsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>ФИО</TableHead>
+              <TableHead>Логин</TableHead>
               <TableHead>Телефон</TableHead>
               <TableHead>Филиал</TableHead>
               <TableHead>Создан</TableHead>
@@ -154,6 +174,7 @@ export default function AdminsPage() {
             {filtered.map((admin) => (
               <TableRow key={admin.id}>
                 <TableCell className="font-medium text-foreground">{admin.fullName}</TableCell>
+                <TableCell className="text-muted-foreground">{admin.username ?? "-"}</TableCell>
                 <TableCell>{admin.phone}</TableCell>
                 <TableCell>{admin.branch?.name ?? "-"}</TableCell>
                 <TableCell className="text-muted-foreground">{formatDate(admin.createdAt)}</TableCell>
@@ -217,6 +238,32 @@ export default function AdminsPage() {
                 <p className="text-xs text-destructive">{form.formState.errors.branchId.message}</p>
               )}
             </div>
+
+            <div className="grid grid-cols-2 gap-4 rounded-xl border border-border bg-muted/50 p-3">
+              <div className="col-span-2 -mb-1 text-xs font-medium text-muted-foreground">
+                Данные для входа в систему
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="username">Логин</Label>
+                <Input id="username" placeholder="например, ivanov" {...form.register("username")} />
+                {form.formState.errors.username && (
+                  <p className="text-xs text-destructive">{form.formState.errors.username.message}</p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="password">{editing ? "Новый пароль" : "Пароль"}</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder={editing ? "Оставьте пустым, чтобы не менять" : "••••••••"}
+                  {...form.register("password")}
+                />
+                {form.formState.errors.password && (
+                  <p className="text-xs text-destructive">{form.formState.errors.password.message}</p>
+                )}
+              </div>
+            </div>
+
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                 Отмена
@@ -235,7 +282,7 @@ export default function AdminsPage() {
         onConfirm={handleDelete}
         loading={deleteAdmin.isPending}
         title="Удалить администратора?"
-        description={`Администратор «${deleteTarget?.fullName}» будет удалён без возможности восстановления.`}
+        description={`Администратор «${deleteTarget?.fullName}» и его учётная запись будут удалены без возможности восстановления.`}
       />
     </div>
   );

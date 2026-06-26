@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../prisma";
 import { sourceSchema } from "../validation";
+import { requireSuperAdmin } from "../middleware/auth";
 
 const router = Router();
 
@@ -15,7 +16,7 @@ router.get("/", async (_req, res, next) => {
   }
 });
 
-router.post("/", async (req, res, next) => {
+router.post("/", requireSuperAdmin, async (req, res, next) => {
   try {
     const data = sourceSchema.parse(req.body);
     const source = await prisma.bookingSource.create({ data });
@@ -25,7 +26,7 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-router.put("/:id", async (req, res, next) => {
+router.put("/:id", requireSuperAdmin, async (req, res, next) => {
   try {
     const data = sourceSchema.parse(req.body);
     const source = await prisma.bookingSource.update({
@@ -38,7 +39,7 @@ router.put("/:id", async (req, res, next) => {
   }
 });
 
-router.delete("/:id", async (req, res, next) => {
+router.delete("/:id", requireSuperAdmin, async (req, res, next) => {
   try {
     await prisma.bookingSource.delete({ where: { id: req.params.id } });
     res.status(204).send();

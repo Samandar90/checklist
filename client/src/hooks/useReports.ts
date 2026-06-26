@@ -4,8 +4,8 @@ import { MonthlyReport, ReportFilters, ReportSummary } from "@/types";
 
 export interface ReportInput {
   date: string;
-  branchId: string;
-  adminId: string;
+  branchId?: string;
+  adminId?: string;
   roomId: string;
   sourceId: string;
   price: number;

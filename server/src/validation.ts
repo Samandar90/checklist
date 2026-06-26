@@ -4,10 +4,25 @@ export const branchSchema = z.object({
   name: z.string().trim().min(1, "Название обязательно"),
 });
 
-export const adminSchema = z.object({
+export const adminCreateSchema = z.object({
   fullName: z.string().trim().min(1, "ФИО обязательно"),
   phone: z.string().trim().min(1, "Телефон обязателен"),
   branchId: z.string().trim().min(1, "Филиал обязателен"),
+  username: z.string().trim().min(3, "Логин должен быть не короче 3 символов"),
+  password: z.string().min(6, "Пароль должен быть не короче 6 символов"),
+});
+
+export const adminUpdateSchema = z.object({
+  fullName: z.string().trim().min(1, "ФИО обязательно"),
+  phone: z.string().trim().min(1, "Телефон обязателен"),
+  branchId: z.string().trim().min(1, "Филиал обязателен"),
+  username: z.string().trim().min(3, "Логин должен быть не короче 3 символов"),
+  password: z.string().min(6, "Пароль должен быть не короче 6 символов").optional().or(z.literal("")),
+});
+
+export const loginSchema = z.object({
+  username: z.string().trim().min(1, "Укажите логин"),
+  password: z.string().min(1, "Укажите пароль"),
 });
 
 export const roomSchema = z.object({

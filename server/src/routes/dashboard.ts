@@ -1,7 +1,9 @@
 import { Router } from "express";
 import { prisma } from "../prisma";
+import { requireSuperAdmin } from "../middleware/auth";
 
 const router = Router();
+router.use(requireSuperAdmin);
 
 router.get("/", async (_req, res, next) => {
   try {

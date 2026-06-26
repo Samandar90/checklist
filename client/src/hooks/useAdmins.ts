@@ -6,6 +6,8 @@ export interface AdminInput {
   fullName: string;
   phone: string;
   branchId: string;
+  username: string;
+  password?: string;
 }
 
 export function useAdmins() {

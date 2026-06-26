@@ -26,6 +26,18 @@ model Admin {
 
   branch  Branch          @relation(fields: [branchId], references: [id], onDelete: Cascade)
   reports MonthlyReport[]
+  user    User?
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  role         String   @default("ADMIN")
+  adminId      String?  @unique
+  createdAt    DateTime @default(now())
+
+  admin Admin? @relation(fields: [adminId], references: [id], onDelete: Cascade)
 }
 
 model Room {

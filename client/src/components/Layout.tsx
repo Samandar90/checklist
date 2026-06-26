@@ -7,10 +7,12 @@ import {
   Megaphone,
   ClipboardList,
   Hotel,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
-const navItems = [
+const superAdminNavItems = [
   { to: "/", label: "Дашборд", icon: LayoutDashboard },
   { to: "/branches", label: "Филиалы", icon: Building2 },
   { to: "/admins", label: "Администраторы", icon: Users },
@@ -19,7 +21,12 @@ const navItems = [
   { to: "/reports", label: "Ежемесячные отчёты", icon: ClipboardList },
 ];
 
+const adminNavItems = [{ to: "/my-reports", label: "Мои отчёты", icon: ClipboardList }];
+
 export default function Layout() {
+  const { user, logout } = useAuth();
+  const navItems = user?.role === "SUPER_ADMIN" ? superAdminNavItems : adminNavItems;
+
   return (
     <div className="flex min-h-screen bg-muted/40">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-border bg-card md:flex">
@@ -59,8 +66,22 @@ export default function Layout() {
             </NavLink>
           ))}
         </nav>
-        <div className="px-6 py-4 text-xs text-muted-foreground">
-          Система отчётов сети отелей
+        <div className="border-t border-border px-4 py-3">
+          <div className="mb-2 px-2">
+            <p className="truncate text-sm font-medium text-foreground">
+              {user?.fullName ?? user?.username}
+            </p>
+            <p className="truncate text-xs text-muted-foreground">
+              {user?.role === "SUPER_ADMIN" ? "Главный аккаунт" : user?.branchName}
+            </p>
+          </div>
+          <button
+            onClick={logout}
+            className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          >
+            <LogOut className="h-4 w-4" />
+            Выйти
+          </button>
         </div>
       </aside>
 
@@ -72,6 +93,13 @@ export default function Layout() {
             </div>
             <span className="text-sm font-semibold">Hotel Reports</span>
           </div>
+          <button
+            onClick={logout}
+            className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs text-muted-foreground"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            Выйти
+          </button>
         </header>
 
         <nav className="flex gap-1 overflow-x-auto border-b border-border bg-card px-3 py-2 md:hidden">

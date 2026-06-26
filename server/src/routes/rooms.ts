@@ -1,12 +1,15 @@
 import { Router } from "express";
 import { prisma } from "../prisma";
 import { roomSchema } from "../validation";
+import { requireSuperAdmin } from "../middleware/auth";
 
 const router = Router();
 
-router.get("/", async (_req, res, next) => {
+router.get("/", async (req, res, next) => {
   try {
+    const where = req.user!.role === "ADMIN" ? { branchId: req.user!.branchId ?? "" } : {};
     const rooms = await prisma.room.findMany({
+      where,
       orderBy: { createdAt: "desc" },
       include: { branch: true },
     });
@@ -16,7 +19,7 @@ router.get("/", async (_req, res, next) => {
   }
 });
 
-router.post("/", async (req, res, next) => {
+router.post("/", requireSuperAdmin, async (req, res, next) => {
   try {
     const data = roomSchema.parse(req.body);
     const room = await prisma.room.create({ data, include: { branch: true } });
@@ -26,7 +29,7 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-router.put("/:id", async (req, res, next) => {
+router.put("/:id", requireSuperAdmin, async (req, res, next) => {
   try {
     const data = roomSchema.parse(req.body);
     const room = await prisma.room.update({
@@ -40,7 +43,7 @@ router.put("/:id", async (req, res, next) => {
   }
 });
 
-router.delete("/:id", async (req, res, next) => {
+router.delete("/:id", requireSuperAdmin, async (req, res, next) => {
   try {
     await prisma.room.delete({ where: { id: req.params.id } });
     res.status(204).send();

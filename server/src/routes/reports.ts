@@ -1,14 +1,20 @@
 import { Router } from "express";
 import { prisma } from "../prisma";
 import { reportSchema } from "../validation";
+import { requireSuperAdmin } from "../middleware/auth";
 
 const router = Router();
 
-function buildWhere(query: any) {
+function buildWhere(query: any, isAdmin: boolean, ownAdminId: string | null) {
   const where: any = {};
-  if (query.branchId) where.branchId = String(query.branchId);
-  if (query.adminId) where.adminId = String(query.adminId);
-  if (query.sourceId) where.sourceId = String(query.sourceId);
+
+  if (isAdmin) {
+    where.adminId = ownAdminId ?? "__none__";
+  } else {
+    if (query.branchId) where.branchId = String(query.branchId);
+    if (query.adminId) where.adminId = String(query.adminId);
+    if (query.sourceId) where.sourceId = String(query.sourceId);
+  }
 
   const month = query.month ? parseInt(String(query.month), 10) : undefined;
   const year = query.year ? parseInt(String(query.year), 10) : undefined;
@@ -28,7 +34,8 @@ function buildWhere(query: any) {
 
 router.get("/", async (req, res, next) => {
   try {
-    const where = buildWhere(req.query);
+    const isAdmin = req.user!.role === "ADMIN";
+    const where = buildWhere(req.query, isAdmin, req.user!.adminId);
     const reports = await prisma.monthlyReport.findMany({
       where,
       orderBy: { date: "desc" },
@@ -40,9 +47,9 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-router.get("/summary", async (req, res, next) => {
+router.get("/summary", requireSuperAdmin, async (req, res, next) => {
   try {
-    const where = buildWhere(req.query);
+    const where = buildWhere(req.query, false, null);
     const reports = await prisma.monthlyReport.findMany({
       where,
       include: { branch: true, admin: true, source: true },
@@ -82,7 +89,16 @@ router.get("/summary", async (req, res, next) => {
 
 router.post("/", async (req, res, next) => {
   try {
-    const data = reportSchema.parse(req.body);
+    const body = { ...req.body };
+    if (req.user!.role === "ADMIN") {
+      if (!req.user!.adminId || !req.user!.branchId) {
+        return res.status(403).json({ message: "Ваш аккаунт не привязан к администратору филиала" });
+      }
+      body.adminId = req.user!.adminId;
+      body.branchId = req.user!.branchId;
+    }
+
+    const data = reportSchema.parse(body);
     const report = await prisma.monthlyReport.create({
       data: { ...data, date: new Date(data.date) },
       include: { branch: true, admin: true, room: true, source: true },
@@ -95,7 +111,20 @@ router.post("/", async (req, res, next) => {
 
 router.put("/:id", async (req, res, next) => {
   try {
-    const data = reportSchema.parse(req.body);
+    if (req.user!.role === "ADMIN") {
+      const existing = await prisma.monthlyReport.findUnique({ where: { id: req.params.id } });
+      if (!existing || existing.adminId !== req.user!.adminId) {
+        return res.status(403).json({ message: "Недостаточно прав для изменения этого отчёта" });
+      }
+    }
+
+    const body = { ...req.body };
+    if (req.user!.role === "ADMIN") {
+      body.adminId = req.user!.adminId;
+      body.branchId = req.user!.branchId;
+    }
+
+    const data = reportSchema.parse(body);
     const report = await prisma.monthlyReport.update({
       where: { id: req.params.id },
       data: { ...data, date: new Date(data.date) },
@@ -109,6 +138,13 @@ router.put("/:id", async (req, res, next) => {
 
 router.delete("/:id", async (req, res, next) => {
   try {
+    if (req.user!.role === "ADMIN") {
+      const existing = await prisma.monthlyReport.findUnique({ where: { id: req.params.id } });
+      if (!existing || existing.adminId !== req.user!.adminId) {
+        return res.status(403).json({ message: "Недостаточно прав для удаления этого отчёта" });
+      }
+    }
+
     await prisma.monthlyReport.delete({ where: { id: req.params.id } });
     res.status(204).send();
   } catch (err) {

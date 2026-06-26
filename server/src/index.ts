@@ -5,6 +5,9 @@ import { ZodError } from "zod";
 import { Prisma } from "@prisma/client";
 
 import { prisma } from "./prisma";
+import { hashPassword } from "./auth";
+import { authenticate } from "./middleware/auth";
+import authRouter from "./routes/auth";
 import branchesRouter from "./routes/branches";
 import adminsRouter from "./routes/admins";
 import roomsRouter from "./routes/rooms";
@@ -22,6 +25,20 @@ async function ensureSeedData() {
       create: { name },
     });
   }
+
+  const superAdminUsername = process.env.SUPER_ADMIN_USERNAME || "admin";
+  const existing = await prisma.user.findUnique({ where: { username: superAdminUsername } });
+  if (!existing) {
+    const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD || "admin123";
+    await prisma.user.create({
+      data: {
+        username: superAdminUsername,
+        passwordHash: await hashPassword(superAdminPassword),
+        role: "SUPER_ADMIN",
+      },
+    });
+    console.log(`Создан главный аккаунт: ${superAdminUsername} / ${superAdminPassword}`);
+  }
 }
 
 const app = express();
@@ -29,12 +46,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/branches", branchesRouter);
-app.use("/api/admins", adminsRouter);
-app.use("/api/rooms", roomsRouter);
-app.use("/api/sources", sourcesRouter);
-app.use("/api/reports", reportsRouter);
-app.use("/api/dashboard", dashboardRouter);
+app.get("/api/health", (_req, res) => res.json({ ok: true }));
+
+app.use("/api/auth", authRouter);
+
+app.use("/api/branches", authenticate, branchesRouter);
+app.use("/api/admins", authenticate, adminsRouter);
+app.use("/api/rooms", authenticate, roomsRouter);
+app.use("/api/sources", authenticate, sourcesRouter);
+app.use("/api/reports", authenticate, reportsRouter);
+app.use("/api/dashboard", authenticate, dashboardRouter);
 
 const clientDistPath = path.join(__dirname, "../public");
 app.use(express.static(clientDistPath));
@@ -78,7 +99,7 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 4000;
 
 ensureSeedData()
   .catch((err) => {
-    console.error("Failed to seed default booking sources:", err);
+    console.error("Failed to seed default data:", err);
   })
   .finally(() => {
     app.listen(PORT, () => {

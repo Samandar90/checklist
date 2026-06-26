@@ -10,8 +10,21 @@ export interface Admin {
   fullName: string;
   phone: string;
   branchId: string;
+  username?: string | null;
   createdAt: string;
   branch?: Branch;
+}
+
+export type Role = "SUPER_ADMIN" | "ADMIN";
+
+export interface AuthUser {
+  id: string;
+  username: string;
+  role: Role;
+  adminId: string | null;
+  branchId: string | null;
+  fullName: string | null;
+  branchName: string | null;
 }
 
 export interface Room {
