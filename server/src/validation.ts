@@ -25,6 +25,11 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Укажите пароль"),
 });
 
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Укажите текущий пароль"),
+  newPassword: z.string().min(6, "Новый пароль должен быть не короче 6 символов"),
+});
+
 export const roomSchema = z.object({
   roomNumber: z.string().trim().min(1, "Номер комнаты обязателен"),
   branchId: z.string().trim().min(1, "Филиал обязателен"),

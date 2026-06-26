@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -8,9 +9,11 @@ import {
   ClipboardList,
   Hotel,
   LogOut,
+  KeyRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import ChangePasswordDialog from "@/components/ChangePasswordDialog";
 
 const superAdminNavItems = [
   { to: "/", label: "Дашборд", icon: LayoutDashboard },
@@ -26,6 +29,7 @@ const adminNavItems = [{ to: "/my-reports", label: "Мои отчёты", icon: 
 export default function Layout() {
   const { user, logout } = useAuth();
   const navItems = user?.role === "SUPER_ADMIN" ? superAdminNavItems : adminNavItems;
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen bg-muted/40">
@@ -76,6 +80,13 @@ export default function Layout() {
             </p>
           </div>
           <button
+            onClick={() => setPasswordDialogOpen(true)}
+            className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          >
+            <KeyRound className="h-4 w-4" />
+            Сменить пароль
+          </button>
+          <button
             onClick={logout}
             className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
           >
@@ -93,13 +104,22 @@ export default function Layout() {
             </div>
             <span className="text-sm font-semibold">Hotel Reports</span>
           </div>
-          <button
-            onClick={logout}
-            className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs text-muted-foreground"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            Выйти
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPasswordDialogOpen(true)}
+              className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs text-muted-foreground"
+            >
+              <KeyRound className="h-3.5 w-3.5" />
+              Пароль
+            </button>
+            <button
+              onClick={logout}
+              className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs text-muted-foreground"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              Выйти
+            </button>
+          </div>
         </header>
 
         <nav className="flex gap-1 overflow-x-auto border-b border-border bg-card px-3 py-2 md:hidden">
@@ -125,6 +145,8 @@ export default function Layout() {
           <Outlet />
         </main>
       </div>
+
+      <ChangePasswordDialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen} />
     </div>
   );
 }

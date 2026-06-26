@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../prisma";
-import { comparePassword, signToken } from "../auth";
-import { loginSchema } from "../validation";
+import { comparePassword, hashPassword, signToken } from "../auth";
+import { changePasswordSchema, loginSchema } from "../validation";
 import { authenticate } from "../middleware/auth";
 
 const router = Router();
@@ -69,6 +69,31 @@ router.get("/me", authenticate, async (req, res, next) => {
       fullName: user.admin?.fullName ?? null,
       branchName: user.admin?.branch.name ?? null,
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post("/change-password", authenticate, async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = changePasswordSchema.parse(req.body);
+
+    const user = await prisma.user.findUnique({ where: { id: req.user!.sub } });
+    if (!user) {
+      return res.status(401).json({ message: "Пользователь не найден" });
+    }
+
+    const valid = await comparePassword(currentPassword, user.passwordHash);
+    if (!valid) {
+      return res.status(400).json({ message: "Текущий пароль указан неверно" });
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: await hashPassword(newPassword) },
+    });
+
+    res.json({ message: "Пароль успешно изменён" });
   } catch (err) {
     next(err);
   }
