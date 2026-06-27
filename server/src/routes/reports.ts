@@ -5,6 +5,16 @@ import { requireSuperAdmin } from "../middleware/auth";
 
 const router = Router();
 
+/**
+ * Normalize the stored paid amount so debt is always `price - (paidAmount ?? price)`:
+ * "Оплачено" → null (fully paid), "Долг" → 0, "Частично" → the entered amount.
+ */
+function normalizePaid(data: { paymentStatus: string; paidAmount?: number | null; price: number }) {
+  if (data.paymentStatus === "Оплачено") return null;
+  if (data.paymentStatus === "Долг") return 0;
+  return data.paidAmount ?? 0;
+}
+
 function buildWhere(query: any, isAdmin: boolean, ownAdminId: string | null) {
   const where: any = {};
 
@@ -100,7 +110,7 @@ router.post("/", async (req, res, next) => {
 
     const data = reportSchema.parse(body);
     const report = await prisma.monthlyReport.create({
-      data: { ...data, date: new Date(data.date) },
+      data: { ...data, date: new Date(data.date), paidAmount: normalizePaid(data) },
       include: { branch: true, admin: true, room: true, source: true },
     });
     res.status(201).json(report);
@@ -127,7 +137,7 @@ router.put("/:id", async (req, res, next) => {
     const data = reportSchema.parse(body);
     const report = await prisma.monthlyReport.update({
       where: { id: req.params.id },
-      data: { ...data, date: new Date(data.date) },
+      data: { ...data, date: new Date(data.date), paidAmount: normalizePaid(data) },
       include: { branch: true, admin: true, room: true, source: true },
     });
     res.json(report);

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { MonthlyReport, PaymentMethod, ReportFilters, ReportSummary } from "@/types";
+import { MonthlyReport, PaymentMethod, PaymentStatus, ReportFilters, ReportSummary } from "@/types";
 
 export interface ReportInput {
   date: string;
@@ -11,6 +11,8 @@ export interface ReportInput {
   price: number;
   currency: string;
   paymentMethod: PaymentMethod;
+  paymentStatus: PaymentStatus;
+  paidAmount?: number | null;
   notes?: string | null;
 }
 

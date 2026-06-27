@@ -1,10 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { DashboardStats } from "@/types";
+import { DashboardStats, DashboardFilters } from "@/types";
 
-export function useDashboard() {
+export function useDashboard(filters: DashboardFilters = {}) {
   return useQuery({
-    queryKey: ["dashboard"],
-    queryFn: async () => (await api.get<DashboardStats>("/dashboard")).data,
+    queryKey: ["dashboard", filters],
+    queryFn: async () => {
+      const params: Record<string, string> = {};
+      if (filters.from) params.from = filters.from;
+      if (filters.to) params.to = filters.to;
+      if (filters.branchId) params.branchId = filters.branchId;
+      return (await api.get<DashboardStats>("/dashboard", { params })).data;
+    },
   });
 }

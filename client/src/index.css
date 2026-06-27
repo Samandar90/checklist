@@ -99,8 +99,42 @@
   }
 }
 
+/* Class-based dark mode: override theme tokens when .dark is on <html>. */
+.dark {
+  --color-border: #262a38;
+  --color-input: #2b3040;
+  --color-ring: #6366f1;
+  --color-background: #0b0d14;
+  --color-foreground: #e7e8f0;
+
+  --color-primary: #6366f1;
+  --color-primary-foreground: #ffffff;
+
+  --color-secondary: #1a1d28;
+  --color-secondary-foreground: #e7e8f0;
+
+  --color-muted: #14161f;
+  --color-muted-foreground: #9499ab;
+
+  --color-accent: #1a1d28;
+  --color-accent-foreground: #e7e8f0;
+
+  --color-destructive: #f0436a;
+  --color-destructive-foreground: #ffffff;
+
+  --color-card: #13151e;
+  --color-card-foreground: #e7e8f0;
+}
+
 * {
   border-color: var(--color-border);
+}
+
+html {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
 }
 
 body {
@@ -122,6 +156,12 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #c2c5d3;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #2b3040;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #383d50;
 }
 ::-webkit-scrollbar-track {
   background: transparent;

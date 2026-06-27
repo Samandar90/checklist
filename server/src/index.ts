@@ -1,6 +1,8 @@
 import path from "path";
 import express, { ErrorRequestHandler } from "express";
 import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import { ZodError } from "zod";
 import { Prisma } from "@prisma/client";
 
@@ -13,6 +15,7 @@ import adminsRouter from "./routes/admins";
 import roomsRouter from "./routes/rooms";
 import sourcesRouter from "./routes/sources";
 import reportsRouter from "./routes/reports";
+import expensesRouter from "./routes/expenses";
 import dashboardRouter from "./routes/dashboard";
 
 const DEFAULT_SOURCES = ["Booking", "Reception", "Walk In", "Telegram", "Phone", "Instagram", "Other"];
@@ -43,18 +46,47 @@ async function ensureSeedData() {
 
 const app = express();
 
-app.use(cors());
+// Behind Render's proxy — required for correct client IPs (rate limiting).
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
+// Security headers. CSP is disabled because the SPA + charts rely on inline styles;
+// the other protections (HSTS, X-Frame-Options, noSniff, etc.) still apply.
+app.use(helmet({ contentSecurityPolicy: false }));
+
+// CORS: restrict to an allowlist in production, allow all in local dev.
+const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+app.use(
+  cors({
+    origin: allowedOrigins.length > 0 ? allowedOrigins : true,
+  })
+);
+
 app.use(express.json());
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
-app.use("/api/auth", authRouter);
+// Throttle authentication attempts to slow down brute-force / credential stuffing.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Слишком много попыток входа. Попробуйте позже." },
+});
+
+app.use("/api/auth", authLimiter, authRouter);
 
 app.use("/api/branches", authenticate, branchesRouter);
 app.use("/api/admins", authenticate, adminsRouter);
 app.use("/api/rooms", authenticate, roomsRouter);
 app.use("/api/sources", authenticate, sourcesRouter);
 app.use("/api/reports", authenticate, reportsRouter);
+app.use("/api/expenses", authenticate, expensesRouter);
 app.use("/api/dashboard", authenticate, dashboardRouter);
 
 const clientDistPath = path.join(__dirname, "../public");

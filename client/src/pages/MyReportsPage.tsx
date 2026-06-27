@@ -3,7 +3,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, ClipboardList, Download } from "lucide-react";
+import { Plus, Pencil, Trash2, ClipboardList, Download, Search } from "lucide-react";
 
 import PageHeader from "@/components/PageHeader";
 import EmptyState from "@/components/EmptyState";
@@ -24,7 +24,9 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Pagination } from "@/components/ui/pagination";
 
+import { useTableControls } from "@/hooks/useTableControls";
 import { useRooms } from "@/hooks/useRooms";
 import { useSources } from "@/hooks/useSources";
 import {
@@ -34,27 +36,50 @@ import {
   useDeleteReport,
 } from "@/hooks/useReports";
 
-import { MonthlyReport, paymentMethods } from "@/types";
+import { Badge } from "@/components/ui/badge";
+import { MonthlyReport, paymentMethods, paymentStatuses } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { getErrorMessage } from "@/lib/api";
-import { formatDate, formatMoney } from "@/lib/utils";
+import { formatDate, formatMoney, reportDebt, paymentStatusClass } from "@/lib/utils";
 import { exportReportsToCsv } from "@/lib/csv";
 
 const currencies = ["UZS", "USD", "EUR"];
 
-const reportFormSchema = z.object({
-  date: z.string().trim().min(1, "Укажите дату"),
-  roomId: z.string().trim().min(1, "Выберите номер"),
-  sourceId: z.string().trim().min(1, "Выберите источник бронирования"),
-  price: z.number({ invalid_type_error: "Укажите цену" }).positive("Цена должна быть положительной"),
-  currency: z.string().trim().min(1, "Выберите валюту"),
-  paymentMethod: z.enum(paymentMethods, { errorMap: () => ({ message: "Выберите способ оплаты" }) }),
-  notes: z.string().trim().optional(),
-});
+const reportFormSchema = z
+  .object({
+    date: z.string().trim().min(1, "Укажите дату"),
+    roomId: z.string().trim().min(1, "Выберите номер"),
+    sourceId: z.string().trim().min(1, "Выберите источник бронирования"),
+    price: z.number({ invalid_type_error: "Укажите цену" }).positive("Цена должна быть положительной"),
+    currency: z.string().trim().min(1, "Выберите валюту"),
+    paymentMethod: z.enum(paymentMethods, { errorMap: () => ({ message: "Выберите способ оплаты" }) }),
+    paymentStatus: z.enum(paymentStatuses, { errorMap: () => ({ message: "Выберите статус оплаты" }) }),
+    paidAmount: z.number({ invalid_type_error: "Укажите сумму" }).min(0).optional(),
+    notes: z.string().trim().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.paymentStatus === "Частично") {
+      if (!data.paidAmount || data.paidAmount <= 0) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["paidAmount"], message: "Укажите оплаченную сумму" });
+      } else if (data.paidAmount >= data.price) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["paidAmount"], message: "Должна быть меньше цены" });
+      }
+    }
+  });
 type ReportFormValues = z.infer<typeof reportFormSchema>;
 
 function todayIso() {
   return new Date().toISOString().slice(0, 10);
+}
+
+function reportMatches(r: MonthlyReport, q: string) {
+  return (
+    r.room.roomNumber.toLowerCase().includes(q) ||
+    r.source.name.toLowerCase().includes(q) ||
+    (r.notes ?? "").toLowerCase().includes(q) ||
+    r.paymentMethod.toLowerCase().includes(q) ||
+    r.paymentStatus.toLowerCase().includes(q)
+  );
 }
 
 export default function MyReportsPage() {
@@ -62,6 +87,7 @@ export default function MyReportsPage() {
   const { data: rooms } = useRooms();
   const { data: sources } = useSources();
   const { data: reports, isLoading } = useReports({});
+  const controls = useTableControls(reports ?? [], reportMatches, 10);
 
   const createReport = useCreateReport();
   const updateReport = useUpdateReport();
@@ -80,11 +106,14 @@ export default function MyReportsPage() {
       price: 0,
       currency: "UZS",
       paymentMethod: "Наличные",
+      paymentStatus: "Оплачено",
+      paidAmount: undefined,
       notes: "",
     },
   });
 
   const hasRequiredData = (rooms ?? []).length > 0 && (sources ?? []).length > 0;
+  const selectedPaymentStatus = form.watch("paymentStatus");
 
   function openCreate() {
     setEditing(null);
@@ -95,6 +124,8 @@ export default function MyReportsPage() {
       price: 0,
       currency: "UZS",
       paymentMethod: "Наличные",
+      paymentStatus: "Оплачено",
+      paidAmount: undefined,
       notes: "",
     });
     setDialogOpen(true);
@@ -109,6 +140,8 @@ export default function MyReportsPage() {
       price: report.price,
       currency: report.currency,
       paymentMethod: report.paymentMethod,
+      paymentStatus: report.paymentStatus,
+      paidAmount: report.paidAmount ?? undefined,
       notes: report.notes ?? "",
     });
     setDialogOpen(true);
@@ -184,6 +217,20 @@ export default function MyReportsPage() {
         </CardContent>
       </Card>
 
+      {(reports ?? []).length > 0 && (
+        <div className="mb-4 max-w-xs">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={controls.search}
+              onChange={(e) => controls.setSearch(e.target.value)}
+              placeholder="Поиск: номер, источник…"
+              className="pl-8"
+            />
+          </div>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -196,7 +243,14 @@ export default function MyReportsPage() {
           title="У вас пока нет отчётов"
           description="Добавьте первый отчёт, чтобы начать работу."
         />
+      ) : controls.totalItems === 0 ? (
+        <EmptyState
+          icon={Search}
+          title="Ничего не найдено"
+          description="По вашему запросу нет отчётов. Измените поиск."
+        />
       ) : (
+        <>
         <Table>
           <TableHeader>
             <TableRow>
@@ -205,12 +259,13 @@ export default function MyReportsPage() {
               <TableHead>Источник</TableHead>
               <TableHead>Цена</TableHead>
               <TableHead>Оплата</TableHead>
+              <TableHead>Статус</TableHead>
               <TableHead>Заметки</TableHead>
               <TableHead className="text-right">Действия</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {(reports ?? []).map((report) => (
+            {controls.pageItems.map((report) => (
               <TableRow key={report.id}>
                 <TableCell>{formatDate(report.date)}</TableCell>
                 <TableCell>{report.room.roomNumber}</TableCell>
@@ -219,6 +274,14 @@ export default function MyReportsPage() {
                   {formatMoney(report.price, report.currency)}
                 </TableCell>
                 <TableCell>{report.paymentMethod}</TableCell>
+                <TableCell>
+                  <Badge className={paymentStatusClass(report.paymentStatus)}>{report.paymentStatus}</Badge>
+                  {reportDebt(report) > 0 && (
+                    <span className="mt-0.5 block text-xs text-destructive">
+                      Долг: {formatMoney(reportDebt(report), report.currency)}
+                    </span>
+                  )}
+                </TableCell>
                 <TableCell className="max-w-[200px] truncate text-muted-foreground">
                   {report.notes || "-"}
                 </TableCell>
@@ -236,6 +299,14 @@ export default function MyReportsPage() {
             ))}
           </TableBody>
         </Table>
+        <Pagination
+          page={controls.page}
+          totalPages={controls.totalPages}
+          totalItems={controls.totalItems}
+          pageSize={controls.pageSize}
+          onPageChange={controls.setPage}
+        />
+        </>
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -365,6 +436,53 @@ export default function MyReportsPage() {
                 <p className="text-xs text-destructive">{form.formState.errors.paymentMethod.message}</p>
               )}
             </div>
+
+            <div className="space-y-1.5">
+              <Label>Статус оплаты</Label>
+              <Controller
+                control={form.control}
+                name="paymentStatus"
+                render={({ field }) => (
+                  <Select
+                    value={field.value}
+                    onValueChange={(v) => {
+                      field.onChange(v);
+                      if (v !== "Частично") form.setValue("paidAmount", undefined);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Выбрать" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {paymentStatuses.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {s}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {form.formState.errors.paymentStatus && (
+                <p className="text-xs text-destructive">{form.formState.errors.paymentStatus.message}</p>
+              )}
+            </div>
+
+            {selectedPaymentStatus === "Частично" && (
+              <div className="col-span-2 space-y-1.5">
+                <Label htmlFor="paidAmount">Оплачено</Label>
+                <Controller
+                  control={form.control}
+                  name="paidAmount"
+                  render={({ field }) => (
+                    <CurrencyInput id="paidAmount" value={field.value ?? 0} onChange={field.onChange} />
+                  )}
+                />
+                {form.formState.errors.paidAmount && (
+                  <p className="text-xs text-destructive">{form.formState.errors.paidAmount.message}</p>
+                )}
+              </div>
+            )}
 
             <div className="col-span-2 space-y-1.5">
               <Label htmlFor="notes">Заметки</Label>

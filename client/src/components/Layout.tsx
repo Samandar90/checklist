@@ -7,12 +7,16 @@ import {
   BedDouble,
   Megaphone,
   ClipboardList,
+  Wallet,
   Hotel,
   LogOut,
   KeyRound,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import ChangePasswordDialog from "@/components/ChangePasswordDialog";
 
 const superAdminNavItems = [
@@ -22,12 +26,14 @@ const superAdminNavItems = [
   { to: "/rooms", label: "Номера", icon: BedDouble },
   { to: "/sources", label: "Источники бронирования", icon: Megaphone },
   { to: "/reports", label: "Ежемесячные отчёты", icon: ClipboardList },
+  { to: "/expenses", label: "Расходы", icon: Wallet },
 ];
 
 const adminNavItems = [{ to: "/my-reports", label: "Мои отчёты", icon: ClipboardList }];
 
 export default function Layout() {
   const { user, logout } = useAuth();
+  const { theme, toggle } = useTheme();
   const location = useLocation();
   const isSuperAdmin = user?.role === "SUPER_ADMIN";
   const navItems = isSuperAdmin ? superAdminNavItems : adminNavItems;
@@ -81,6 +87,13 @@ export default function Layout() {
               {isSuperAdmin ? "Главный аккаунт" : user?.branchName}
             </p>
           </div>
+          <button
+            onClick={toggle}
+            className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          >
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {theme === "dark" ? "Светлая тема" : "Тёмная тема"}
+          </button>
           {isSuperAdmin && (
             <button
               onClick={() => setPasswordDialogOpen(true)}
@@ -109,6 +122,13 @@ export default function Layout() {
             <span className="text-sm font-semibold">Hotel Reports</span>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={toggle}
+              aria-label="Переключить тему"
+              className="flex items-center rounded-lg p-1.5 text-muted-foreground"
+            >
+              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
             {isSuperAdmin && (
               <button
                 onClick={() => setPasswordDialogOpen(true)}

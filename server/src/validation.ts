@@ -40,17 +40,57 @@ export const sourceSchema = z.object({
 });
 
 export const paymentMethods = ["Наличные", "Карта", "Терминал"] as const;
+export const paymentStatuses = ["Оплачено", "Частично", "Долг"] as const;
 
-export const reportSchema = z.object({
+export const reportSchema = z
+  .object({
+    date: z.string().trim().min(1, "Дата обязательна"),
+    branchId: z.string().trim().min(1, "Филиал обязателен"),
+    adminId: z.string().trim().min(1, "Администратор обязателен"),
+    roomId: z.string().trim().min(1, "Номер обязателен"),
+    sourceId: z.string().trim().min(1, "Источник бронирования обязателен"),
+    price: z.number({ invalid_type_error: "Цена должна быть числом" }).positive("Цена должна быть положительной"),
+    currency: z.string().trim().min(1, "Валюта обязательна"),
+    paymentMethod: z.enum(paymentMethods, {
+      errorMap: () => ({ message: "Выберите способ оплаты" }),
+    }),
+    paymentStatus: z.enum(paymentStatuses, {
+      errorMap: () => ({ message: "Выберите статус оплаты" }),
+    }).default("Оплачено"),
+    paidAmount: z.number({ invalid_type_error: "Сумма должна быть числом" }).min(0).optional().nullable(),
+    notes: z.string().trim().optional().nullable(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.paymentStatus === "Частично") {
+      if (data.paidAmount == null || data.paidAmount <= 0) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["paidAmount"], message: "Укажите оплаченную сумму" });
+      } else if (data.paidAmount >= data.price) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["paidAmount"],
+          message: "Частичная оплата должна быть меньше цены",
+        });
+      }
+    }
+  });
+
+export const expenseCategories = [
+  "Зарплата",
+  "Аренда",
+  "Коммунальные",
+  "Снабжение",
+  "Ремонт",
+  "Маркетинг",
+  "Прочее",
+] as const;
+
+export const expenseSchema = z.object({
   date: z.string().trim().min(1, "Дата обязательна"),
   branchId: z.string().trim().min(1, "Филиал обязателен"),
-  adminId: z.string().trim().min(1, "Администратор обязателен"),
-  roomId: z.string().trim().min(1, "Номер обязателен"),
-  sourceId: z.string().trim().min(1, "Источник бронирования обязателен"),
-  price: z.number({ invalid_type_error: "Цена должна быть числом" }).positive("Цена должна быть положительной"),
-  currency: z.string().trim().min(1, "Валюта обязательна"),
-  paymentMethod: z.enum(paymentMethods, {
-    errorMap: () => ({ message: "Выберите способ оплаты" }),
+  category: z.enum(expenseCategories, {
+    errorMap: () => ({ message: "Выберите категорию" }),
   }),
-  notes: z.string().trim().optional().nullable(),
+  amount: z.number({ invalid_type_error: "Сумма должна быть числом" }).positive("Сумма должна быть положительной"),
+  currency: z.string().trim().min(1, "Валюта обязательна"),
+  note: z.string().trim().optional().nullable(),
 });
