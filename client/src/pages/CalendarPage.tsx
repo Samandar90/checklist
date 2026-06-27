@@ -30,6 +30,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import BookingDialog, { BookingDraft } from "@/components/BookingDialog";
 import { useBranches } from "@/hooks/useBranches";
 import { useCalendar } from "@/hooks/useCalendar";
+import { useUpdateReport } from "@/hooks/useReports";
 import { useSettleDebt } from "@/hooks/useDebtors";
 import { MonthlyReport, Room } from "@/types";
 import { getErrorMessage } from "@/lib/api";
@@ -101,6 +102,19 @@ export default function CalendarPage() {
   const [draft, setDraft] = useState<BookingDraft | null>(null);
   const [editing, setEditing] = useState<MonthlyReport | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
+  // Drag an existing booking to move / resize it.
+  const [move, setMove] = useState<{
+    booking: MonthlyReport;
+    mode: "move" | "resize";
+    origStart: number;
+    origEnd: number;
+    gridLeft: number;
+    pointerStartDay: number;
+    curStart: number;
+    curEnd: number;
+  } | null>(null);
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const updateReport = useUpdateReport();
 
   const effectiveBranchId = branchId ?? branches?.[0]?.id;
 
@@ -135,15 +149,19 @@ export default function CalendarPage() {
     function finish() {
       const d = dragRef.current;
       if (!d) return;
+      dragRef.current = null;
+      setDrag(null);
       const a = Math.min(d.a, d.b);
       const b = Math.max(d.a, d.b);
+      if (!rangeFree(d.roomId, a, b + 1)) {
+        toast.error("Номер занят на выбранные даты");
+        return;
+      }
       const checkOut = new Date(days[b]);
       checkOut.setDate(checkOut.getDate() + 1);
       setEditing(null);
       setDraft({ roomId: d.roomId, date: isoDay(days[a]), checkOut: isoDay(checkOut) });
       setBookingOpen(true);
-      dragRef.current = null;
-      setDrag(null);
     }
     window.addEventListener("mouseup", finish);
     return () => window.removeEventListener("mouseup", finish);
@@ -183,6 +201,110 @@ export default function CalendarPage() {
     }
     return map;
   }, [data]);
+
+  // Ref so global drag handlers always see the latest bookings.
+  const bookingsRef = useRef(bookingsByRoom);
+  useEffect(() => {
+    bookingsRef.current = bookingsByRoom;
+  });
+
+  const spanOf = (b: MonthlyReport): [number, number] => {
+    const s = dayIndex(b.date);
+    return [s, b.checkOut ? dayIndex(b.checkOut) : s + 1];
+  };
+
+  /** Is [start, end) free in this room (ignoring one booking by id)? */
+  function rangeFree(roomId: string, start: number, end: number, ignoreId?: string) {
+    const list = bookingsRef.current.get(roomId) ?? [];
+    return !list.some((b) => {
+      if (ignoreId && b.id === ignoreId) return false;
+      const [s, e] = spanOf(b);
+      return start < e && s < end;
+    });
+  }
+
+  /** Convert a month-relative day index (may be negative) to an ISO date. */
+  const idxToIso = (idx: number) => isoDay(new Date(cursor.year, cursor.month, 1 + idx));
+
+  // Live drag-move / resize of an existing booking.
+  const moveRef = useRef(move);
+  useEffect(() => {
+    moveRef.current = move;
+  }, [move]);
+
+  useEffect(() => {
+    function onMouseMove(e: MouseEvent) {
+      const m = moveRef.current;
+      if (!m) return;
+      const day = Math.floor((e.clientX - m.gridLeft) / CELL_W);
+      const delta = day - m.pointerStartDay;
+      let curStart = m.origStart;
+      let curEnd = m.origEnd;
+      if (m.mode === "move") {
+        curStart = m.origStart + delta;
+        curEnd = m.origEnd + delta;
+      } else {
+        curEnd = Math.max(m.origStart + 1, m.origEnd + delta);
+      }
+      if (curStart !== m.curStart || curEnd !== m.curEnd) setMove({ ...m, curStart, curEnd });
+    }
+    async function onMouseUp() {
+      const m = moveRef.current;
+      if (!m) return;
+      setMove(null);
+      // No movement → it was a click → open details.
+      if (m.curStart === m.origStart && m.curEnd === m.origEnd) {
+        setSelected(m.booking);
+        return;
+      }
+      if (!rangeFree(m.booking.roomId, m.curStart, m.curEnd, m.booking.id)) {
+        toast.error("Пересекается с другой бронью");
+        return;
+      }
+      const b = m.booking;
+      try {
+        await updateReport.mutateAsync({
+          id: b.id,
+          data: {
+            date: idxToIso(m.curStart),
+            checkOut: idxToIso(m.curEnd),
+            guestName: b.guestName ?? "",
+            branchId: b.branchId,
+            adminId: b.adminId,
+            roomId: b.roomId,
+            sourceId: b.sourceId,
+            price: b.price,
+            currency: b.currency,
+            paymentMethod: b.paymentMethod,
+            paymentStatus: b.paymentStatus,
+            paidAmount: b.paidAmount ?? undefined,
+            notes: b.notes ?? "",
+          },
+        });
+        toast.success(m.mode === "resize" ? "Срок брони изменён" : "Бронь перенесена");
+      } catch (err) {
+        toast.error(getErrorMessage(err));
+      }
+    }
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cursor.year, cursor.month, monthStartMs]);
+
+  function startMove(e: React.MouseEvent, booking: MonthlyReport, mode: "move" | "resize") {
+    e.stopPropagation();
+    e.preventDefault();
+    const gridEl = (e.currentTarget as HTMLElement).closest("[data-grid-row]") as HTMLElement | null;
+    if (!gridEl) return;
+    const gridLeft = gridEl.getBoundingClientRect().left;
+    const [origStart, origEnd] = spanOf(booking);
+    const pointerStartDay = Math.floor((e.clientX - gridLeft) / CELL_W);
+    setMove({ booking, mode, origStart, origEnd, gridLeft, pointerStartDay, curStart: origStart, curEnd: origEnd });
+  }
 
   // Quick stats strip.
   const stats = useMemo(() => {
@@ -407,13 +529,26 @@ export default function CalendarPage() {
               {groups.map((g) => (
                 <div key={g.type}>
                   <div className="flex border-b border-border bg-secondary/50">
-                    <div
-                      className="sticky left-0 z-20 flex items-center gap-2 bg-secondary/50 px-3 py-1.5 font-semibold text-foreground"
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setCollapsed((prev) => {
+                          const next = new Set(prev);
+                          next.has(g.type) ? next.delete(g.type) : next.add(g.type);
+                          return next;
+                        })
+                      }
+                      className="sticky left-0 z-20 flex items-center gap-1.5 bg-secondary/50 px-3 py-1.5 font-semibold text-foreground transition-colors hover:bg-secondary"
                       style={{ width: LABEL_W, minWidth: LABEL_W }}
                     >
-                      <span className="h-3 w-1 rounded-full bg-primary/60" />
+                      <ChevronRight
+                        className={cn(
+                          "h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform",
+                          !collapsed.has(g.type) && "rotate-90"
+                        )}
+                      />
                       {g.type} · {g.rooms.length}
-                    </div>
+                    </button>
                     {days.map((d, i) => {
                       const occInGroup = g.rooms.filter((r) => occupiedByDay[i].has(r.id)).length;
                       const free = g.rooms.length - occInGroup;
@@ -433,7 +568,7 @@ export default function CalendarPage() {
                     })}
                   </div>
 
-                  {g.rooms.map((room, ri) => (
+                  {!collapsed.has(g.type) && g.rooms.map((room, ri) => (
                     <div
                       key={room.id}
                       className={cn(
@@ -453,7 +588,11 @@ export default function CalendarPage() {
                           </span>
                         )}
                       </div>
-                      <div className="relative select-none" style={{ width: daysInMonth * CELL_W, height: ROW_H }}>
+                      <div
+                        data-grid-row
+                        className="relative select-none"
+                        style={{ width: daysInMonth * CELL_W, height: ROW_H }}
+                      >
                         {/* фон-сетка (кликабельная для создания брони) */}
                         <div className="absolute inset-0 flex">
                           {days.map((d, i) => {
@@ -499,19 +638,24 @@ export default function CalendarPage() {
                           />
                         )}
                         {/* брони */}
-                        {(bookingsByRoom.get(room.id) ?? []).map((b) => (
-                          <BookingBar
-                            key={b.id}
-                            booking={b}
-                            checkInIdx={dayIndex(b.date)}
-                            checkOutIdx={b.checkOut ? dayIndex(b.checkOut) : dayIndex(b.date) + 1}
-                            daysInMonth={daysInMonth}
-                            dimmed={filterActive && !matches(b)}
-                            onClick={() => setSelected(b)}
-                            onHover={(x, y) => setHover({ b, x, y })}
-                            onLeave={() => setHover(null)}
-                          />
-                        ))}
+                        {(bookingsByRoom.get(room.id) ?? []).map((b) => {
+                          const beingMoved = move?.booking.id === b.id;
+                          const [s0, e0] = spanOf(b);
+                          return (
+                            <BookingBar
+                              key={b.id}
+                              booking={b}
+                              checkInIdx={beingMoved ? move!.curStart : s0}
+                              checkOutIdx={beingMoved ? move!.curEnd : e0}
+                              daysInMonth={daysInMonth}
+                              dimmed={filterActive && !matches(b)}
+                              dragging={beingMoved}
+                              onMoveStart={(e, mode) => startMove(e, b, mode)}
+                              onHover={(x, y) => !moveRef.current && setHover({ b, x, y })}
+                              onLeave={() => setHover(null)}
+                            />
+                          );
+                        })}
                       </div>
                     </div>
                   ))}
@@ -523,7 +667,7 @@ export default function CalendarPage() {
       )}
 
       {/* Плавающая подсказка */}
-      {hover && <HoverCard booking={hover.b} x={hover.x} y={hover.y} />}
+      {hover && !move && <HoverCard booking={hover.b} x={hover.x} y={hover.y} />}
 
       {/* Детали брони */}
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
@@ -656,13 +800,21 @@ function HoverCard({ booking, x, y }: { booking: MonthlyReport; x: number; y: nu
   );
 }
 
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
 function BookingBar({
   booking,
   checkInIdx,
   checkOutIdx,
   daysInMonth,
   dimmed,
-  onClick,
+  dragging,
+  onMoveStart,
   onHover,
   onLeave,
 }: {
@@ -671,7 +823,8 @@ function BookingBar({
   checkOutIdx: number;
   daysInMonth: number;
   dimmed: boolean;
-  onClick: () => void;
+  dragging: boolean;
+  onMoveStart: (e: React.MouseEvent, mode: "move" | "resize") => void;
   onHover: (x: number, y: number) => void;
   onLeave: () => void;
 }) {
@@ -692,19 +845,21 @@ function BookingBar({
 
   const debt = reportDebt(booking);
   const label = booking.guestName || booking.source.name;
-  const wide = width > 64;
+  const showAvatar = width > 70;
+  const showPrice = width > 96;
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <div
+      onMouseDown={(e) => onMoveStart(e, "move")}
       onMouseEnter={(e) => onHover(e.clientX, e.clientY)}
       onMouseMove={(e) => onHover(e.clientX, e.clientY)}
       onMouseLeave={onLeave}
+      title={`${label} · ${formatMoney(booking.price, booking.currency)} · ${booking.paymentStatus}`}
       className={cn(
-        "absolute flex items-center gap-1.5 overflow-hidden whitespace-nowrap bg-gradient-to-b px-2.5 text-[11px] font-semibold shadow-sm ring-1 ring-black/5 transition-[transform,box-shadow] duration-150 hover:z-30 hover:-translate-y-px hover:shadow-md",
+        "group/bar absolute flex cursor-grab items-center gap-1.5 overflow-hidden whitespace-nowrap bg-gradient-to-b px-1.5 text-[11px] font-semibold shadow-sm ring-1 ring-black/5 transition-[transform,box-shadow] duration-150 hover:z-30 hover:-translate-y-px hover:shadow-md active:cursor-grabbing",
         statusBar[booking.paymentStatus] ?? "from-secondary to-secondary text-foreground",
-        dimmed && "opacity-20 grayscale"
+        dimmed && "opacity-20 grayscale",
+        dragging && "z-40 opacity-90 shadow-lg ring-2 ring-primary"
       )}
       style={{
         left,
@@ -727,13 +882,28 @@ function BookingBar({
           }}
         />
       )}
+      {showAvatar && (
+        <span className="relative flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-black/15 text-[9px] font-bold">
+          {initials(label)}
+        </span>
+      )}
       <span className="relative truncate">{label}</span>
-      {wide && (
+      {showPrice && (
         <span className="relative ml-auto shrink-0 font-medium opacity-80">
           {Math.round(booking.price / 1000)}к
         </span>
       )}
       {debt > 0 && <AlertCircle className="relative h-3 w-3 shrink-0" />}
-    </button>
+      {/* ручка изменения срока (правый край) */}
+      {roundRight && (
+        <span
+          onMouseDown={(e) => onMoveStart(e, "resize")}
+          className="absolute inset-y-0 right-0 z-10 w-2 cursor-ew-resize opacity-0 transition-opacity group-hover/bar:opacity-100"
+          title="Потяните, чтобы изменить срок"
+        >
+          <span className="absolute inset-y-1.5 right-0.5 w-0.5 rounded-full bg-black/30" />
+        </span>
+      )}
+    </div>
   );
 }
