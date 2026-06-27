@@ -29,9 +29,12 @@ import { formatDate } from "@/lib/utils";
 
 const roomFormSchema = z.object({
   roomNumber: z.string().trim().min(1, "Укажите номер комнаты"),
+  type: z.string().trim().optional(),
   branchId: z.string().trim().min(1, "Выберите филиал"),
 });
 type RoomFormValues = z.infer<typeof roomFormSchema>;
+
+const ROOM_TYPE_SUGGESTIONS = ["DBL", "TWIN", "SGL", "Lux", "Suite"];
 
 export default function RoomsPage() {
   const { data: rooms, isLoading } = useRooms();
@@ -47,18 +50,18 @@ export default function RoomsPage() {
 
   const form = useForm<RoomFormValues>({
     resolver: zodResolver(roomFormSchema),
-    defaultValues: { roomNumber: "", branchId: "" },
+    defaultValues: { roomNumber: "", type: "", branchId: "" },
   });
 
   function openCreate() {
     setEditing(null);
-    form.reset({ roomNumber: "", branchId: "" });
+    form.reset({ roomNumber: "", type: "", branchId: "" });
     setDialogOpen(true);
   }
 
   function openEdit(room: Room) {
     setEditing(room);
-    form.reset({ roomNumber: room.roomNumber, branchId: room.branchId });
+    form.reset({ roomNumber: room.roomNumber, type: room.type ?? "", branchId: room.branchId });
     setDialogOpen(true);
   }
 
@@ -137,6 +140,7 @@ export default function RoomsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Номер комнаты</TableHead>
+              <TableHead>Тип</TableHead>
               <TableHead>Филиал</TableHead>
               <TableHead>Создан</TableHead>
               <TableHead className="text-right">Действия</TableHead>
@@ -146,6 +150,7 @@ export default function RoomsPage() {
             {filtered.map((room) => (
               <TableRow key={room.id}>
                 <TableCell className="font-medium text-foreground">{room.roomNumber}</TableCell>
+                <TableCell className="text-muted-foreground">{room.type || "-"}</TableCell>
                 <TableCell>{room.branch?.name ?? "-"}</TableCell>
                 <TableCell className="text-muted-foreground">{formatDate(room.createdAt)}</TableCell>
                 <TableCell className="text-right">
@@ -176,6 +181,20 @@ export default function RoomsPage() {
               {form.formState.errors.roomNumber && (
                 <p className="text-xs text-destructive">{form.formState.errors.roomNumber.message}</p>
               )}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="type">Тип номера</Label>
+              <Input
+                id="type"
+                list="room-type-suggestions"
+                placeholder="например, DBL, TWIN"
+                {...form.register("type")}
+              />
+              <datalist id="room-type-suggestions">
+                {ROOM_TYPE_SUGGESTIONS.map((t) => (
+                  <option key={t} value={t} />
+                ))}
+              </datalist>
             </div>
             <div className="space-y-1.5">
               <Label>Филиал</Label>

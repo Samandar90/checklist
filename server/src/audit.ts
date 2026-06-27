@@ -13,6 +13,8 @@ export interface FieldChange {
 const FIELD_LABELS: Record<string, string> = {
   date: "Заезд",
   checkOut: "Выезд",
+  guestName: "Гость",
+  type: "Тип номера",
   price: "Цена",
   currency: "Валюта",
   paymentMethod: "Способ оплаты",

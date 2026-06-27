@@ -32,6 +32,7 @@ export const changePasswordSchema = z.object({
 
 export const roomSchema = z.object({
   roomNumber: z.string().trim().min(1, "Номер комнаты обязателен"),
+  type: z.string().trim().optional().nullable(),
   branchId: z.string().trim().min(1, "Филиал обязателен"),
 });
 
@@ -46,6 +47,7 @@ export const reportSchema = z
   .object({
     date: z.string().trim().min(1, "Дата заезда обязательна"),
     checkOut: z.string().trim().optional().nullable(),
+    guestName: z.string().trim().optional().nullable(),
     branchId: z.string().trim().min(1, "Филиал обязателен"),
     adminId: z.string().trim().min(1, "Администратор обязателен"),
     roomId: z.string().trim().min(1, "Номер обязателен"),

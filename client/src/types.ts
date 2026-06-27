@@ -30,6 +30,7 @@ export interface AuthUser {
 export interface Room {
   id: string;
   roomNumber: string;
+  type?: string | null;
   branchId: string;
   createdAt: string;
   branch?: Branch;
@@ -51,6 +52,7 @@ export interface MonthlyReport {
   id: string;
   date: string;
   checkOut?: string | null;
+  guestName?: string | null;
   branchId: string;
   adminId: string;
   roomId: string;

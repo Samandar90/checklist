@@ -30,7 +30,7 @@ const superAdminNavItems = [
   { to: "/rooms", label: "Номера", icon: BedDouble },
   { to: "/sources", label: "Источники бронирования", icon: Megaphone },
   { to: "/reports", label: "Ежемесячные отчёты", icon: ClipboardList },
-  { to: "/calendar", label: "Календарь загрузки", icon: CalendarRange },
+  { to: "/calendar", label: "Шахматка", icon: CalendarRange },
   { to: "/expenses", label: "Расходы", icon: Wallet },
   { to: "/debtors", label: "Должники", icon: AlertTriangle },
   { to: "/audit", label: "Журнал изменений", icon: History },

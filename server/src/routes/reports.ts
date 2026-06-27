@@ -4,7 +4,7 @@ import { reportSchema } from "../validation";
 import { requireSuperAdmin } from "../middleware/auth";
 import { recordAudit, buildChanges, summarize } from "../audit";
 
-const REPORT_AUDIT_FIELDS = ["date", "checkOut", "price", "currency", "paymentMethod", "paymentStatus", "paidAmount", "notes"];
+const REPORT_AUDIT_FIELDS = ["date", "checkOut", "guestName", "price", "currency", "paymentMethod", "paymentStatus", "paidAmount", "notes"];
 
 const money = (n: number) => n.toLocaleString("ru-RU");
 const DAY_MS = 24 * 60 * 60 * 1000;

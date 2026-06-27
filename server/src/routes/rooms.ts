@@ -48,7 +48,7 @@ router.put("/:id", requireSuperAdmin, async (req, res, next) => {
       data,
       include: { branch: true },
     });
-    const changes = buildChanges(existing, room, ["roomNumber"]);
+    const changes = buildChanges(existing, room, ["roomNumber", "type"]);
     if (changes.length) {
       await recordAudit(req, {
         action: "UPDATE",

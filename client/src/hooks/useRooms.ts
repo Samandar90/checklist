@@ -4,6 +4,7 @@ import { Room } from "@/types";
 
 export interface RoomInput {
   roomNumber: string;
+  type?: string | null;
   branchId: string;
 }
 

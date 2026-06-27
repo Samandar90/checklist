@@ -67,6 +67,7 @@ const reportFormSchema = z
   .object({
     date: z.string().trim().min(1, "Укажите дату заезда"),
     checkOut: z.string().trim().min(1, "Укажите дату выезда"),
+    guestName: z.string().trim().optional(),
     branchId: z.string().trim().min(1, "Выберите филиал"),
     adminId: z.string().trim().min(1, "Выберите администратора"),
     roomId: z.string().trim().min(1, "Выберите номер"),
@@ -141,6 +142,7 @@ export default function ReportsPage() {
     defaultValues: {
       date: todayIso(),
       checkOut: addDaysIso(todayIso(), 1),
+      guestName: "",
       branchId: "",
       adminId: "",
       roomId: "",
@@ -177,6 +179,7 @@ export default function ReportsPage() {
     form.reset({
       date: todayIso(),
       checkOut: addDaysIso(todayIso(), 1),
+      guestName: "",
       branchId: "",
       adminId: "",
       roomId: "",
@@ -194,6 +197,7 @@ export default function ReportsPage() {
     form.reset({
       date: report.date.slice(0, 10),
       checkOut: report.checkOut ? report.checkOut.slice(0, 10) : addDaysIso(report.date.slice(0, 10), 1),
+      guestName: report.guestName ?? "",
       branchId: report.branchId,
       adminId: report.adminId,
       roomId: report.roomId,
@@ -495,6 +499,7 @@ export default function ReportsPage() {
               <TableHead>Администратор</TableHead>
               <TableHead>Номер</TableHead>
               <TableHead>Источник</TableHead>
+              <TableHead>Гость</TableHead>
               <TableHead>Цена</TableHead>
               <TableHead>Оплата</TableHead>
               <TableHead>Статус</TableHead>
@@ -523,6 +528,7 @@ export default function ReportsPage() {
                 <TableCell>{report.admin.fullName}</TableCell>
                 <TableCell>{report.room.roomNumber}</TableCell>
                 <TableCell>{report.source.name}</TableCell>
+                <TableCell>{report.guestName || "-"}</TableCell>
                 <TableCell className="font-medium text-foreground">
                   {formatMoney(report.price, report.currency)}
                 </TableCell>
@@ -618,6 +624,11 @@ export default function ReportsPage() {
               <p className="text-xs text-muted-foreground">
                 Ночей: <span className="font-medium text-foreground">{nightsBetween(form.watch("date"), form.watch("checkOut"))}</span>
               </p>
+            </div>
+
+            <div className="col-span-2 space-y-1.5">
+              <Label htmlFor="guestName">Имя гостя</Label>
+              <Input id="guestName" placeholder="например, Иван Иванов" {...form.register("guestName")} />
             </div>
 
             <div className="space-y-1.5">

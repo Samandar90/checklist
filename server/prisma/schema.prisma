@@ -44,6 +44,7 @@ model User {
 model Room {
   id         String   @id @default(cuid())
   roomNumber String
+  type       String? // тип номера: DBL, TWIN, Lux …
   branchId   String
   createdAt  DateTime @default(now())
 
@@ -63,6 +64,7 @@ model MonthlyReport {
   id        String    @id @default(cuid())
   date      DateTime // дата заезда (check-in)
   checkOut  DateTime? // дата выезда (check-out); null = одна ночь
+  guestName String? // имя гостя
   branchId  String
   adminId   String
   roomId    String

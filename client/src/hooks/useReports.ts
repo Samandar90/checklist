@@ -5,6 +5,7 @@ import { MonthlyReport, PaymentMethod, PaymentStatus, ReportFilters, ReportSumma
 export interface ReportInput {
   date: string;
   checkOut?: string | null;
+  guestName?: string | null;
   branchId?: string;
   adminId?: string;
   roomId: string;
