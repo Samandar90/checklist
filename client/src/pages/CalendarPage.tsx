@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -11,6 +11,8 @@ import {
   Moon,
   TrendingUp,
   DoorOpen,
+  Pencil,
+  MousePointerClick,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -25,6 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+import BookingDialog, { BookingDraft } from "@/components/BookingDialog";
 import { useBranches } from "@/hooks/useBranches";
 import { useCalendar } from "@/hooks/useCalendar";
 import { useSettleDebt } from "@/hooks/useDebtors";
@@ -93,6 +96,11 @@ export default function CalendarPage() {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [hover, setHover] = useState<{ b: MonthlyReport; x: number; y: number } | null>(null);
+  // Drag-to-select on the grid → new booking.
+  const [drag, setDrag] = useState<{ roomId: string; a: number; b: number } | null>(null);
+  const [draft, setDraft] = useState<BookingDraft | null>(null);
+  const [editing, setEditing] = useState<MonthlyReport | null>(null);
+  const [bookingOpen, setBookingOpen] = useState(false);
 
   const effectiveBranchId = branchId ?? branches?.[0]?.id;
 
@@ -115,6 +123,31 @@ export default function CalendarPage() {
   }, [cursor.year, cursor.month]);
 
   const dayIndex = (d: string | Date) => Math.round((dayStartMs(d) - monthStartMs) / DAY_MS);
+
+  // Keep a ref of the live drag so the global mouseup handler always sees it.
+  const dragRef = useRef(drag);
+  useEffect(() => {
+    dragRef.current = drag;
+  }, [drag]);
+
+  // Finalize a drag-selection on mouse release anywhere → open the create dialog.
+  useEffect(() => {
+    function finish() {
+      const d = dragRef.current;
+      if (!d) return;
+      const a = Math.min(d.a, d.b);
+      const b = Math.max(d.a, d.b);
+      const checkOut = new Date(days[b]);
+      checkOut.setDate(checkOut.getDate() + 1);
+      setEditing(null);
+      setDraft({ roomId: d.roomId, date: isoDay(days[a]), checkOut: isoDay(checkOut) });
+      setBookingOpen(true);
+      dragRef.current = null;
+      setDrag(null);
+    }
+    window.addEventListener("mouseup", finish);
+    return () => window.removeEventListener("mouseup", finish);
+  }, [days]);
 
   const groups: Group[] = useMemo(() => {
     if (!data) return [];
@@ -321,6 +354,9 @@ export default function CalendarPage() {
             <X className="h-3.5 w-3.5" /> Сбросить
           </button>
         )}
+        <span className="ml-auto hidden items-center gap-1.5 text-xs text-muted-foreground md:flex">
+          <MousePointerClick className="h-3.5 w-3.5" /> Кликните или протяните по дням — создать бронь
+        </span>
       </div>
 
       {isLoading ? (
@@ -417,8 +453,8 @@ export default function CalendarPage() {
                           </span>
                         )}
                       </div>
-                      <div className="relative" style={{ width: daysInMonth * CELL_W, height: ROW_H }}>
-                        {/* фон-сетка */}
+                      <div className="relative select-none" style={{ width: daysInMonth * CELL_W, height: ROW_H }}>
+                        {/* фон-сетка (кликабельная для создания брони) */}
                         <div className="absolute inset-0 flex">
                           {days.map((d, i) => {
                             const weekend = d.getDay() === 0 || d.getDay() === 6;
@@ -426,8 +462,23 @@ export default function CalendarPage() {
                               <div
                                 key={i}
                                 style={{ width: CELL_W, minWidth: CELL_W }}
+                                onMouseDown={() => {
+                                  const next = { roomId: room.id, a: i, b: i };
+                                  dragRef.current = next;
+                                  setDrag(next);
+                                }}
+                                onMouseEnter={() =>
+                                  setDrag((dr) => {
+                                    if (dr && dr.roomId === room.id) {
+                                      const next = { ...dr, b: i };
+                                      dragRef.current = next;
+                                      return next;
+                                    }
+                                    return dr;
+                                  })
+                                }
                                 className={cn(
-                                  "border-l border-border/40",
+                                  "cursor-pointer border-l border-border/40 transition-colors hover:bg-primary/10",
                                   i === todayIndex && "bg-primary/[0.07]",
                                   weekend && i !== todayIndex && "bg-muted/25"
                                 )}
@@ -435,6 +486,18 @@ export default function CalendarPage() {
                             );
                           })}
                         </div>
+                        {/* подсветка выделения при протяжке */}
+                        {drag && drag.roomId === room.id && (
+                          <div
+                            className="pointer-events-none absolute rounded-md border-2 border-dashed border-primary bg-primary/15"
+                            style={{
+                              left: Math.min(drag.a, drag.b) * CELL_W + 1,
+                              width: (Math.abs(drag.b - drag.a) + 1) * CELL_W - 2,
+                              top: 4,
+                              height: ROW_H - 8,
+                            }}
+                          />
+                        )}
                         {/* брони */}
                         {(bookingsByRoom.get(room.id) ?? []).map((b) => (
                           <BookingBar
@@ -494,6 +557,17 @@ export default function CalendarPage() {
                     <CheckCircle2 className="h-4 w-4" /> Погасить долг
                   </Button>
                 )}
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setEditing(selected);
+                    setDraft(null);
+                    setBookingOpen(true);
+                    setSelected(null);
+                  }}
+                >
+                  <Pencil className="h-4 w-4" /> Редактировать
+                </Button>
                 <Button variant="outline" onClick={() => setSelected(null)}>
                   Закрыть
                 </Button>
@@ -502,6 +576,24 @@ export default function CalendarPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Создание / редактирование брони */}
+      {effectiveBranchId && (
+        <BookingDialog
+          open={bookingOpen}
+          onOpenChange={(o) => {
+            setBookingOpen(o);
+            if (!o) {
+              setEditing(null);
+              setDraft(null);
+            }
+          }}
+          branchId={effectiveBranchId}
+          rooms={data?.rooms ?? []}
+          editing={editing}
+          draft={draft}
+        />
+      )}
     </div>
   );
 }

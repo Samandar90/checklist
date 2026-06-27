@@ -52,6 +52,7 @@ export function useCreateReport() {
       qc.invalidateQueries({ queryKey: ["reports"] });
       qc.invalidateQueries({ queryKey: ["reports-summary"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["calendar"] });
     },
   });
 }
@@ -65,6 +66,7 @@ export function useUpdateReport() {
       qc.invalidateQueries({ queryKey: ["reports"] });
       qc.invalidateQueries({ queryKey: ["reports-summary"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["calendar"] });
     },
   });
 }
@@ -77,6 +79,7 @@ export function useDeleteReport() {
       qc.invalidateQueries({ queryKey: ["reports"] });
       qc.invalidateQueries({ queryKey: ["reports-summary"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["calendar"] });
     },
   });
 }
