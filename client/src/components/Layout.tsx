@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   LayoutDashboard,
   Building2,
@@ -37,7 +38,10 @@ const superAdminNavItems = [
   { to: "/backups", label: "Резервные копии", icon: DatabaseBackup },
 ];
 
-const adminNavItems = [{ to: "/my-reports", label: "Мои отчёты", icon: ClipboardList }];
+const adminNavItems = [
+  { to: "/my-reports", label: "Мои отчёты", icon: ClipboardList },
+  { to: "/my-expenses", label: "Расходы за смену", icon: Wallet },
+];
 
 export default function Layout() {
   const { user, logout } = useAuth();
@@ -77,7 +81,11 @@ export default function Layout() {
               {({ isActive }) => (
                 <>
                   {isActive && (
-                    <span className="absolute left-0 top-1/2 h-4 w-1 -translate-y-1/2 rounded-full bg-primary" />
+                    <motion.span
+                      layoutId="nav-indicator"
+                      className="absolute left-0 top-1/2 h-4 w-1 -translate-y-1/2 rounded-full bg-primary"
+                      transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                    />
                   )}
                   <item.icon className="h-4 w-4" />
                   {item.label}
@@ -176,9 +184,17 @@ export default function Layout() {
         </nav>
 
         <main className="flex-1 p-4 md:p-8">
-          <div key={location.pathname} className="animate-fade-in">
-            <Outlet />
-          </div>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
 

@@ -25,9 +25,10 @@ model Admin {
   branchId  String
   createdAt DateTime @default(now())
 
-  branch  Branch          @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  reports MonthlyReport[]
-  user    User?
+  branch   Branch          @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  reports  MonthlyReport[]
+  expenses Expense[]
+  user     User?
 }
 
 model User {
@@ -88,6 +89,7 @@ model Expense {
   id        String    @id @default(cuid())
   date      DateTime
   branchId  String
+  adminId   String?
   category  String
   amount    Float
   currency  String    @default("UZS")
@@ -96,6 +98,7 @@ model Expense {
   updatedAt DateTime? @updatedAt
 
   branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  admin  Admin? @relation(fields: [adminId], references: [id], onDelete: SetNull)
 }
 
 model AuditLog {

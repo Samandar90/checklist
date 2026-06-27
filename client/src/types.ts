@@ -86,6 +86,7 @@ export interface Expense {
   id: string;
   date: string;
   branchId: string;
+  adminId?: string | null;
   category: ExpenseCategory;
   amount: number;
   currency: string;
@@ -93,12 +94,14 @@ export interface Expense {
   createdAt: string;
   updatedAt?: string | null;
   branch: Branch;
+  admin?: Admin | null;
 }
 
 export interface ExpenseFilters {
   from?: string;
   to?: string;
   branchId?: string;
+  adminId?: string;
 }
 
 export type AuditAction = "CREATE" | "UPDATE" | "DELETE";

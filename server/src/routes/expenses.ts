@@ -1,18 +1,22 @@
 import { Router } from "express";
 import { prisma } from "../prisma";
 import { expenseSchema } from "../validation";
-import { requireSuperAdmin } from "../middleware/auth";
 import { recordAudit, buildChanges, summarize } from "../audit";
 
 const router = Router();
-router.use(requireSuperAdmin);
 
 const EXPENSE_AUDIT_FIELDS = ["date", "category", "amount", "currency", "note"];
 const money = (n: number) => n.toLocaleString("ru-RU");
 
-function buildWhere(query: any) {
+function buildWhere(query: any, isAdmin: boolean, ownAdminId: string | null) {
   const where: any = {};
-  if (query.branchId) where.branchId = String(query.branchId);
+
+  if (isAdmin) {
+    where.adminId = ownAdminId ?? "__none__";
+  } else {
+    if (query.branchId) where.branchId = String(query.branchId);
+    if (query.adminId) where.adminId = String(query.adminId);
+  }
 
   const from = query.from ? new Date(String(query.from)) : undefined;
   const to = query.to ? new Date(String(query.to)) : undefined;
@@ -30,10 +34,11 @@ function buildWhere(query: any) {
 
 router.get("/", async (req, res, next) => {
   try {
+    const isAdmin = req.user!.role === "ADMIN";
     const expenses = await prisma.expense.findMany({
-      where: buildWhere(req.query),
+      where: buildWhere(req.query, isAdmin, req.user!.adminId),
       orderBy: { date: "desc" },
-      include: { branch: true },
+      include: { branch: true, admin: true },
     });
     res.json(expenses);
   } catch (err) {
@@ -43,10 +48,24 @@ router.get("/", async (req, res, next) => {
 
 router.post("/", async (req, res, next) => {
   try {
+    const isAdmin = req.user!.role === "ADMIN";
+    if (isAdmin && (!req.user!.adminId || !req.user!.branchId)) {
+      return res.status(403).json({ message: "Ваш аккаунт не привязан к администратору филиала" });
+    }
+
     const data = expenseSchema.parse(req.body);
+    if (!isAdmin && !data.branchId) {
+      return res.status(400).json({
+        message: "Ошибка валидации",
+        errors: [{ path: "branchId", message: "Филиал обязателен" }],
+      });
+    }
+    const branchId = isAdmin ? req.user!.branchId! : data.branchId!;
+    const adminId = isAdmin ? req.user!.adminId! : null;
+
     const expense = await prisma.expense.create({
-      data: { ...data, date: new Date(data.date) },
-      include: { branch: true },
+      data: { ...data, branchId, adminId, date: new Date(data.date) },
+      include: { branch: true, admin: true },
     });
     await recordAudit(req, {
       action: "CREATE",
@@ -62,16 +81,28 @@ router.post("/", async (req, res, next) => {
 
 router.put("/:id", async (req, res, next) => {
   try {
+    const isAdmin = req.user!.role === "ADMIN";
     const existing = await prisma.expense.findUnique({ where: { id: req.params.id } });
     if (!existing) {
       return res.status(404).json({ message: "Запись не найдена" });
     }
+    if (isAdmin && existing.adminId !== req.user!.adminId) {
+      return res.status(403).json({ message: "Недостаточно прав для изменения этого расхода" });
+    }
 
     const data = expenseSchema.parse(req.body);
+    if (!isAdmin && !data.branchId) {
+      return res.status(400).json({
+        message: "Ошибка валидации",
+        errors: [{ path: "branchId", message: "Филиал обязателен" }],
+      });
+    }
+    const branchId = isAdmin ? req.user!.branchId! : data.branchId!;
+
     const expense = await prisma.expense.update({
       where: { id: req.params.id },
-      data: { ...data, date: new Date(data.date) },
-      include: { branch: true },
+      data: { ...data, branchId, date: new Date(data.date) },
+      include: { branch: true, admin: true },
     });
 
     const changes = buildChanges(
@@ -96,9 +127,13 @@ router.put("/:id", async (req, res, next) => {
 
 router.delete("/:id", async (req, res, next) => {
   try {
+    const isAdmin = req.user!.role === "ADMIN";
     const existing = await prisma.expense.findUnique({ where: { id: req.params.id } });
     if (!existing) {
       return res.status(404).json({ message: "Запись не найдена" });
+    }
+    if (isAdmin && existing.adminId !== req.user!.adminId) {
+      return res.status(403).json({ message: "Недостаточно прав для удаления этого расхода" });
     }
 
     await prisma.expense.delete({ where: { id: req.params.id } });

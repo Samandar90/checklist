@@ -3,7 +3,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Wallet, X, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Wallet, Search } from "lucide-react";
 
 import PageHeader from "@/components/PageHeader";
 import EmptyState from "@/components/EmptyState";
@@ -27,10 +27,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Pagination } from "@/components/ui/pagination";
 
 import { useTableControls } from "@/hooks/useTableControls";
-import { useBranches } from "@/hooks/useBranches";
-import { useAdmins } from "@/hooks/useAdmins";
 import { useExpenses, useCreateExpense, useUpdateExpense, useDeleteExpense } from "@/hooks/useExpenses";
-import { Expense, ExpenseFilters, expenseCategories } from "@/types";
+import { Expense, expenseCategories } from "@/types";
+import { useAuth } from "@/contexts/AuthContext";
 import { getErrorMessage } from "@/lib/api";
 import { formatDate, formatMoney } from "@/lib/utils";
 
@@ -38,7 +37,6 @@ const currencies = ["UZS", "USD", "EUR"];
 
 const expenseFormSchema = z.object({
   date: z.string().trim().min(1, "Укажите дату"),
-  branchId: z.string().trim().min(1, "Выберите филиал"),
   category: z.enum(expenseCategories, { errorMap: () => ({ message: "Выберите категорию" }) }),
   amount: z.number({ invalid_type_error: "Укажите сумму" }).positive("Сумма должна быть положительной"),
   currency: z.string().trim().min(1, "Выберите валюту"),
@@ -51,32 +49,20 @@ function todayIso() {
 }
 
 function expenseMatches(e: Expense, q: string) {
-  return (
-    e.branch.name.toLowerCase().includes(q) ||
-    e.category.toLowerCase().includes(q) ||
-    (e.note ?? "").toLowerCase().includes(q) ||
-    (e.admin?.fullName ?? "").toLowerCase().includes(q)
-  );
-}
-
-function spenderName(e: Expense) {
-  return e.admin?.fullName ?? "Главный аккаунт";
+  return e.category.toLowerCase().includes(q) || (e.note ?? "").toLowerCase().includes(q);
 }
 
 const emptyForm: ExpenseFormValues = {
   date: todayIso(),
-  branchId: "",
   category: "Прочее",
   amount: 0,
   currency: "UZS",
   note: "",
 };
 
-export default function ExpensesPage() {
-  const { data: branches } = useBranches();
-  const { data: admins } = useAdmins();
-  const [filters, setFilters] = useState<ExpenseFilters>({});
-  const { data: expenses, isLoading } = useExpenses(filters);
+export default function MyExpensesPage() {
+  const { user } = useAuth();
+  const { data: expenses, isLoading } = useExpenses({});
   const controls = useTableControls(expenses ?? [], expenseMatches, 10);
 
   const createExpense = useCreateExpense();
@@ -92,7 +78,6 @@ export default function ExpensesPage() {
     defaultValues: emptyForm,
   });
 
-  const hasBranches = (branches ?? []).length > 0;
   const total = (expenses ?? []).reduce((sum, e) => sum + e.amount, 0);
 
   function openCreate() {
@@ -105,7 +90,6 @@ export default function ExpensesPage() {
     setEditing(expense);
     form.reset({
       date: expense.date.slice(0, 10),
-      branchId: expense.branchId,
       category: expense.category,
       amount: expense.amount,
       currency: expense.currency,
@@ -140,115 +124,41 @@ export default function ExpensesPage() {
     }
   }
 
-  const hasActiveFilters = Object.values(filters).some(Boolean);
-
   return (
     <div>
       <PageHeader
-        title="Расходы"
-        description="Учёт расходов филиалов для расчёта чистой прибыли."
+        title="Расходы за смену"
+        description={`${user?.fullName ?? user?.username} · ${user?.branchName ?? ""}`}
         action={
-          <Button onClick={openCreate} disabled={!hasBranches}>
+          <Button onClick={openCreate}>
             <Plus className="h-4 w-4" /> Добавить расход
           </Button>
         }
       />
 
-      {!hasBranches && (
-        <div className="mb-4 rounded-xl border border-border bg-muted p-3 text-sm text-muted-foreground">
-          Сначала создайте хотя бы один филиал.
-        </div>
-      )}
-
-      {/* Фильтры */}
-      <Card className="mb-6">
-        <CardContent className="flex flex-wrap items-end gap-3 p-4">
-          <div className="w-52 space-y-1.5">
-            <Label>Поиск</Label>
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={controls.search}
-                onChange={(e) => controls.setSearch(e.target.value)}
-                placeholder="Филиал, категория…"
-                className="pl-8"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>С</Label>
-            <Input
-              type="date"
-              value={filters.from ?? ""}
-              onChange={(e) => setFilters((f) => ({ ...f, from: e.target.value || undefined }))}
-              className="w-40"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label>По</Label>
-            <Input
-              type="date"
-              value={filters.to ?? ""}
-              onChange={(e) => setFilters((f) => ({ ...f, to: e.target.value || undefined }))}
-              className="w-40"
-            />
-          </div>
-          <div className="w-56 space-y-1.5">
-            <Label>Филиал</Label>
-            <Select
-              value={filters.branchId ?? "all"}
-              onValueChange={(v) => setFilters((f) => ({ ...f, branchId: v === "all" ? undefined : v }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Все филиалы" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Все филиалы</SelectItem>
-                {(branches ?? []).map((b) => (
-                  <SelectItem key={b.id} value={b.id}>
-                    {b.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="w-56 space-y-1.5">
-            <Label>Кто потратил</Label>
-            <Select
-              value={filters.adminId ?? "all"}
-              onValueChange={(v) => setFilters((f) => ({ ...f, adminId: v === "all" ? undefined : v }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Все" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Все</SelectItem>
-                {(admins ?? []).map((a) => (
-                  <SelectItem key={a.id} value={a.id}>
-                    {a.fullName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {hasActiveFilters && (
-            <Button variant="ghost" size="sm" onClick={() => setFilters({})}>
-              <X className="h-3.5 w-3.5" /> Сбросить
-            </Button>
-          )}
-        </CardContent>
-      </Card>
-
       <Card className="mb-6 max-w-xs">
         <CardHeader className="pb-2">
-          <CardTitle>Сумма расходов</CardTitle>
+          <CardTitle>Мои расходы</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-semibold text-foreground">{total.toLocaleString("ru-RU")}</div>
           <p className="mt-1 text-xs text-muted-foreground">{(expenses ?? []).length} записей</p>
         </CardContent>
       </Card>
+
+      {(expenses ?? []).length > 0 && (
+        <div className="mb-4 max-w-xs">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={controls.search}
+              onChange={(e) => controls.setSearch(e.target.value)}
+              placeholder="Поиск: категория, заметка…"
+              className="pl-8"
+            />
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="space-y-2">
@@ -259,8 +169,8 @@ export default function ExpensesPage() {
       ) : (expenses ?? []).length === 0 ? (
         <EmptyState
           icon={Wallet}
-          title="Расходы не найдены"
-          description="Добавьте первый расход или измените фильтры."
+          title="У вас пока нет расходов"
+          description="Добавьте расход за смену, чтобы он попал в общий учёт."
         />
       ) : controls.totalItems === 0 ? (
         <EmptyState
@@ -270,52 +180,48 @@ export default function ExpensesPage() {
         />
       ) : (
         <>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Дата</TableHead>
-              <TableHead>Филиал</TableHead>
-              <TableHead>Кто потратил</TableHead>
-              <TableHead>Категория</TableHead>
-              <TableHead>Сумма</TableHead>
-              <TableHead>Заметка</TableHead>
-              <TableHead className="text-right">Действия</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {controls.pageItems.map((expense) => (
-              <TableRow key={expense.id}>
-                <TableCell>{formatDate(expense.date)}</TableCell>
-                <TableCell>{expense.branch.name}</TableCell>
-                <TableCell className="text-muted-foreground">{spenderName(expense)}</TableCell>
-                <TableCell>{expense.category}</TableCell>
-                <TableCell className="font-medium text-foreground">
-                  {formatMoney(expense.amount, expense.currency)}
-                </TableCell>
-                <TableCell className="max-w-[200px] truncate text-muted-foreground">
-                  {expense.note || "-"}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(expense)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(expense)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                </TableCell>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Дата</TableHead>
+                <TableHead>Категория</TableHead>
+                <TableHead>Сумма</TableHead>
+                <TableHead>Заметка</TableHead>
+                <TableHead className="text-right">Действия</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <Pagination
-          page={controls.page}
-          totalPages={controls.totalPages}
-          totalItems={controls.totalItems}
-          pageSize={controls.pageSize}
-          onPageChange={controls.setPage}
-        />
+            </TableHeader>
+            <TableBody>
+              {controls.pageItems.map((expense) => (
+                <TableRow key={expense.id}>
+                  <TableCell>{formatDate(expense.date)}</TableCell>
+                  <TableCell>{expense.category}</TableCell>
+                  <TableCell className="font-medium text-foreground">
+                    {formatMoney(expense.amount, expense.currency)}
+                  </TableCell>
+                  <TableCell className="max-w-[200px] truncate text-muted-foreground">
+                    {expense.note || "-"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(expense)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(expense)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <Pagination
+            page={controls.page}
+            totalPages={controls.totalPages}
+            totalItems={controls.totalItems}
+            pageSize={controls.pageSize}
+            onPageChange={controls.setPage}
+          />
         </>
       )}
 
@@ -330,31 +236,6 @@ export default function ExpensesPage() {
               <Input id="exp-date" type="date" {...form.register("date")} />
               {form.formState.errors.date && (
                 <p className="text-xs text-destructive">{form.formState.errors.date.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Филиал</Label>
-              <Controller
-                control={form.control}
-                name="branchId"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Выбрать" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(branches ?? []).map((b) => (
-                        <SelectItem key={b.id} value={b.id}>
-                          {b.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {form.formState.errors.branchId && (
-                <p className="text-xs text-destructive">{form.formState.errors.branchId.message}</p>
               )}
             </div>
 

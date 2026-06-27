@@ -4,7 +4,7 @@ import { Expense, ExpenseCategory, ExpenseFilters } from "@/types";
 
 export interface ExpenseInput {
   date: string;
-  branchId: string;
+  branchId?: string;
   category: ExpenseCategory;
   amount: number;
   currency: string;
@@ -16,6 +16,7 @@ function cleanFilters(filters: ExpenseFilters) {
   if (filters.from) params.from = filters.from;
   if (filters.to) params.to = filters.to;
   if (filters.branchId) params.branchId = filters.branchId;
+  if (filters.adminId) params.adminId = filters.adminId;
   return params;
 }
 

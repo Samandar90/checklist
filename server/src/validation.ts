@@ -100,7 +100,7 @@ export const expenseCategories = [
 
 export const expenseSchema = z.object({
   date: z.string().trim().min(1, "Дата обязательна"),
-  branchId: z.string().trim().min(1, "Филиал обязателен"),
+  branchId: z.string().trim().optional(),
   category: z.enum(expenseCategories, {
     errorMap: () => ({ message: "Выберите категорию" }),
   }),

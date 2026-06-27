@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, CalendarDays, BedDouble, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarDays, BedDouble, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { AnimatePresence, motion } from "framer-motion";
 
 import PageHeader from "@/components/PageHeader";
 import EmptyState from "@/components/EmptyState";
@@ -25,17 +26,22 @@ const MONTHS = [
 ];
 const WEEKDAYS = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 
-const CELL_W = 40;
-const ROW_H = 34;
-const LABEL_W = 132;
+const CELL_W = 44;
+const ROW_H = 38;
+const LABEL_W = 140;
 const DAY_MS = 24 * 60 * 60 * 1000;
-const ANGLE = 7;
 
-const statusColor: Record<string, string> = {
-  Оплачено: "bg-emerald-400/85 text-emerald-950",
-  Частично: "bg-amber-400/90 text-amber-950",
-  Долг: "bg-red-400/85 text-red-950",
+const statusGradient: Record<string, string> = {
+  Оплачено: "bg-gradient-to-b from-emerald-400 to-emerald-500 text-emerald-950",
+  Частично: "bg-gradient-to-b from-amber-400 to-amber-500 text-amber-950",
+  Долг: "bg-gradient-to-b from-rose-400 to-rose-500 text-rose-950",
 };
+
+const legendItems = [
+  { label: "Оплачено", cls: "bg-emerald-500" },
+  { label: "Частично", cls: "bg-amber-500" },
+  { label: "Долг", cls: "bg-rose-500" },
+];
 
 function isoDay(d: Date) {
   const y = d.getFullYear();
@@ -62,6 +68,7 @@ export default function CalendarPage() {
     const n = new Date();
     return { year: n.getFullYear(), month: n.getMonth() };
   });
+  const [direction, setDirection] = useState(0);
   const [selected, setSelected] = useState<MonthlyReport | null>(null);
 
   const effectiveBranchId = branchId ?? branches?.[0]?.id;
@@ -124,10 +131,17 @@ export default function CalendarPage() {
   }, [data]);
 
   function shiftMonth(delta: number) {
+    setDirection(delta);
     setCursor((c) => {
       const d = new Date(c.year, c.month + delta, 1);
       return { year: d.getFullYear(), month: d.getMonth() };
     });
+  }
+
+  function goToday() {
+    setDirection(0);
+    const n = new Date();
+    setCursor({ year: n.getFullYear(), month: n.getMonth() });
   }
 
   async function handleSettle() {
@@ -165,19 +179,27 @@ export default function CalendarPage() {
             </Select>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={() => setCursor(() => {
-              const n = new Date();
-              return { year: n.getFullYear(), month: n.getMonth() };
-            })}>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={goToday}>
               Сегодня
             </Button>
             <Button variant="outline" size="icon" onClick={() => shiftMonth(-1)} aria-label="Предыдущий месяц">
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="min-w-[150px] text-center text-sm font-medium text-foreground">
-              {MONTHS[cursor.month]} {cursor.year}
-            </span>
+            <div className="relative min-w-[150px] overflow-hidden text-center">
+              <AnimatePresence mode="popLayout" initial={false}>
+                <motion.span
+                  key={`${cursor.year}-${cursor.month}`}
+                  initial={{ opacity: 0, x: direction >= 0 ? 16 : -16 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: direction >= 0 ? -16 : 16 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  className="block text-sm font-medium text-foreground"
+                >
+                  {MONTHS[cursor.month]} {cursor.year}
+                </motion.span>
+              </AnimatePresence>
+            </div>
             <Button variant="outline" size="icon" onClick={() => shiftMonth(1)} aria-label="Следующий месяц">
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -185,11 +207,19 @@ export default function CalendarPage() {
         </CardContent>
       </Card>
 
-      <div className="mb-4 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-emerald-400/85" /> Оплачено</span>
-        <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-amber-400/90" /> Частично</span>
-        <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-red-400/85" /> Долг</span>
-        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-red-500" /> есть долг</span>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        {legendItems.map((l) => (
+          <span
+            key={l.label}
+            className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground shadow-sm"
+          >
+            <span className={cn("h-2.5 w-2.5 rounded-full", l.cls)} />
+            {l.label}
+          </span>
+        ))}
+        <span className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground shadow-sm">
+          <AlertCircle className="h-3 w-3 text-rose-500" /> есть долг
+        </span>
       </div>
 
       {isLoading ? (
@@ -199,13 +229,13 @@ export default function CalendarPage() {
       ) : !data || data.rooms.length === 0 ? (
         <EmptyState icon={BedDouble} title="Нет номеров" description="В этом филиале ещё нет номеров." />
       ) : (
-        <Card>
+        <Card className="overflow-hidden">
           <CardContent className="overflow-x-auto p-0">
             <div style={{ width: gridWidth }} className="text-xs">
               {/* Заголовок: дни + загрузка % */}
-              <div className="flex border-b border-border bg-muted/40">
+              <div className="flex border-b border-border bg-gradient-to-b from-muted/60 to-muted/30">
                 <div
-                  className="sticky left-0 z-20 flex items-center bg-card px-3 font-medium text-muted-foreground"
+                  className="sticky left-0 z-20 flex items-center bg-card px-3 font-semibold text-muted-foreground"
                   style={{ width: LABEL_W, minWidth: LABEL_W }}
                 >
                   Загрузка
@@ -218,16 +248,19 @@ export default function CalendarPage() {
                       key={i}
                       style={{ width: CELL_W, minWidth: CELL_W }}
                       className={cn(
-                        "border-l border-border py-1 text-center",
+                        "relative border-l border-border/70 py-1.5 text-center",
                         i === todayIndex && "bg-primary/10",
-                        weekend && i !== todayIndex && "bg-muted"
+                        weekend && i !== todayIndex && "bg-muted/40"
                       )}
                     >
+                      {i === todayIndex && (
+                        <span className="absolute inset-x-0 top-0 h-0.5 bg-primary" />
+                      )}
                       <div className="text-[10px] text-muted-foreground">{WEEKDAYS[d.getDay()]}</div>
-                      <div className={cn("font-medium", i === todayIndex ? "text-primary" : "text-foreground")}>
+                      <div className={cn("font-semibold", i === todayIndex ? "text-primary" : "text-foreground")}>
                         {d.getDate()}
                       </div>
-                      <div className={cn("text-[9px]", occ >= 90 ? "text-red-500" : "text-muted-foreground")}>
+                      <div className={cn("text-[9px] font-medium", occ >= 90 ? "text-rose-500" : "text-muted-foreground")}>
                         {occ}%
                       </div>
                     </div>
@@ -238,11 +271,12 @@ export default function CalendarPage() {
               {/* Группы по типам */}
               {groups.map((g) => (
                 <div key={g.type}>
-                  <div className="flex border-b border-border bg-secondary/60">
+                  <div className="relative flex border-b border-border bg-secondary/50">
                     <div
-                      className="sticky left-0 z-20 flex items-center bg-secondary/60 px-3 py-1 font-semibold text-foreground"
+                      className="sticky left-0 z-20 flex items-center gap-2 bg-secondary/50 px-3 py-1.5 font-semibold text-foreground"
                       style={{ width: LABEL_W, minWidth: LABEL_W }}
                     >
+                      <span className="h-3 w-1 rounded-full bg-primary/60" />
                       {g.type} · {g.rooms.length}
                     </div>
                     {days.map((d, i) => {
@@ -253,9 +287,9 @@ export default function CalendarPage() {
                           key={i}
                           style={{ width: CELL_W, minWidth: CELL_W }}
                           className={cn(
-                            "border-l border-border py-1 text-center text-[11px]",
+                            "border-l border-border/70 py-1.5 text-center text-[11px] font-medium",
                             i === todayIndex && "bg-primary/10",
-                            free === 0 ? "text-red-500" : "text-muted-foreground"
+                            free === 0 ? "text-rose-500" : "text-muted-foreground"
                           )}
                         >
                           {free}
@@ -265,9 +299,13 @@ export default function CalendarPage() {
                   </div>
 
                   {g.rooms.map((room) => (
-                    <div key={room.id} className="flex border-b border-border" style={{ height: ROW_H }}>
+                    <div
+                      key={room.id}
+                      className="group flex border-b border-border transition-colors hover:bg-muted/30"
+                      style={{ height: ROW_H }}
+                    >
                       <div
-                        className="sticky left-0 z-20 flex items-center bg-card px-3 font-medium text-foreground"
+                        className="sticky left-0 z-20 flex items-center bg-card px-3 font-medium text-foreground transition-colors group-hover:bg-muted/30"
                         style={{ width: LABEL_W, minWidth: LABEL_W }}
                       >
                         {room.roomNumber}
@@ -282,9 +320,9 @@ export default function CalendarPage() {
                                 key={i}
                                 style={{ width: CELL_W, minWidth: CELL_W }}
                                 className={cn(
-                                  "border-l border-border/70",
+                                  "border-l border-border/50",
                                   i === todayIndex && "bg-primary/5",
-                                  weekend && i !== todayIndex && "bg-muted/50"
+                                  weekend && i !== todayIndex && "bg-muted/30"
                                 )}
                               />
                             );
@@ -384,32 +422,29 @@ function BookingBar({
   const endUnit = Math.min(daysInMonth, rawEnd);
   if (endUnit <= startUnit) return null;
 
-  const left = startUnit * CELL_W;
-  const width = (endUnit - startUnit) * CELL_W;
-
-  const leftAngled = rawStart >= 0; // настоящий заезд виден
-  const rightAngled = rawEnd <= daysInMonth; // настоящий выезд виден
-
-  const tl = leftAngled ? `${ANGLE}px` : "0";
-  const br = rightAngled ? `calc(100% - ${ANGLE}px)` : "100%";
-  const clipPath = `polygon(${tl} 0, 100% 0, ${br} 100%, 0 100%)`;
+  const left = startUnit * CELL_W + 2;
+  const width = (endUnit - startUnit) * CELL_W - 4;
 
   const debt = reportDebt(booking);
   const label = booking.guestName || booking.source.name;
 
   return (
-    <button
+    <motion.button
       type="button"
       onClick={onClick}
       title={`${label} · ${formatMoney(booking.price, booking.currency)} · ${booking.paymentStatus}`}
+      initial={{ opacity: 0, scaleX: 0.9 }}
+      animate={{ opacity: 1, scaleX: 1 }}
+      whileHover={{ scale: 1.035, zIndex: 30 }}
+      transition={{ duration: 0.15, ease: "easeOut" }}
       className={cn(
-        "absolute flex items-center gap-1 overflow-hidden whitespace-nowrap px-2.5 text-[11px] font-medium shadow-sm transition-transform hover:brightness-95",
-        statusColor[booking.paymentStatus] ?? "bg-secondary text-foreground"
+        "absolute flex items-center gap-1.5 overflow-hidden whitespace-nowrap rounded-md px-2.5 text-[11px] font-semibold shadow-sm ring-1 ring-black/5",
+        statusGradient[booking.paymentStatus] ?? "bg-secondary text-foreground"
       )}
-      style={{ left, width, top: 4, height: ROW_H - 8, clipPath }}
+      style={{ left, width, top: 5, height: ROW_H - 10 }}
     >
       <span className="truncate">{label}</span>
-      {debt > 0 && <span className="ml-auto h-2 w-2 shrink-0 rounded-full bg-red-600" />}
-    </button>
+      {debt > 0 && <AlertCircle className="ml-auto h-3 w-3 shrink-0" />}
+    </motion.button>
   );
 }
