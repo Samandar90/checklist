@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { motion } from "framer-motion";
 import {
   Building2,
   Users,
@@ -264,14 +263,8 @@ export default function DashboardPage() {
 
       {/* KPI */}
       <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {kpis.map((c, i) => (
-          <motion.div
-            key={c.label}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, delay: i * 0.05, ease: "easeOut" }}
-          >
-          <Card>
+        {kpis.map((c) => (
+          <Card key={c.label}>
             <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle>{c.label}</CardTitle>
               <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${c.tint}`}>
@@ -304,20 +297,13 @@ export default function DashboardPage() {
               )}
             </CardContent>
           </Card>
-          </motion.div>
         ))}
       </div>
 
       {/* Финансы */}
       <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {finance.map((c, i) => (
-          <motion.div
-            key={c.label}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, delay: 0.2 + i * 0.05, ease: "easeOut" }}
-          >
-          <Card>
+        {finance.map((c) => (
+          <Card key={c.label}>
             <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle>{c.label}</CardTitle>
               <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${c.tint}`}>
@@ -339,20 +325,13 @@ export default function DashboardPage() {
               )}
             </CardContent>
           </Card>
-          </motion.div>
         ))}
       </div>
 
       {/* Счётчики */}
       <div className="mb-6 grid grid-cols-3 gap-4">
-        {counts.map((c, i) => (
-          <motion.div
-            key={c.label}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, delay: 0.4 + i * 0.05, ease: "easeOut" }}
-          >
-          <Card>
+        {counts.map((c) => (
+          <Card key={c.label}>
             <CardContent className="flex items-center gap-3 p-4">
               <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${c.tint}`}>
                 <c.icon className="h-5 w-5" />
@@ -365,7 +344,6 @@ export default function DashboardPage() {
               </div>
             </CardContent>
           </Card>
-          </motion.div>
         ))}
       </div>
 
