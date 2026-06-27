@@ -2,6 +2,11 @@ import { Router } from "express";
 import { prisma } from "../prisma";
 import { reportSchema } from "../validation";
 import { requireSuperAdmin } from "../middleware/auth";
+import { recordAudit, buildChanges, summarize } from "../audit";
+
+const REPORT_AUDIT_FIELDS = ["date", "price", "currency", "paymentMethod", "paymentStatus", "paidAmount", "notes"];
+
+const money = (n: number) => n.toLocaleString("ru-RU");
 
 const router = Router();
 
@@ -113,6 +118,12 @@ router.post("/", async (req, res, next) => {
       data: { ...data, date: new Date(data.date), paidAmount: normalizePaid(data) },
       include: { branch: true, admin: true, room: true, source: true },
     });
+    await recordAudit(req, {
+      action: "CREATE",
+      entity: "report",
+      entityId: report.id,
+      summary: summarize("CREATE", "report", [], `${money(report.price)} ${report.currency}, номер ${report.room.roomNumber}`),
+    });
     res.status(201).json(report);
   } catch (err) {
     next(err);
@@ -121,11 +132,12 @@ router.post("/", async (req, res, next) => {
 
 router.put("/:id", async (req, res, next) => {
   try {
-    if (req.user!.role === "ADMIN") {
-      const existing = await prisma.monthlyReport.findUnique({ where: { id: req.params.id } });
-      if (!existing || existing.adminId !== req.user!.adminId) {
-        return res.status(403).json({ message: "Недостаточно прав для изменения этого отчёта" });
-      }
+    const existing = await prisma.monthlyReport.findUnique({ where: { id: req.params.id } });
+    if (!existing) {
+      return res.status(404).json({ message: "Запись не найдена" });
+    }
+    if (req.user!.role === "ADMIN" && existing.adminId !== req.user!.adminId) {
+      return res.status(403).json({ message: "Недостаточно прав для изменения этого отчёта" });
     }
 
     const body = { ...req.body };
@@ -140,6 +152,21 @@ router.put("/:id", async (req, res, next) => {
       data: { ...data, date: new Date(data.date), paidAmount: normalizePaid(data) },
       include: { branch: true, admin: true, room: true, source: true },
     });
+
+    const changes = buildChanges(
+      existing as unknown as Record<string, unknown>,
+      report as unknown as Record<string, unknown>,
+      REPORT_AUDIT_FIELDS
+    );
+    if (changes.length) {
+      await recordAudit(req, {
+        action: "UPDATE",
+        entity: "report",
+        entityId: report.id,
+        summary: summarize("UPDATE", "report", changes),
+        changes,
+      });
+    }
     res.json(report);
   } catch (err) {
     next(err);
@@ -148,14 +175,24 @@ router.put("/:id", async (req, res, next) => {
 
 router.delete("/:id", async (req, res, next) => {
   try {
-    if (req.user!.role === "ADMIN") {
-      const existing = await prisma.monthlyReport.findUnique({ where: { id: req.params.id } });
-      if (!existing || existing.adminId !== req.user!.adminId) {
-        return res.status(403).json({ message: "Недостаточно прав для удаления этого отчёта" });
-      }
+    const existing = await prisma.monthlyReport.findUnique({
+      where: { id: req.params.id },
+      include: { room: true },
+    });
+    if (!existing) {
+      return res.status(404).json({ message: "Запись не найдена" });
+    }
+    if (req.user!.role === "ADMIN" && existing.adminId !== req.user!.adminId) {
+      return res.status(403).json({ message: "Недостаточно прав для удаления этого отчёта" });
     }
 
     await prisma.monthlyReport.delete({ where: { id: req.params.id } });
+    await recordAudit(req, {
+      action: "DELETE",
+      entity: "report",
+      entityId: existing.id,
+      summary: summarize("DELETE", "report", [], `${money(existing.price)} ${existing.currency}, номер ${existing.room.roomNumber}`),
+    });
     res.status(204).send();
   } catch (err) {
     next(err);

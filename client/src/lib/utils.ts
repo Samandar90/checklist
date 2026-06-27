@@ -17,6 +17,17 @@ export function formatDate(value: string | Date) {
   return d.toLocaleDateString("ru-RU", { year: "numeric", month: "short", day: "2-digit" });
 }
 
+export function formatDateTime(value: string | Date) {
+  const d = new Date(value);
+  return d.toLocaleString("ru-RU", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 /** Outstanding debt for a report. `paidAmount === null/undefined` means fully paid. */
 export function reportDebt(report: { price: number; paidAmount?: number | null }) {
   return report.price - (report.paidAmount ?? report.price);

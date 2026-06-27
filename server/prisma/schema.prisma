@@ -72,7 +72,8 @@ model MonthlyReport {
   paymentStatus String   @default("Оплачено")
   paidAmount    Float?
   notes         String?
-  createdAt     DateTime @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime? @updatedAt
 
   branch Branch        @relation(fields: [branchId], references: [id], onDelete: Cascade)
   admin  Admin         @relation(fields: [adminId], references: [id], onDelete: Cascade)
@@ -81,14 +82,31 @@ model MonthlyReport {
 }
 
 model Expense {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   date      DateTime
   branchId  String
   category  String
   amount    Float
-  currency  String   @default("UZS")
+  currency  String    @default("UZS")
   note      String?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
 
   branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actorName String
+  actorRole String
+  action    String // CREATE | UPDATE | DELETE
+  entity    String // report | expense | branch | admin | room | source
+  entityId  String?
+  summary   String
+  changes   String? // JSON: [{ field, label, from, to }]
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([entity])
 }

@@ -23,6 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Segmented } from "@/components/ui/segmented";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pagination } from "@/components/ui/pagination";
 
@@ -40,10 +41,17 @@ import { Badge } from "@/components/ui/badge";
 import { MonthlyReport, paymentMethods, paymentStatuses } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { getErrorMessage } from "@/lib/api";
-import { formatDate, formatMoney, reportDebt, paymentStatusClass } from "@/lib/utils";
+import { formatDate, formatDateTime, formatMoney, reportDebt, paymentStatusClass } from "@/lib/utils";
 import { exportReportsToCsv } from "@/lib/csv";
 
 const currencies = ["UZS", "USD", "EUR"];
+
+const paymentMethodOptions = paymentMethods.map((m) => ({ value: m, label: m }));
+const paymentStatusOptions = [
+  { value: "Оплачено" as const, label: "Оплачено", activeCls: "bg-emerald-500 text-white shadow-sm" },
+  { value: "Частично" as const, label: "Частично", activeCls: "bg-amber-500 text-white shadow-sm" },
+  { value: "Долг" as const, label: "Долг", activeCls: "bg-red-500 text-white shadow-sm" },
+];
 
 const reportFormSchema = z
   .object({
@@ -267,7 +275,17 @@ export default function MyReportsPage() {
           <TableBody>
             {controls.pageItems.map((report) => (
               <TableRow key={report.id}>
-                <TableCell>{formatDate(report.date)}</TableCell>
+                <TableCell>
+                  {formatDate(report.date)}
+                  {report.updatedAt && (
+                    <span
+                      className="mt-0.5 block text-[10px] font-medium text-amber-600"
+                      title={`Изменён: ${formatDateTime(report.updatedAt)}`}
+                    >
+                      ред.
+                    </span>
+                  )}
+                </TableCell>
                 <TableCell>{report.room.roomNumber}</TableCell>
                 <TableCell>{report.source.name}</TableCell>
                 <TableCell className="font-medium text-foreground">
@@ -412,65 +430,38 @@ export default function MyReportsPage() {
               )}
             </div>
 
-            <div className="space-y-1.5">
+            <div className="col-span-2 space-y-1.5">
               <Label>Способ оплаты</Label>
               <Controller
                 control={form.control}
                 name="paymentMethod"
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Выбрать" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {paymentMethods.map((p) => (
-                        <SelectItem key={p} value={p}>
-                          {p}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Segmented options={paymentMethodOptions} value={field.value} onChange={field.onChange} />
                 )}
               />
-              {form.formState.errors.paymentMethod && (
-                <p className="text-xs text-destructive">{form.formState.errors.paymentMethod.message}</p>
-              )}
             </div>
 
-            <div className="space-y-1.5">
+            <div className="col-span-2 space-y-1.5">
               <Label>Статус оплаты</Label>
               <Controller
                 control={form.control}
                 name="paymentStatus"
                 render={({ field }) => (
-                  <Select
+                  <Segmented
+                    options={paymentStatusOptions}
                     value={field.value}
-                    onValueChange={(v) => {
+                    onChange={(v) => {
                       field.onChange(v);
                       if (v !== "Частично") form.setValue("paidAmount", undefined);
                     }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Выбрать" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {paymentStatuses.map((s) => (
-                        <SelectItem key={s} value={s}>
-                          {s}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  />
                 )}
               />
-              {form.formState.errors.paymentStatus && (
-                <p className="text-xs text-destructive">{form.formState.errors.paymentStatus.message}</p>
-              )}
             </div>
 
             {selectedPaymentStatus === "Частично" && (
               <div className="col-span-2 space-y-1.5">
-                <Label htmlFor="paidAmount">Оплачено</Label>
+                <Label htmlFor="paidAmount">Оплачено сейчас</Label>
                 <Controller
                   control={form.control}
                   name="paidAmount"
@@ -478,6 +469,12 @@ export default function MyReportsPage() {
                     <CurrencyInput id="paidAmount" value={field.value ?? 0} onChange={field.onChange} />
                   )}
                 />
+                {(() => {
+                  const remaining = (form.watch("price") || 0) - (form.watch("paidAmount") || 0);
+                  return remaining > 0 ? (
+                    <p className="text-xs text-amber-600">Остаток долга: {remaining.toLocaleString("ru-RU")}</p>
+                  ) : null;
+                })()}
                 {form.formState.errors.paidAmount && (
                   <p className="text-xs text-destructive">{form.formState.errors.paidAmount.message}</p>
                 )}

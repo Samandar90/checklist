@@ -8,6 +8,7 @@ import {
   Megaphone,
   ClipboardList,
   Wallet,
+  History,
   Hotel,
   LogOut,
   KeyRound,
@@ -27,6 +28,7 @@ const superAdminNavItems = [
   { to: "/sources", label: "Источники бронирования", icon: Megaphone },
   { to: "/reports", label: "Ежемесячные отчёты", icon: ClipboardList },
   { to: "/expenses", label: "Расходы", icon: Wallet },
+  { to: "/audit", label: "Журнал изменений", icon: History },
 ];
 
 const adminNavItems = [{ to: "/my-reports", label: "Мои отчёты", icon: ClipboardList }];

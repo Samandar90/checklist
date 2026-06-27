@@ -16,6 +16,7 @@ import roomsRouter from "./routes/rooms";
 import sourcesRouter from "./routes/sources";
 import reportsRouter from "./routes/reports";
 import expensesRouter from "./routes/expenses";
+import auditRouter from "./routes/audit";
 import dashboardRouter from "./routes/dashboard";
 
 const DEFAULT_SOURCES = ["Booking", "Reception", "Walk In", "Telegram", "Phone", "Instagram", "Other"];
@@ -87,6 +88,7 @@ app.use("/api/rooms", authenticate, roomsRouter);
 app.use("/api/sources", authenticate, sourcesRouter);
 app.use("/api/reports", authenticate, reportsRouter);
 app.use("/api/expenses", authenticate, expensesRouter);
+app.use("/api/audit", authenticate, auditRouter);
 app.use("/api/dashboard", authenticate, dashboardRouter);
 
 const clientDistPath = path.join(__dirname, "../public");

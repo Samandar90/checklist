@@ -61,6 +61,7 @@ export interface MonthlyReport {
   paidAmount?: number | null;
   notes?: string | null;
   createdAt: string;
+  updatedAt?: string | null;
   branch: Branch;
   admin: Admin;
   room: Room;
@@ -87,6 +88,7 @@ export interface Expense {
   currency: string;
   note?: string | null;
   createdAt: string;
+  updatedAt?: string | null;
   branch: Branch;
 }
 
@@ -94,6 +96,43 @@ export interface ExpenseFilters {
   from?: string;
   to?: string;
   branchId?: string;
+}
+
+export type AuditAction = "CREATE" | "UPDATE" | "DELETE";
+
+export interface AuditFieldChange {
+  field: string;
+  label: string;
+  from: string;
+  to: string;
+}
+
+export interface AuditLog {
+  id: string;
+  actorId: string | null;
+  actorName: string;
+  actorRole: string;
+  action: AuditAction;
+  entity: string;
+  entityId: string | null;
+  summary: string;
+  changes: string | null;
+  createdAt: string;
+}
+
+export interface AuditFilters {
+  entity?: string;
+  action?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+}
+
+export interface AuditResponse {
+  items: AuditLog[];
+  total: number;
+  page: number;
+  pageSize: number;
 }
 
 export interface DashboardBucket {
