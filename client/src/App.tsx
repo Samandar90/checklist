@@ -13,8 +13,10 @@ const RoomsPage = lazy(() => import("@/pages/RoomsPage"));
 const SourcesPage = lazy(() => import("@/pages/SourcesPage"));
 const ReportsPage = lazy(() => import("@/pages/ReportsPage"));
 const ExpensesPage = lazy(() => import("@/pages/ExpensesPage"));
+const DebtorsPage = lazy(() => import("@/pages/DebtorsPage"));
 const CalendarPage = lazy(() => import("@/pages/CalendarPage"));
 const AuditPage = lazy(() => import("@/pages/AuditPage"));
+const BackupPage = lazy(() => import("@/pages/BackupPage"));
 const MyReportsPage = lazy(() => import("@/pages/MyReportsPage"));
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
 
@@ -42,7 +44,9 @@ export default function App() {
                 <Route path="/reports" element={<ReportsPage />} />
                 <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/expenses" element={<ExpensesPage />} />
+                <Route path="/debtors" element={<DebtorsPage />} />
                 <Route path="/audit" element={<AuditPage />} />
+                <Route path="/backups" element={<BackupPage />} />
               </Route>
             </Route>
 

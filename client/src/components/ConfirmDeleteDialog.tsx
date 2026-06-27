@@ -16,6 +16,8 @@ export default function ConfirmDeleteDialog({
   title = "Вы уверены?",
   description = "Это действие нельзя отменить.",
   loading,
+  confirmLabel = "Удалить",
+  loadingLabel = "Удаление...",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -23,6 +25,8 @@ export default function ConfirmDeleteDialog({
   title?: string;
   description?: string;
   loading?: boolean;
+  confirmLabel?: string;
+  loadingLabel?: string;
 }) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -40,7 +44,7 @@ export default function ConfirmDeleteDialog({
               onConfirm();
             }}
           >
-            {loading ? "Удаление..." : "Удалить"}
+            {loading ? loadingLabel : confirmLabel}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -141,6 +141,22 @@ export interface CalendarResponse {
   bookings: MonthlyReport[];
 }
 
+export interface BackupSnapshot {
+  name: string;
+  size: number;
+  createdAt: string;
+}
+
+export interface DebtorReport extends MonthlyReport {
+  debt: number;
+}
+
+export interface DebtorsResponse {
+  items: DebtorReport[];
+  totalDebt: number;
+  byBranch: DashboardBucket[];
+}
+
 export interface DashboardBucket {
   name: string;
   total: number;

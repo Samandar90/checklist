@@ -17,7 +17,10 @@ import sourcesRouter from "./routes/sources";
 import reportsRouter from "./routes/reports";
 import expensesRouter from "./routes/expenses";
 import auditRouter from "./routes/audit";
+import backupRouter from "./routes/backup";
 import dashboardRouter from "./routes/dashboard";
+import { scheduleBackups } from "./backup";
+import crypto from "crypto";
 
 const DEFAULT_SOURCES = ["Booking", "Reception", "Walk In", "Telegram", "Phone", "Instagram", "Other"];
 
@@ -33,7 +36,20 @@ async function ensureSeedData() {
   const superAdminUsername = process.env.SUPER_ADMIN_USERNAME || "admin";
   const existing = await prisma.user.findUnique({ where: { username: superAdminUsername } });
   if (!existing) {
-    const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD || "admin123";
+    const isProd = process.env.NODE_ENV === "production";
+    // In production never fall back to a predictable password. If none is
+    // configured, generate a strong random one and print it once to the logs.
+    let superAdminPassword = process.env.SUPER_ADMIN_PASSWORD;
+    let generated = false;
+    if (!superAdminPassword) {
+      if (isProd) {
+        superAdminPassword = crypto.randomBytes(12).toString("base64url");
+        generated = true;
+      } else {
+        superAdminPassword = "admin123";
+      }
+    }
+
     await prisma.user.create({
       data: {
         username: superAdminUsername,
@@ -41,7 +57,16 @@ async function ensureSeedData() {
         role: "SUPER_ADMIN",
       },
     });
-    console.log(`Создан главный аккаунт: ${superAdminUsername} / ${superAdminPassword}`);
+
+    if (generated) {
+      console.warn(
+        `⚠ SUPER_ADMIN_PASSWORD не задан. Создан главный аккаунт со СЛУЧАЙНЫМ паролем:\n` +
+          `   Логин: ${superAdminUsername}\n   Пароль: ${superAdminPassword}\n` +
+          `   Сохраните его и задайте SUPER_ADMIN_PASSWORD в переменных окружения.`
+      );
+    } else {
+      console.log(`Создан главный аккаунт: ${superAdminUsername} / ${superAdminPassword}`);
+    }
   }
 }
 
@@ -89,6 +114,7 @@ app.use("/api/sources", authenticate, sourcesRouter);
 app.use("/api/reports", authenticate, reportsRouter);
 app.use("/api/expenses", authenticate, expensesRouter);
 app.use("/api/audit", authenticate, auditRouter);
+app.use("/api/backup", authenticate, backupRouter);
 app.use("/api/dashboard", authenticate, dashboardRouter);
 
 const clientDistPath = path.join(__dirname, "../public");
@@ -138,5 +164,6 @@ ensureSeedData()
   .finally(() => {
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
+      scheduleBackups();
     });
   });

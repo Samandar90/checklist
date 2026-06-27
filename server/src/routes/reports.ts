@@ -103,6 +103,64 @@ router.get("/summary", requireSuperAdmin, async (req, res, next) => {
   }
 });
 
+router.get("/debtors", requireSuperAdmin, async (req, res, next) => {
+  try {
+    const branchId = typeof req.query.branchId === "string" && req.query.branchId ? req.query.branchId : undefined;
+    const reports = await prisma.monthlyReport.findMany({
+      where: { paymentStatus: { in: ["Частично", "Долг"] }, ...(branchId ? { branchId } : {}) },
+      orderBy: { date: "desc" },
+      include: { branch: true, admin: true, room: true, source: true },
+    });
+
+    const items = reports
+      .map((r) => ({ ...r, debt: r.price - (r.paidAmount ?? r.price) }))
+      .filter((r) => r.debt > 0);
+
+    const totalDebt = items.reduce((sum, r) => sum + r.debt, 0);
+
+    const byBranch: Record<string, { name: string; total: number; count: number }> = {};
+    for (const r of items) {
+      byBranch[r.branchId] ??= { name: r.branch.name, total: 0, count: 0 };
+      byBranch[r.branchId].total += r.debt;
+      byBranch[r.branchId].count += 1;
+    }
+
+    res.json({ items, totalDebt, byBranch: Object.values(byBranch).sort((a, b) => b.total - a.total) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post("/:id/settle", requireSuperAdmin, async (req, res, next) => {
+  try {
+    const existing = await prisma.monthlyReport.findUnique({
+      where: { id: req.params.id },
+      include: { room: true },
+    });
+    if (!existing) {
+      return res.status(404).json({ message: "Запись не найдена" });
+    }
+
+    const report = await prisma.monthlyReport.update({
+      where: { id: req.params.id },
+      data: { paymentStatus: "Оплачено", paidAmount: null },
+      include: { branch: true, admin: true, room: true, source: true },
+    });
+
+    await recordAudit(req, {
+      action: "UPDATE",
+      entity: "report",
+      entityId: report.id,
+      summary: `Погасил долг по отчёту — ${money(existing.price)} ${existing.currency}, номер ${existing.room.roomNumber}`,
+      changes: [{ field: "paymentStatus", label: "Статус оплаты", from: existing.paymentStatus, to: "Оплачено" }],
+    });
+
+    res.json(report);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get("/calendar", requireSuperAdmin, async (req, res, next) => {
   try {
     const branchId = typeof req.query.branchId === "string" ? req.query.branchId : "";

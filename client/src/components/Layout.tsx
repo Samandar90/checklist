@@ -9,7 +9,9 @@ import {
   ClipboardList,
   CalendarRange,
   Wallet,
+  AlertTriangle,
   History,
+  DatabaseBackup,
   Hotel,
   LogOut,
   KeyRound,
@@ -30,7 +32,9 @@ const superAdminNavItems = [
   { to: "/reports", label: "Ежемесячные отчёты", icon: ClipboardList },
   { to: "/calendar", label: "Календарь загрузки", icon: CalendarRange },
   { to: "/expenses", label: "Расходы", icon: Wallet },
+  { to: "/debtors", label: "Должники", icon: AlertTriangle },
   { to: "/audit", label: "Журнал изменений", icon: History },
+  { to: "/backups", label: "Резервные копии", icon: DatabaseBackup },
 ];
 
 const adminNavItems = [{ to: "/my-reports", label: "Мои отчёты", icon: ClipboardList }];
