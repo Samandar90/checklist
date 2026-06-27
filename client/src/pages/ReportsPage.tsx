@@ -43,7 +43,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { MonthlyReport, ReportFilters, paymentMethods, paymentStatuses } from "@/types";
 import { getErrorMessage } from "@/lib/api";
-import { formatDate, formatDateTime, formatMoney, reportDebt, paymentStatusClass } from "@/lib/utils";
+import {
+  formatDate,
+  formatDateTime,
+  formatMoney,
+  reportDebt,
+  paymentStatusClass,
+  nightsBetween,
+  addDaysIso,
+} from "@/lib/utils";
 import { exportReportsToCsv } from "@/lib/csv";
 
 const currencies = ["UZS", "USD", "EUR"];
@@ -57,7 +65,8 @@ const paymentStatusOptions = [
 
 const reportFormSchema = z
   .object({
-    date: z.string().trim().min(1, "Укажите дату"),
+    date: z.string().trim().min(1, "Укажите дату заезда"),
+    checkOut: z.string().trim().min(1, "Укажите дату выезда"),
     branchId: z.string().trim().min(1, "Выберите филиал"),
     adminId: z.string().trim().min(1, "Выберите администратора"),
     roomId: z.string().trim().min(1, "Выберите номер"),
@@ -70,6 +79,9 @@ const reportFormSchema = z
     notes: z.string().trim().optional(),
   })
   .superRefine((data, ctx) => {
+    if (data.checkOut && data.date && new Date(data.checkOut) <= new Date(data.date)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["checkOut"], message: "Выезд должен быть позже заезда" });
+    }
     if (data.paymentStatus === "Частично") {
       if (!data.paidAmount || data.paidAmount <= 0) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["paidAmount"], message: "Укажите оплаченную сумму" });
@@ -128,6 +140,7 @@ export default function ReportsPage() {
     resolver: zodResolver(reportFormSchema),
     defaultValues: {
       date: todayIso(),
+      checkOut: addDaysIso(todayIso(), 1),
       branchId: "",
       adminId: "",
       roomId: "",
@@ -163,6 +176,7 @@ export default function ReportsPage() {
     setEditing(null);
     form.reset({
       date: todayIso(),
+      checkOut: addDaysIso(todayIso(), 1),
       branchId: "",
       adminId: "",
       roomId: "",
@@ -179,6 +193,7 @@ export default function ReportsPage() {
     setEditing(report);
     form.reset({
       date: report.date.slice(0, 10),
+      checkOut: report.checkOut ? report.checkOut.slice(0, 10) : addDaysIso(report.date.slice(0, 10), 1),
       branchId: report.branchId,
       adminId: report.adminId,
       roomId: report.roomId,
@@ -492,6 +507,9 @@ export default function ReportsPage() {
               <TableRow key={report.id}>
                 <TableCell>
                   {formatDate(report.date)}
+                  <span className="block text-[11px] text-muted-foreground">
+                    → {report.checkOut ? formatDate(report.checkOut) : "+1"} · {nightsBetween(report.date, report.checkOut)} ноч.
+                  </span>
                   {report.updatedAt && (
                     <span
                       className="mt-0.5 block text-[10px] font-medium text-amber-600"
@@ -551,12 +569,55 @@ export default function ReportsPage() {
             <DialogTitle>{editing ? "Редактировать отчёт" : "Добавить ежемесячный отчёт"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-2 gap-4">
-            <div className="col-span-2 space-y-1.5">
-              <Label htmlFor="date">Дата</Label>
-              <Input id="date" type="date" {...form.register("date")} />
+            <div className="space-y-1.5">
+              <Label htmlFor="date">Заезд</Label>
+              <Controller
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <Input
+                    id="date"
+                    type="date"
+                    value={field.value}
+                    onChange={(e) => {
+                      field.onChange(e.target.value);
+                      const co = form.getValues("checkOut");
+                      if (!co || new Date(co) <= new Date(e.target.value)) {
+                        form.setValue("checkOut", addDaysIso(e.target.value, 1));
+                      }
+                    }}
+                  />
+                )}
+              />
               {form.formState.errors.date && (
                 <p className="text-xs text-destructive">{form.formState.errors.date.message}</p>
               )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="checkOut">Выезд</Label>
+              <Controller
+                control={form.control}
+                name="checkOut"
+                render={({ field }) => (
+                  <Input
+                    id="checkOut"
+                    type="date"
+                    min={form.watch("date")}
+                    value={field.value}
+                    onChange={(e) => field.onChange(e.target.value)}
+                  />
+                )}
+              />
+              {form.formState.errors.checkOut && (
+                <p className="text-xs text-destructive">{form.formState.errors.checkOut.message}</p>
+              )}
+            </div>
+
+            <div className="col-span-2 -mt-2">
+              <p className="text-xs text-muted-foreground">
+                Ночей: <span className="font-medium text-foreground">{nightsBetween(form.watch("date"), form.watch("checkOut"))}</span>
+              </p>
             </div>
 
             <div className="space-y-1.5">

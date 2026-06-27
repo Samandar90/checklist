@@ -96,9 +96,17 @@ router.get("/", async (req, res, next) => {
     const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
     const netProfit = revenue - totalExpenses;
 
-    // Occupancy: each report ≈ one room-night. capacity = rooms in scope × days in range.
+    // Occupancy: count occupied room-nights within the window using check-in/out.
+    let occupiedNights = 0;
+    for (const r of reports) {
+      const start = new Date(r.date);
+      const end = r.checkOut ? new Date(r.checkOut) : new Date(start.getTime() + DAY_MS);
+      const clampedEnd = Math.min(end.getTime(), toExclusive.getTime());
+      const nights = Math.round((clampedEnd - start.getTime()) / DAY_MS);
+      occupiedNights += Math.max(1, nights);
+    }
     const capacity = roomsInScope * rangeDays;
-    const occupancy = capacity > 0 ? Math.min(100, (count / capacity) * 100) : 0;
+    const occupancy = capacity > 0 ? Math.min(100, (occupiedNights / capacity) * 100) : 0;
 
     const byExpense: Record<string, Bucket> = {};
     for (const e of expenses) {

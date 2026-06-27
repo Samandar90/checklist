@@ -60,8 +60,9 @@ model BookingSource {
 }
 
 model MonthlyReport {
-  id        String   @id @default(cuid())
-  date      DateTime
+  id        String    @id @default(cuid())
+  date      DateTime // дата заезда (check-in)
+  checkOut  DateTime? // дата выезда (check-out); null = одна ночь
   branchId  String
   adminId   String
   roomId    String

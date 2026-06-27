@@ -1,5 +1,5 @@
 import { MonthlyReport } from "@/types";
-import { formatDate, reportDebt } from "@/lib/utils";
+import { formatDate, reportDebt, nightsBetween } from "@/lib/utils";
 
 function escapeCsv(value: string) {
   if (/[",\n]/.test(value)) {
@@ -10,7 +10,9 @@ function escapeCsv(value: string) {
 
 export function exportReportsToCsv(reports: MonthlyReport[], filename = "ежемесячные-отчёты.csv") {
   const headers = [
-    "Дата",
+    "Заезд",
+    "Выезд",
+    "Ночей",
     "Филиал",
     "Администратор",
     "Номер",
@@ -24,6 +26,8 @@ export function exportReportsToCsv(reports: MonthlyReport[], filename = "еже�
   ];
   const rows = reports.map((r) => [
     formatDate(r.date),
+    r.checkOut ? formatDate(r.checkOut) : "",
+    String(nightsBetween(r.date, r.checkOut)),
     r.branch.name,
     r.admin.fullName,
     r.room.roomNumber,

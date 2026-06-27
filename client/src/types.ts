@@ -50,6 +50,7 @@ export type PaymentStatus = (typeof paymentStatuses)[number];
 export interface MonthlyReport {
   id: string;
   date: string;
+  checkOut?: string | null;
   branchId: string;
   adminId: string;
   roomId: string;
@@ -133,6 +134,11 @@ export interface AuditResponse {
   total: number;
   page: number;
   pageSize: number;
+}
+
+export interface CalendarResponse {
+  rooms: Room[];
+  bookings: MonthlyReport[];
 }
 
 export interface DashboardBucket {

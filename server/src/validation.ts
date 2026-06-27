@@ -44,7 +44,8 @@ export const paymentStatuses = ["Оплачено", "Частично", "Дол�
 
 export const reportSchema = z
   .object({
-    date: z.string().trim().min(1, "Дата обязательна"),
+    date: z.string().trim().min(1, "Дата заезда обязательна"),
+    checkOut: z.string().trim().optional().nullable(),
     branchId: z.string().trim().min(1, "Филиал обязателен"),
     adminId: z.string().trim().min(1, "Администратор обязателен"),
     roomId: z.string().trim().min(1, "Номер обязателен"),
@@ -61,6 +62,17 @@ export const reportSchema = z
     notes: z.string().trim().optional().nullable(),
   })
   .superRefine((data, ctx) => {
+    if (data.checkOut) {
+      const inDate = new Date(data.date);
+      const outDate = new Date(data.checkOut);
+      if (!Number.isNaN(outDate.getTime()) && outDate <= inDate) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["checkOut"],
+          message: "Дата выезда должна быть позже заезда",
+        });
+      }
+    }
     if (data.paymentStatus === "Частично") {
       if (data.paidAmount == null || data.paidAmount <= 0) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["paidAmount"], message: "Укажите оплаченную сумму" });

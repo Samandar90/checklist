@@ -11,7 +11,8 @@ export interface FieldChange {
 }
 
 const FIELD_LABELS: Record<string, string> = {
-  date: "Дата",
+  date: "Заезд",
+  checkOut: "Выезд",
   price: "Цена",
   currency: "Валюта",
   paymentMethod: "Способ оплаты",
@@ -41,7 +42,7 @@ const ENTITY_LABELS: Record<string, string> = {
 };
 
 const MONEY_FIELDS = new Set(["price", "paidAmount", "amount"]);
-const DATE_FIELDS = new Set(["date"]);
+const DATE_FIELDS = new Set(["date", "checkOut"]);
 
 function formatValue(field: string, value: unknown): string {
   if (value === null || value === undefined || value === "") return "—";

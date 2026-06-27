@@ -28,6 +28,22 @@ export function formatDateTime(value: string | Date) {
   });
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Number of nights between two ISO dates (checkOut null ⇒ 1 night). */
+export function nightsBetween(date: string, checkOut?: string | null) {
+  if (!checkOut) return 1;
+  const diff = Math.round((new Date(checkOut).getTime() - new Date(date).getTime()) / DAY_MS);
+  return diff > 0 ? diff : 1;
+}
+
+/** Add `days` to a YYYY-MM-DD string, returning YYYY-MM-DD. */
+export function addDaysIso(iso: string, days: number) {
+  const d = new Date(iso);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 /** Outstanding debt for a report. `paidAmount === null/undefined` means fully paid. */
 export function reportDebt(report: { price: number; paidAmount?: number | null }) {
   return report.price - (report.paidAmount ?? report.price);

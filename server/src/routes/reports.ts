@@ -4,9 +4,10 @@ import { reportSchema } from "../validation";
 import { requireSuperAdmin } from "../middleware/auth";
 import { recordAudit, buildChanges, summarize } from "../audit";
 
-const REPORT_AUDIT_FIELDS = ["date", "price", "currency", "paymentMethod", "paymentStatus", "paidAmount", "notes"];
+const REPORT_AUDIT_FIELDS = ["date", "checkOut", "price", "currency", "paymentMethod", "paymentStatus", "paidAmount", "notes"];
 
 const money = (n: number) => n.toLocaleString("ru-RU");
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 const router = Router();
 
@@ -102,6 +103,45 @@ router.get("/summary", requireSuperAdmin, async (req, res, next) => {
   }
 });
 
+router.get("/calendar", requireSuperAdmin, async (req, res, next) => {
+  try {
+    const branchId = typeof req.query.branchId === "string" ? req.query.branchId : "";
+    if (!branchId) {
+      return res.status(400).json({ message: "Укажите филиал" });
+    }
+
+    const from = new Date(String(req.query.from));
+    const to = new Date(String(req.query.to));
+    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+      return res.status(400).json({ message: "Укажите корректный период" });
+    }
+    from.setHours(0, 0, 0, 0);
+    to.setHours(0, 0, 0, 0);
+    const toExclusive = new Date(to.getTime() + DAY_MS);
+    // Bookings can start up to ~31 days before the window and still overlap it.
+    const windowStart = new Date(from.getTime() - 31 * DAY_MS);
+
+    const [rooms, candidates] = await Promise.all([
+      prisma.room.findMany({ where: { branchId }, orderBy: { createdAt: "asc" } }),
+      prisma.monthlyReport.findMany({
+        where: { branchId, date: { gte: windowStart, lt: toExclusive } },
+        include: { room: true, admin: true, source: true },
+        orderBy: { date: "asc" },
+      }),
+    ]);
+
+    const bookings = candidates.filter((r) => {
+      const start = new Date(r.date);
+      const end = r.checkOut ? new Date(r.checkOut) : new Date(start.getTime() + DAY_MS);
+      return start < toExclusive && end > from;
+    });
+
+    res.json({ rooms, bookings });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.post("/", async (req, res, next) => {
   try {
     const body = { ...req.body };
@@ -115,7 +155,12 @@ router.post("/", async (req, res, next) => {
 
     const data = reportSchema.parse(body);
     const report = await prisma.monthlyReport.create({
-      data: { ...data, date: new Date(data.date), paidAmount: normalizePaid(data) },
+      data: {
+        ...data,
+        date: new Date(data.date),
+        checkOut: data.checkOut ? new Date(data.checkOut) : null,
+        paidAmount: normalizePaid(data),
+      },
       include: { branch: true, admin: true, room: true, source: true },
     });
     await recordAudit(req, {
@@ -149,7 +194,12 @@ router.put("/:id", async (req, res, next) => {
     const data = reportSchema.parse(body);
     const report = await prisma.monthlyReport.update({
       where: { id: req.params.id },
-      data: { ...data, date: new Date(data.date), paidAmount: normalizePaid(data) },
+      data: {
+        ...data,
+        date: new Date(data.date),
+        checkOut: data.checkOut ? new Date(data.checkOut) : null,
+        paidAmount: normalizePaid(data),
+      },
       include: { branch: true, admin: true, room: true, source: true },
     });
 
