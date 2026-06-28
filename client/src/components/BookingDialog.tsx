@@ -22,6 +22,7 @@ import { Segmented } from "@/components/ui/segmented";
 import { useAdmins } from "@/hooks/useAdmins";
 import { useSources } from "@/hooks/useSources";
 import { useCreateReport, useUpdateReport } from "@/hooks/useReports";
+import { useAuth } from "@/contexts/AuthContext";
 import { MonthlyReport, Room, paymentMethods, paymentStatuses } from "@/types";
 import { getErrorMessage } from "@/lib/api";
 import { addDaysIso, nightsBetween } from "@/lib/utils";
@@ -43,7 +44,7 @@ const schema = z
     roomId: z.string().trim().min(1, "Выберите номер"),
     adminId: z.string().trim().min(1, "Выберите администратора"),
     sourceId: z.string().trim().min(1, "Выберите источник"),
-    price: z.number({ invalid_type_error: "Укажите цену" }).positive("Цена должна быть положительной"),
+    pricePerNight: z.number({ invalid_type_error: "Укажите цену за ночь" }).positive("Цена должна быть положительной"),
     currency: z.string().trim().min(1, "Выберите валюту"),
     paymentMethod: z.enum(paymentMethods, { errorMap: () => ({ message: "Выберите способ оплаты" }) }),
     paymentStatus: z.enum(paymentStatuses, { errorMap: () => ({ message: "Выберите статус" }) }),
@@ -54,11 +55,13 @@ const schema = z
     if (data.checkOut && data.date && new Date(data.checkOut) <= new Date(data.date)) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["checkOut"], message: "Выезд должен быть позже заезда" });
     }
+    const nights = Math.max(1, nightsBetween(data.date, data.checkOut));
+    const total = data.pricePerNight * nights;
     if (data.paymentStatus === "Частично") {
       if (!data.paidAmount || data.paidAmount <= 0) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["paidAmount"], message: "Укажите оплаченную сумму" });
-      } else if (data.paidAmount >= data.price) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["paidAmount"], message: "Должна быть меньше цены" });
+      } else if (data.paidAmount >= total) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["paidAmount"], message: "Должна быть меньше общей суммы" });
       }
     }
   });
@@ -85,7 +88,9 @@ export default function BookingDialog({
   editing: MonthlyReport | null;
   draft: BookingDraft | null;
 }) {
-  const { data: admins } = useAdmins();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
+  const { data: admins } = useAdmins({ enabled: !isAdmin });
   const { data: sources } = useSources();
   const createReport = useCreateReport();
   const updateReport = useUpdateReport();
@@ -101,7 +106,7 @@ export default function BookingDialog({
       roomId: "",
       adminId: "",
       sourceId: "",
-      price: 0,
+      pricePerNight: 0,
       currency: "UZS",
       paymentMethod: "Наличные",
       paymentStatus: "Оплачено",
@@ -114,14 +119,15 @@ export default function BookingDialog({
   useEffect(() => {
     if (!open) return;
     if (editing) {
+      const editNights = Math.max(1, nightsBetween(editing.date, editing.checkOut));
       form.reset({
         date: editing.date.slice(0, 10),
         checkOut: editing.checkOut ? editing.checkOut.slice(0, 10) : addDaysIso(editing.date.slice(0, 10), 1),
         guestName: editing.guestName ?? "",
         roomId: editing.roomId,
-        adminId: editing.adminId,
+        adminId: isAdmin ? user?.adminId ?? "" : editing.adminId,
         sourceId: editing.sourceId,
-        price: editing.price,
+        pricePerNight: Math.round((editing.price / editNights) * 100) / 100,
         currency: editing.currency,
         paymentMethod: editing.paymentMethod,
         paymentStatus: editing.paymentStatus,
@@ -134,9 +140,9 @@ export default function BookingDialog({
         checkOut: draft.checkOut,
         guestName: "",
         roomId: draft.roomId,
-        adminId: branchAdmins[0]?.id ?? "",
+        adminId: isAdmin ? user?.adminId ?? "" : branchAdmins[0]?.id ?? "",
         sourceId: sources?.[0]?.id ?? "",
-        price: 0,
+        pricePerNight: 0,
         currency: "UZS",
         paymentMethod: "Наличные",
         paymentStatus: "Оплачено",
@@ -148,10 +154,14 @@ export default function BookingDialog({
   }, [open, editing, draft, admins, sources]);
 
   const selectedStatus = form.watch("paymentStatus");
+  const nights = Math.max(1, nightsBetween(form.watch("date"), form.watch("checkOut")));
+  const totalPrice = (form.watch("pricePerNight") || 0) * nights;
 
   async function onSubmit(values: FormValues) {
     try {
-      const payload = { ...values, branchId };
+      const { pricePerNight, ...rest } = values;
+      const total = pricePerNight * Math.max(1, nightsBetween(values.date, values.checkOut));
+      const payload = { ...rest, price: total, branchId };
       if (editing) {
         await updateReport.mutateAsync({ id: editing.id, data: payload });
         toast.success("Бронь обновлена");
@@ -215,10 +225,7 @@ export default function BookingDialog({
 
             <div className="col-span-2 -mt-2">
               <p className="text-xs text-muted-foreground">
-                Ночей:{" "}
-                <span className="font-medium text-foreground">
-                  {nightsBetween(form.watch("date"), form.watch("checkOut"))}
-                </span>
+                Ночей: <span className="font-medium text-foreground">{nights}</span>
               </p>
             </div>
 
@@ -278,41 +285,52 @@ export default function BookingDialog({
               )}
             </div>
 
+            {!isAdmin && (
+              <div className="space-y-1.5">
+                <Label>Администратор</Label>
+                <Controller
+                  control={form.control}
+                  name="adminId"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Выбрать" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {branchAdmins.map((a) => (
+                          <SelectItem key={a.id} value={a.id}>
+                            {a.fullName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {form.formState.errors.adminId && (
+                  <p className="text-xs text-destructive">{form.formState.errors.adminId.message}</p>
+                )}
+              </div>
+            )}
+
             <div className="space-y-1.5">
-              <Label>Администратор</Label>
+              <Label htmlFor="bd-price">Цена за ночь</Label>
               <Controller
                 control={form.control}
-                name="adminId"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Выбрать" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {branchAdmins.map((a) => (
-                        <SelectItem key={a.id} value={a.id}>
-                          {a.fullName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
+                name="pricePerNight"
+                render={({ field }) => <CurrencyInput id="bd-price" value={field.value} onChange={field.onChange} />}
               />
-              {form.formState.errors.adminId && (
-                <p className="text-xs text-destructive">{form.formState.errors.adminId.message}</p>
+              {form.formState.errors.pricePerNight && (
+                <p className="text-xs text-destructive">{form.formState.errors.pricePerNight.message}</p>
               )}
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="bd-price">Цена</Label>
-              <Controller
-                control={form.control}
-                name="price"
-                render={({ field }) => <CurrencyInput id="bd-price" value={field.value} onChange={field.onChange} />}
-              />
-              {form.formState.errors.price && (
-                <p className="text-xs text-destructive">{form.formState.errors.price.message}</p>
-              )}
+            <div className="col-span-2 -mt-2 flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">
+              <span className="text-xs text-muted-foreground">
+                Итого за {nights} {nights === 1 ? "ночь" : "ночи"}
+              </span>
+              <span className="text-sm font-semibold text-foreground">
+                {totalPrice.toLocaleString("ru-RU")} {form.watch("currency")}
+              </span>
             </div>
 
             <div className="space-y-1.5">

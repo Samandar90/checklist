@@ -19,6 +19,7 @@ import expensesRouter from "./routes/expenses";
 import auditRouter from "./routes/audit";
 import backupRouter from "./routes/backup";
 import dashboardRouter from "./routes/dashboard";
+import cashShiftsRouter from "./routes/cashShifts";
 import { scheduleBackups } from "./backup";
 import crypto from "crypto";
 
@@ -116,6 +117,7 @@ app.use("/api/expenses", authenticate, expensesRouter);
 app.use("/api/audit", authenticate, auditRouter);
 app.use("/api/backup", authenticate, backupRouter);
 app.use("/api/dashboard", authenticate, dashboardRouter);
+app.use("/api/cash-shifts", authenticate, cashShiftsRouter);
 
 const clientDistPath = path.join(__dirname, "../public");
 app.use(express.static(clientDistPath));

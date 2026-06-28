@@ -68,7 +68,7 @@ const reportFormSchema = z
     guestName: z.string().trim().optional(),
     roomId: z.string().trim().min(1, "Выберите номер"),
     sourceId: z.string().trim().min(1, "Выберите источник бронирования"),
-    price: z.number({ invalid_type_error: "Укажите цену" }).positive("Цена должна быть положительной"),
+    pricePerNight: z.number({ invalid_type_error: "Укажите цену за ночь" }).positive("Цена должна быть положительной"),
     currency: z.string().trim().min(1, "Выберите валюту"),
     paymentMethod: z.enum(paymentMethods, { errorMap: () => ({ message: "Выберите способ оплаты" }) }),
     paymentStatus: z.enum(paymentStatuses, { errorMap: () => ({ message: "Выберите статус оплаты" }) }),
@@ -79,11 +79,13 @@ const reportFormSchema = z
     if (data.checkOut && data.date && new Date(data.checkOut) <= new Date(data.date)) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["checkOut"], message: "Выезд должен быть позже заезда" });
     }
+    const nights = Math.max(1, nightsBetween(data.date, data.checkOut));
+    const total = data.pricePerNight * nights;
     if (data.paymentStatus === "Частично") {
       if (!data.paidAmount || data.paidAmount <= 0) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["paidAmount"], message: "Укажите оплаченную сумму" });
-      } else if (data.paidAmount >= data.price) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["paidAmount"], message: "Должна быть меньше цены" });
+      } else if (data.paidAmount >= total) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["paidAmount"], message: "Должна быть меньше общей суммы" });
       }
     }
   });
@@ -126,7 +128,7 @@ export default function MyReportsPage() {
       guestName: "",
       roomId: "",
       sourceId: "",
-      price: 0,
+      pricePerNight: 0,
       currency: "UZS",
       paymentMethod: "Наличные",
       paymentStatus: "Оплачено",
@@ -137,6 +139,8 @@ export default function MyReportsPage() {
 
   const hasRequiredData = (rooms ?? []).length > 0 && (sources ?? []).length > 0;
   const selectedPaymentStatus = form.watch("paymentStatus");
+  const nights = Math.max(1, nightsBetween(form.watch("date"), form.watch("checkOut")));
+  const totalPrice = (form.watch("pricePerNight") || 0) * nights;
 
   function openCreate() {
     setEditing(null);
@@ -146,7 +150,7 @@ export default function MyReportsPage() {
       guestName: "",
       roomId: "",
       sourceId: "",
-      price: 0,
+      pricePerNight: 0,
       currency: "UZS",
       paymentMethod: "Наличные",
       paymentStatus: "Оплачено",
@@ -158,13 +162,14 @@ export default function MyReportsPage() {
 
   function openEdit(report: MonthlyReport) {
     setEditing(report);
+    const editNights = Math.max(1, nightsBetween(report.date, report.checkOut));
     form.reset({
       date: report.date.slice(0, 10),
       checkOut: report.checkOut ? report.checkOut.slice(0, 10) : addDaysIso(report.date.slice(0, 10), 1),
       guestName: report.guestName ?? "",
       roomId: report.roomId,
       sourceId: report.sourceId,
-      price: report.price,
+      pricePerNight: Math.round((report.price / editNights) * 100) / 100,
       currency: report.currency,
       paymentMethod: report.paymentMethod,
       paymentStatus: report.paymentStatus,
@@ -176,11 +181,14 @@ export default function MyReportsPage() {
 
   async function onSubmit(values: ReportFormValues) {
     try {
+      const { pricePerNight, ...rest } = values;
+      const total = pricePerNight * Math.max(1, nightsBetween(values.date, values.checkOut));
+      const payload = { ...rest, price: total };
       if (editing) {
-        await updateReport.mutateAsync({ id: editing.id, data: values });
+        await updateReport.mutateAsync({ id: editing.id, data: payload });
         toast.success("Отчёт обновлён");
       } else {
-        await createReport.mutateAsync(values);
+        await createReport.mutateAsync(payload);
         toast.success("Отчёт создан");
       }
       setDialogOpen(false);
@@ -404,7 +412,7 @@ export default function MyReportsPage() {
 
             <div className="col-span-2 -mt-2">
               <p className="text-xs text-muted-foreground">
-                Ночей: <span className="font-medium text-foreground">{nightsBetween(form.watch("date"), form.watch("checkOut"))}</span>
+                Ночей: <span className="font-medium text-foreground">{nights}</span>
               </p>
             </div>
 
@@ -464,16 +472,16 @@ export default function MyReportsPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="price">Цена</Label>
+              <Label htmlFor="price">Цена за ночь</Label>
               <Controller
                 control={form.control}
-                name="price"
+                name="pricePerNight"
                 render={({ field }) => (
                   <CurrencyInput id="price" value={field.value} onChange={field.onChange} />
                 )}
               />
-              {form.formState.errors.price && (
-                <p className="text-xs text-destructive">{form.formState.errors.price.message}</p>
+              {form.formState.errors.pricePerNight && (
+                <p className="text-xs text-destructive">{form.formState.errors.pricePerNight.message}</p>
               )}
             </div>
 
@@ -500,6 +508,15 @@ export default function MyReportsPage() {
               {form.formState.errors.currency && (
                 <p className="text-xs text-destructive">{form.formState.errors.currency.message}</p>
               )}
+            </div>
+
+            <div className="col-span-2 -mt-2 flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">
+              <span className="text-xs text-muted-foreground">
+                Итого за {nights} {nights === 1 ? "ночь" : "ночи"}
+              </span>
+              <span className="text-sm font-semibold text-foreground">
+                {totalPrice.toLocaleString("ru-RU")} {form.watch("currency")}
+              </span>
             </div>
 
             <div className="col-span-2 space-y-1.5">
@@ -542,7 +559,7 @@ export default function MyReportsPage() {
                   )}
                 />
                 {(() => {
-                  const remaining = (form.watch("price") || 0) - (form.watch("paidAmount") || 0);
+                  const remaining = totalPrice - (form.watch("paidAmount") || 0);
                   return remaining > 0 ? (
                     <p className="text-xs text-amber-600">Остаток долга: {remaining.toLocaleString("ru-RU")}</p>
                   ) : null;

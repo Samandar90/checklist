@@ -12,10 +12,11 @@ model Branch {
   name      String
   createdAt DateTime @default(now())
 
-  admins   Admin[]
-  rooms    Room[]
-  reports  MonthlyReport[]
-  expenses Expense[]
+  admins     Admin[]
+  rooms      Room[]
+  reports    MonthlyReport[]
+  expenses   Expense[]
+  cashShifts CashShift[]
 }
 
 model Admin {
@@ -25,10 +26,11 @@ model Admin {
   branchId  String
   createdAt DateTime @default(now())
 
-  branch   Branch          @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  reports  MonthlyReport[]
-  expenses Expense[]
-  user     User?
+  branch     Branch          @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  reports    MonthlyReport[]
+  expenses   Expense[]
+  cashShifts CashShift[]
+  user       User?
 }
 
 model User {
@@ -99,6 +101,28 @@ model Expense {
 
   branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
   admin  Admin? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+}
+
+model CashShift {
+  id            String    @id @default(cuid())
+  branchId      String
+  adminId       String
+  openedAt      DateTime  @default(now())
+  closedAt      DateTime?
+  openingAmount Float
+  closingAmount Float? // фактически посчитано админом при закрытии
+  expectedAmount Float? // расчёт системы на момент закрытия (нал. приход - расход)
+  currency      String    @default("UZS")
+  status        String    @default("OPEN") // OPEN | CLOSED
+  notes         String?
+  createdAt     DateTime  @default(now())
+
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  admin  Admin  @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([branchId])
+  @@index([adminId])
+  @@index([status])
 }
 
 model AuditLog {

@@ -17,6 +17,28 @@ export interface Admin {
 
 export type Role = "SUPER_ADMIN" | "ADMIN";
 
+export type CashShiftStatus = "OPEN" | "CLOSED";
+
+export interface CashShift {
+  id: string;
+  branchId: string;
+  adminId: string;
+  openedAt: string;
+  closedAt?: string | null;
+  openingAmount: number;
+  closingAmount?: number | null;
+  expectedAmount?: number | null;
+  currency: string;
+  status: CashShiftStatus;
+  notes?: string | null;
+  createdAt: string;
+  branch: Branch;
+  admin: Admin;
+  cashIn?: number;
+  cashOut?: number;
+  expected?: number;
+}
+
 export interface AuthUser {
   id: string;
   username: string;

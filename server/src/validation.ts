@@ -108,3 +108,14 @@ export const expenseSchema = z.object({
   currency: z.string().trim().min(1, "Валюта обязательна"),
   note: z.string().trim().optional().nullable(),
 });
+
+export const cashShiftOpenSchema = z.object({
+  openingAmount: z.number({ invalid_type_error: "Укажите сумму" }).min(0, "Сумма не может быть отрицательной"),
+  currency: z.string().trim().min(1, "Валюта обязательна"),
+  notes: z.string().trim().optional().nullable(),
+});
+
+export const cashShiftCloseSchema = z.object({
+  closingAmount: z.number({ invalid_type_error: "Укажите сумму" }).min(0, "Сумма не может быть отрицательной"),
+  notes: z.string().trim().optional().nullable(),
+});

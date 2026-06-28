@@ -161,9 +161,14 @@ router.post("/:id/settle", requireSuperAdmin, async (req, res, next) => {
   }
 });
 
-router.get("/calendar", requireSuperAdmin, async (req, res, next) => {
+router.get("/calendar", async (req, res, next) => {
   try {
-    const branchId = typeof req.query.branchId === "string" ? req.query.branchId : "";
+    const isAdmin = req.user!.role === "ADMIN";
+    const branchId = isAdmin
+      ? req.user!.branchId ?? ""
+      : typeof req.query.branchId === "string"
+        ? req.query.branchId
+        : "";
     if (!branchId) {
       return res.status(400).json({ message: "Укажите филиал" });
     }

@@ -33,6 +33,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import BookingDialog, { BookingDraft } from "@/components/BookingDialog";
 import { useBranches } from "@/hooks/useBranches";
+import { useAuth } from "@/contexts/AuthContext";
 import { useCalendar } from "@/hooks/useCalendar";
 import { useUpdateReport, useDeleteReport } from "@/hooks/useReports";
 import { useSettleDebt } from "@/hooks/useDebtors";
@@ -106,7 +107,9 @@ interface Group {
 }
 
 export default function CalendarPage() {
-  const { data: branches } = useBranches();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
+  const { data: branches } = useBranches({ enabled: !isAdmin });
   const [branchId, setBranchId] = useState<string | undefined>(undefined);
   const [cursor, setCursor] = useState(() => {
     const n = new Date();
@@ -139,7 +142,7 @@ export default function CalendarPage() {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const updateReport = useUpdateReport();
 
-  const effectiveBranchId = branchId ?? branches?.[0]?.id;
+  const effectiveBranchId = isAdmin ? user?.branchId ?? undefined : branchId ?? branches?.[0]?.id;
 
   const monthStart = new Date(cursor.year, cursor.month, 1);
   const monthEnd = new Date(cursor.year, cursor.month + 1, 0);
@@ -419,21 +422,23 @@ export default function CalendarPage() {
       <Card className="mb-4">
         <CardContent className="flex flex-wrap items-end justify-between gap-3 p-4">
           <div className="flex flex-wrap items-end gap-3">
-            <div className="w-52 space-y-1.5">
-              <Label>Филиал</Label>
-              <Select value={effectiveBranchId ?? ""} onValueChange={(v) => setBranchId(v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Выберите филиал" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(branches ?? []).map((b) => (
-                    <SelectItem key={b.id} value={b.id}>
-                      {b.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {!isAdmin && (
+              <div className="w-52 space-y-1.5">
+                <Label>Филиал</Label>
+                <Select value={effectiveBranchId ?? ""} onValueChange={(v) => setBranchId(v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Выберите филиал" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(branches ?? []).map((b) => (
+                      <SelectItem key={b.id} value={b.id}>
+                        {b.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="w-56 space-y-1.5">
               <Label>Поиск</Label>
               <div className="relative">

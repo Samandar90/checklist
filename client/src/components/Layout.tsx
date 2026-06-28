@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   History,
   DatabaseBackup,
+  Banknote,
   Hotel,
   LogOut,
   KeyRound,
@@ -31,6 +32,7 @@ const superAdminNavItems = [
   { to: "/sources", label: "Источники бронирования", icon: Megaphone },
   { to: "/reports", label: "Ежемесячные отчёты", icon: ClipboardList },
   { to: "/calendar", label: "Шахматка", icon: CalendarRange },
+  { to: "/cash-register", label: "Касса", icon: Banknote },
   { to: "/expenses", label: "Расходы", icon: Wallet },
   { to: "/debtors", label: "Должники", icon: AlertTriangle },
   { to: "/audit", label: "Журнал изменений", icon: History },
@@ -38,6 +40,8 @@ const superAdminNavItems = [
 ];
 
 const adminNavItems = [
+  { to: "/calendar", label: "Шахматка", icon: CalendarRange },
+  { to: "/cash-register", label: "Касса", icon: Banknote },
   { to: "/my-reports", label: "Мои отчёты", icon: ClipboardList },
   { to: "/my-expenses", label: "Расходы за смену", icon: Wallet },
 ];

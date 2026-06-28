@@ -10,10 +10,11 @@ export interface AdminInput {
   password?: string;
 }
 
-export function useAdmins() {
+export function useAdmins(options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ["admins"],
     queryFn: async () => (await api.get<Admin[]>("/admins")).data,
+    enabled: options.enabled ?? true,
   });
 }
 
