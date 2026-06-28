@@ -34,6 +34,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import BookingDialog, { BookingDraft } from "@/components/BookingDialog";
+import BookingWizard from "@/components/BookingWizard";
 import { useBranches } from "@/hooks/useBranches";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCalendar } from "@/hooks/useCalendar";
@@ -870,8 +871,8 @@ export default function CalendarPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Создание / редактирование брони */}
-      {effectiveBranchId && (
+      {/* Редактирование существующей брони */}
+      {effectiveBranchId && editing && (
         <BookingDialog
           open={bookingOpen}
           onOpenChange={(o) => {
@@ -884,6 +885,20 @@ export default function CalendarPage() {
           branchId={effectiveBranchId}
           rooms={data?.rooms ?? []}
           editing={editing}
+          draft={null}
+        />
+      )}
+
+      {/* Создание новой брони — пошаговый визард */}
+      {effectiveBranchId && !editing && (
+        <BookingWizard
+          open={bookingOpen}
+          onOpenChange={(o) => {
+            setBookingOpen(o);
+            if (!o) setDraft(null);
+          }}
+          branchId={effectiveBranchId}
+          rooms={data?.rooms ?? []}
           draft={draft}
         />
       )}
