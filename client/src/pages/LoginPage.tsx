@@ -34,15 +34,17 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
-      <Card className="w-full max-w-sm animate-fade-in">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-sm animate-fade-in shadow-[0_1px_2px_rgba(16,24,40,0.04),0_12px_32px_rgba(16,24,40,0.06)]">
         <CardContent className="p-8">
-          <div className="mb-6 flex flex-col items-center gap-2 text-center">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-indigo-500 text-primary-foreground shadow-sm">
-              <Hotel className="h-5 w-5" />
+          <div className="mb-7 flex flex-col items-center gap-3 text-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-[10px] bg-primary text-primary-foreground shadow-[0_1px_2px_rgba(16,24,40,0.08),inset_0_1px_0_rgba(255,255,255,0.15)]">
+              <Hotel className="h-4.5 w-4.5" />
             </div>
-            <h1 className="text-lg font-semibold text-foreground">Hotel Reports</h1>
-            <p className="text-sm text-muted-foreground">Войдите в систему отчётности</p>
+            <div>
+              <h1 className="text-[17px] font-semibold tracking-tight text-foreground">Hotel Reports</h1>
+              <p className="mt-0.5 text-[13px] text-muted-foreground">Войдите в систему отчётности</p>
+            </div>
           </div>
 
           <form onSubmit={onSubmit} className="space-y-4">
