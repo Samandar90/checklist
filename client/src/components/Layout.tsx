@@ -11,6 +11,7 @@ import {
   CalendarRange,
   Wallet,
   AlertTriangle,
+  User2,
   History,
   DatabaseBackup,
   Banknote,
@@ -49,6 +50,7 @@ const superAdminSections: NavSection[] = [
       { to: "/reports", label: "Ежемесячные отчёты", icon: ClipboardList },
       { to: "/expenses", label: "Расходы", icon: Wallet },
       { to: "/debtors", label: "Должники", icon: AlertTriangle },
+      { to: "/guests", label: "Гости", icon: User2 },
     ],
   },
   {
