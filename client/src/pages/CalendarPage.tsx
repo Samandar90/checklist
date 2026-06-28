@@ -472,21 +472,21 @@ export default function CalendarPage() {
 
       {/* Быстрые показатели */}
       {effectiveBranchId && data && data.rooms.length > 0 && (
-        <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {statCards.map((c) => (
-            <Card key={c.label}>
-              <CardContent className="flex items-center gap-3 p-3.5">
-                <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${c.tint}`}>
+        <Card className="mb-4">
+          <div className="grid grid-cols-2 divide-x divide-y divide-border lg:grid-cols-4 lg:divide-y-0">
+            {statCards.map((c) => (
+              <div key={c.label} className="flex items-center gap-3 p-4">
+                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${c.tint}`}>
                   <c.icon className="h-4 w-4" />
                 </div>
                 <div>
-                  <div className="text-lg font-semibold leading-tight text-foreground">{c.value}</div>
+                  <div className="text-lg font-semibold leading-tight tabular-nums text-foreground">{c.value}</div>
                   <p className="text-[11px] text-muted-foreground">{c.label}</p>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              </div>
+            ))}
+          </div>
+        </Card>
       )}
 
       {/* Легенда + фильтр по статусу */}

@@ -114,10 +114,10 @@ export default function CashRegisterPage() {
           ) : active ? (
             <>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-[13px] font-medium text-foreground">
                   <LockOpen className="h-4 w-4 text-emerald-500" /> Смена открыта
                 </CardTitle>
-                <Badge className="bg-emerald-100 text-emerald-700">{formatDateTime(active.openedAt)}</Badge>
+                <Badge className="bg-emerald-50 text-emerald-700">{formatDateTime(active.openedAt)}</Badge>
               </CardHeader>
               <CardContent className="space-y-3">
                 <Row label="Остаток на начало" value={formatMoney(active.openingAmount, active.currency)} />
@@ -131,11 +131,11 @@ export default function CashRegisterPage() {
                   value={`-${formatMoney(active.cashOut ?? 0, active.currency)}`}
                   valueClass="text-rose-600"
                 />
-                <div className="border-t border-border pt-2">
+                <div className="border-t border-border pt-2.5">
                   <Row
                     label="Должно быть в кассе"
                     value={formatMoney(active.expected ?? active.openingAmount, active.currency)}
-                    valueClass="text-base font-semibold text-foreground"
+                    valueClass="text-lg font-semibold tracking-tight text-foreground"
                   />
                 </div>
                 <Button
@@ -333,7 +333,7 @@ function Row({ label, value, valueClass }: { label: string; value: string; value
   return (
     <div className="flex items-center justify-between text-sm">
       <span className="text-muted-foreground">{label}</span>
-      <span className={cn("text-foreground", valueClass)}>{value}</span>
+      <span className={cn("tabular-nums text-foreground", valueClass)}>{value}</span>
     </div>
   );
 }
