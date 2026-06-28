@@ -48,7 +48,8 @@ const superAdminSections: NavSection[] = [
     label: "Операции",
     items: [
       { to: "/calendar", label: "Шахматка", icon: CalendarRange },
-      { to: "/cash-register", label: "Касса", icon: Banknote },
+      { to: "/finance", label: "Финансовый центр", icon: Banknote },
+      { to: "/cash-register", label: "Касса (смены)", icon: Banknote },
       { to: "/reports", label: "Ежемесячные отчёты", icon: ClipboardList },
       { to: "/expenses", label: "Расходы", icon: Wallet },
       { to: "/debtors", label: "Должники", icon: AlertTriangle },
