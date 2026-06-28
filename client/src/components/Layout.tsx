@@ -24,6 +24,7 @@ import {
   ChevronRight,
   ChevronDown,
   Sparkles,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,7 +43,7 @@ interface NavSection {
 }
 
 const superAdminSections: NavSection[] = [
-  { label: null, items: [{ to: "/", label: "Дашборд", icon: LayoutDashboard }] },
+  { label: null, items: [{ to: "/", label: "Дашборд", icon: LayoutDashboard }, { to: "/analytics", label: "Аналитика", icon: BarChart3 }] },
   {
     label: "Операции",
     items: [
