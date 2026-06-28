@@ -117,7 +117,7 @@ export default function CashRegisterPage() {
                 <CardTitle className="flex items-center gap-2 text-[13px] font-medium text-foreground">
                   <LockOpen className="h-4 w-4 text-emerald-500" /> Смена открыта
                 </CardTitle>
-                <Badge className="bg-emerald-50 text-emerald-700">{formatDateTime(active.openedAt)}</Badge>
+                <Badge className="tint-emerald">{formatDateTime(active.openedAt)}</Badge>
               </CardHeader>
               <CardContent className="space-y-3">
                 <Row label="Остаток на начало" value={formatMoney(active.openingAmount, active.currency)} />

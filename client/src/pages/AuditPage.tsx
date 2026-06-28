@@ -26,9 +26,9 @@ const entityLabels: Record<string, string> = {
 };
 
 const actionMeta: Record<string, { label: string; icon: typeof Plus; cls: string }> = {
-  CREATE: { label: "Добавление", icon: Plus, cls: "bg-emerald-50 text-emerald-600" },
-  UPDATE: { label: "Изменение", icon: Pencil, cls: "bg-amber-50 text-amber-600" },
-  DELETE: { label: "Удаление", icon: Trash2, cls: "bg-red-50 text-red-600" },
+  CREATE: { label: "Добавление", icon: Plus, cls: "tint-emerald" },
+  UPDATE: { label: "Изменение", icon: Pencil, cls: "tint-amber" },
+  DELETE: { label: "Удаление", icon: Trash2, cls: "tint-rose" },
 };
 
 function parseChanges(raw: string | null): AuditFieldChange[] {

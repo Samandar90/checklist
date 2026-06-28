@@ -74,9 +74,9 @@ function stayStageOf(b: MonthlyReport): StayStage {
   return "active";
 }
 const stageMeta: Record<StayStage, { label: string; icon: typeof Clock; cls: string }> = {
-  upcoming: { label: "Ожидается", icon: Clock, cls: "text-sky-700 bg-sky-100" },
-  active: { label: "Заселён", icon: LogIn, cls: "text-emerald-700 bg-emerald-100" },
-  past: { label: "Выехал", icon: LogOut, cls: "text-slate-600 bg-slate-100" },
+  upcoming: { label: "Ожидается", icon: Clock, cls: "tint-sky" },
+  active: { label: "Заселён", icon: LogIn, cls: "tint-emerald" },
+  past: { label: "Выехал", icon: LogOut, cls: "tint-slate" },
 };
 
 function isoDay(d: Date) {
@@ -403,15 +403,15 @@ export default function CalendarPage() {
   const gridWidth = LABEL_W + daysInMonth * CELL_W;
 
   const statCards = [
-    { label: "Загрузка сегодня", value: `${stats.occPctToday}%`, icon: TrendingUp, tint: "bg-indigo-50 text-indigo-600" },
+    { label: "Загрузка сегодня", value: `${stats.occPctToday}%`, icon: TrendingUp, tint: "tint-indigo" },
     {
       label: "Свободно сегодня",
       value: stats.freeToday === null ? "—" : String(stats.freeToday),
       icon: DoorOpen,
-      tint: "bg-emerald-50 text-emerald-600",
+      tint: "tint-emerald",
     },
-    { label: "Броней в месяце", value: String(stats.bookings), icon: CalendarDays, tint: "bg-sky-50 text-sky-600" },
-    { label: "Средняя загрузка", value: `${stats.avg}%`, icon: Moon, tint: "bg-violet-50 text-violet-600" },
+    { label: "Броней в месяце", value: String(stats.bookings), icon: CalendarDays, tint: "tint-sky" },
+    { label: "Средняя загрузка", value: `${stats.avg}%`, icon: Moon, tint: "tint-violet" },
   ];
 
   return (
@@ -923,7 +923,7 @@ function FreeCellCard({ room, day, x, y }: { room: Room; day: Date; x: number; y
     >
       <div className="mb-1 flex items-center justify-between gap-2">
         <span className="text-sm font-semibold text-foreground">{room.roomNumber}</span>
-        <Badge className="bg-emerald-100 text-emerald-700">Свободно</Badge>
+        <Badge className="tint-emerald">Свободно</Badge>
       </div>
       <div className="text-muted-foreground">
         {room.type && <span>{room.type} · </span>}

@@ -65,7 +65,7 @@ export default function BackupPage() {
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Card>
           <CardContent className="flex items-start gap-3 p-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl tint-emerald">
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div>
@@ -78,7 +78,7 @@ export default function BackupPage() {
         </Card>
         <Card>
           <CardContent className="flex items-start gap-3 p-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl tint-sky">
               <HardDriveDownload className="h-5 w-5" />
             </div>
             <div>

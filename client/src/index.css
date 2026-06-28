@@ -153,6 +153,28 @@ body {
   font-feature-settings: "tnum" 1;
 }
 
+/*
+ * Tint chips: theme-aware accent backgrounds for icons/badges.
+ * Plain Tailwind palette classes (bg-emerald-50 etc.) don't react to the
+ * .dark class — they're invisible pale swatches on a dark card. These
+ * classes use the same hue at higher opacity for dark mode instead.
+ */
+.tint-indigo { background: color-mix(in srgb, #6366f1 12%, transparent); color: #4f46e5; }
+.tint-violet { background: color-mix(in srgb, #8b5cf6 12%, transparent); color: #7c3aed; }
+.tint-sky { background: color-mix(in srgb, #0ea5e9 12%, transparent); color: #0284c7; }
+.tint-emerald { background: color-mix(in srgb, #10b981 12%, transparent); color: #059669; }
+.tint-amber { background: color-mix(in srgb, #f59e0b 14%, transparent); color: #b45309; }
+.tint-rose { background: color-mix(in srgb, #f43f5e 12%, transparent); color: #be123c; }
+.tint-slate { background: color-mix(in srgb, #64748b 14%, transparent); color: #475569; }
+
+.dark .tint-indigo { background: color-mix(in srgb, #818cf8 18%, transparent); color: #a5b4fc; }
+.dark .tint-violet { background: color-mix(in srgb, #a78bfa 18%, transparent); color: #c4b5fd; }
+.dark .tint-sky { background: color-mix(in srgb, #38bdf8 18%, transparent); color: #7dd3fc; }
+.dark .tint-emerald { background: color-mix(in srgb, #34d399 18%, transparent); color: #6ee7b7; }
+.dark .tint-amber { background: color-mix(in srgb, #fbbf24 18%, transparent); color: #fcd34d; }
+.dark .tint-rose { background: color-mix(in srgb, #fb7185 18%, transparent); color: #fda4af; }
+.dark .tint-slate { background: color-mix(in srgb, #94a3b8 18%, transparent); color: #cbd5e1; }
+
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;

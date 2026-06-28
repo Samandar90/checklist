@@ -160,19 +160,19 @@ export default function DashboardPage() {
       label: "Отчётов",
       value: data?.reports ?? 0,
       icon: ClipboardList,
-      tint: "bg-violet-50 text-violet-600",
+      tint: "tint-violet",
     },
     {
       label: "Средний чек",
       value: Math.round(data?.avgCheck ?? 0),
       icon: Receipt,
-      tint: "bg-amber-50 text-amber-600",
+      tint: "tint-amber",
     },
     {
       label: "Выручка сегодня",
       value: data?.today.revenue ?? 0,
       icon: Wallet,
-      tint: "bg-sky-50 text-sky-600",
+      tint: "tint-sky",
       hint: `${data?.today.reports ?? 0} отчётов`,
     },
   ];
@@ -182,20 +182,20 @@ export default function DashboardPage() {
       label: "Чистая прибыль",
       value: data?.netProfit ?? 0,
       icon: PiggyBank,
-      tint: "bg-emerald-50 text-emerald-600",
+      tint: "tint-emerald",
       negative: (data?.netProfit ?? 0) < 0,
     },
     {
       label: "Расходы",
       value: data?.totalExpenses ?? 0,
       icon: ArrowDownCircle,
-      tint: "bg-rose-50 text-rose-600",
+      tint: "tint-rose",
     },
     {
       label: "Задолженность",
       value: data?.totalDebt ?? 0,
       icon: AlertTriangle,
-      tint: "bg-amber-50 text-amber-600",
+      tint: "tint-amber",
       negative: (data?.totalDebt ?? 0) > 0,
     },
     {
@@ -203,14 +203,14 @@ export default function DashboardPage() {
       value: data?.occupancy ?? 0,
       suffix: "%",
       icon: Percent,
-      tint: "bg-sky-50 text-sky-600",
+      tint: "tint-sky",
     },
   ];
 
   const counts = [
-    { label: "Филиалы", value: data?.totals.branches ?? 0, icon: Building2, tint: "bg-indigo-50 text-indigo-600" },
-    { label: "Администраторы", value: data?.totals.admins ?? 0, icon: Users, tint: "bg-amber-50 text-amber-600" },
-    { label: "Номера", value: data?.totals.rooms ?? 0, icon: BedDouble, tint: "bg-sky-50 text-sky-600" },
+    { label: "Филиалы", value: data?.totals.branches ?? 0, icon: Building2, tint: "tint-indigo" },
+    { label: "Администраторы", value: data?.totals.admins ?? 0, icon: Users, tint: "tint-amber" },
+    { label: "Номера", value: data?.totals.rooms ?? 0, icon: BedDouble, tint: "tint-sky" },
   ];
 
   const maxAdmin = Math.max(1, ...(data?.byAdmin ?? []).map((a) => a.total));
@@ -299,9 +299,11 @@ export default function DashboardPage() {
         <motion.div variants={staggerItem}>
         <Card className="relative overflow-hidden">
           <CardContent className="p-5">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Wallet className="h-3.5 w-3.5" />
-              <span className="text-[12.5px] font-medium">
+            <div className="flex items-center gap-2">
+              <div className="flex h-6 w-6 items-center justify-center rounded-lg tint-indigo">
+                <Wallet className="h-3.5 w-3.5" />
+              </div>
+              <span className="text-[12.5px] font-medium text-muted-foreground">
                 {preset === "today" ? "Выручка за сегодня" : "Выручка за период"}
               </span>
             </div>
@@ -360,7 +362,9 @@ export default function DashboardPage() {
           {finance.map((c) => (
             <div key={c.label} className="p-5">
               <div className="mb-2.5 flex items-center gap-2">
-                <c.icon className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className={cn("flex h-6 w-6 items-center justify-center rounded-lg", c.tint)}>
+                  <c.icon className="h-3.5 w-3.5" />
+                </div>
                 <span className="text-[12.5px] font-medium text-muted-foreground">{c.label}</span>
               </div>
               {isLoading ? (

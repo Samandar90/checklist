@@ -52,11 +52,11 @@ export function reportDebt(report: { price: number; paidAmount?: number | null }
 export function paymentStatusClass(status: string) {
   switch (status) {
     case "Оплачено":
-      return "bg-emerald-50 text-emerald-700";
+      return "tint-emerald";
     case "Частично":
-      return "bg-amber-50 text-amber-700";
+      return "tint-amber";
     case "Долг":
-      return "bg-red-50 text-red-700";
+      return "tint-rose";
     default:
       return "bg-secondary text-secondary-foreground";
   }
