@@ -8,7 +8,6 @@ import {
   AlertCircle,
   Search,
   X,
-  Moon,
   TrendingUp,
   DoorOpen,
   Pencil,
@@ -17,6 +16,9 @@ import {
   Clock,
   LogIn,
   LogOut,
+  Plus,
+  Wallet,
+  Gauge,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -53,9 +55,9 @@ const LABEL_W = 148;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const statusBar: Record<string, string> = {
-  Оплачено: "from-emerald-400 to-emerald-500 text-emerald-950",
-  Частично: "from-amber-400 to-amber-500 text-amber-950",
-  Долг: "from-rose-400 to-rose-500 text-rose-950",
+  Оплачено: "bg-emerald-500/90 text-white",
+  Частично: "bg-amber-500/90 text-white",
+  Долг: "bg-rose-500/90 text-white",
 };
 
 const statusFilters = [
@@ -358,12 +360,26 @@ export default function CalendarPage() {
             (occupiedByDay.reduce((s, set) => s + set.size, 0) / (totalRooms * daysInMonth)) * 100
           )
         : 0;
+    let arrivals = 0;
+    let departures = 0;
+    let revenueToday = 0;
+    for (const b of data?.bookings ?? []) {
+      const [s, e] = [dayIndex(b.date), b.checkOut ? dayIndex(b.checkOut) : dayIndex(b.date) + 1];
+      if (s === todayIndex) arrivals++;
+      if (e === todayIndex) departures++;
+      if (todayIndex >= s && todayIndex < e) revenueToday += b.price / Math.max(1, e - s);
+    }
     return {
       occPctToday,
       freeToday: todayIndex >= 0 ? totalRooms - occToday : null,
       bookings: data?.bookings.length ?? 0,
       avg,
+      arrivals,
+      departures,
+      revenueToday: Math.round(revenueToday),
+      avgRate: occToday ? Math.round(revenueToday / occToday) : 0,
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [occupiedByDay, totalRooms, todayIndex, daysInMonth, data]);
 
   function shiftMonth(delta: number) {
@@ -403,27 +419,33 @@ export default function CalendarPage() {
   const gridWidth = LABEL_W + daysInMonth * CELL_W;
 
   const statCards = [
-    { label: "Загрузка сегодня", value: `${stats.occPctToday}%`, icon: TrendingUp, tint: "tint-indigo" },
-    {
-      label: "Свободно сегодня",
-      value: stats.freeToday === null ? "—" : String(stats.freeToday),
-      icon: DoorOpen,
-      tint: "tint-emerald",
-    },
-    { label: "Броней в месяце", value: String(stats.bookings), icon: CalendarDays, tint: "tint-sky" },
-    { label: "Средняя загрузка", value: `${stats.avg}%`, icon: Moon, tint: "tint-violet" },
+    { label: "Загрузка сейчас", value: `${stats.occPctToday}%`, icon: TrendingUp, tint: "tint-indigo" },
+    { label: "Свободно", value: stats.freeToday === null ? "—" : String(stats.freeToday), icon: DoorOpen, tint: "tint-emerald" },
+    { label: "Заезды сегодня", value: String(stats.arrivals), icon: LogIn, tint: "tint-sky" },
+    { label: "Выезды сегодня", value: String(stats.departures), icon: LogOut, tint: "tint-slate" },
+    { label: "Выручка сегодня", value: `${(stats.revenueToday / 1000).toFixed(0)}к`, icon: Wallet, tint: "tint-amber" },
+    { label: "Средняя загрузка", value: `${stats.avg}%`, icon: Gauge, tint: "tint-violet" },
   ];
+
+  function quickNewBooking() {
+    if (!data?.rooms.length) return;
+    const startIdx = Math.max(0, todayIndex);
+    const checkOut = new Date(days[Math.min(startIdx + 1, daysInMonth - 1)] ?? days[startIdx]);
+    setEditing(null);
+    setDraft({ roomId: data.rooms[0].id, date: isoDay(days[startIdx]), checkOut: isoDay(checkOut) });
+    setBookingOpen(true);
+  }
 
   return (
     <div>
       <PageHeader title="Шахматка" description="Загрузка номеров по датам заезда и выезда." />
 
-      {/* Панель управления */}
-      <Card className="mb-4">
-        <CardContent className="flex flex-wrap items-end justify-between gap-3 p-4">
+      {/* Тулбар */}
+      <div className="sticky top-0 z-30 -mx-4 mb-4 border-b border-border bg-background/85 px-4 py-3 backdrop-blur-xl md:-mx-8 md:px-8">
+        <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="flex flex-wrap items-end gap-3">
             {!isAdmin && (
-              <div className="w-52 space-y-1.5">
+              <div className="w-48 space-y-1.5">
                 <Label>Филиал</Label>
                 <Select value={effectiveBranchId ?? ""} onValueChange={(v) => setBranchId(v)}>
                   <SelectTrigger>
@@ -439,49 +461,47 @@ export default function CalendarPage() {
                 </Select>
               </div>
             )}
-            <div className="w-56 space-y-1.5">
+            <div className="w-52 space-y-1.5">
               <Label>Поиск</Label>
               <div className="relative">
                 <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Гость, номер, источник…"
-                  className="pl-8"
-                />
+                <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Гость, номер, источник…" className="pl-8" />
               </div>
             </div>
-          </div>
-
-          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 rounded-full border border-border bg-secondary/60 p-1">
+              <button onClick={() => shiftMonth(-1)} aria-label="Предыдущий месяц" className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-card hover:text-foreground">
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <span className="min-w-[120px] px-1 text-center text-[13px] font-semibold text-foreground">
+                {MONTHS[cursor.month]} {cursor.year}
+              </span>
+              <button onClick={() => shiftMonth(1)} aria-label="Следующий месяц" className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-card hover:text-foreground">
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
             <Button variant="outline" size="sm" onClick={goToday}>
               Сегодня
             </Button>
-            <Button variant="outline" size="icon" onClick={() => shiftMonth(-1)} aria-label="Предыдущий месяц">
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="min-w-[150px] text-center text-sm font-semibold text-foreground">
-              {MONTHS[cursor.month]} {cursor.year}
-            </span>
-            <Button variant="outline" size="icon" onClick={() => shiftMonth(1)} aria-label="Следующий месяц">
-              <ChevronRight className="h-4 w-4" />
-            </Button>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Быстрые показатели */}
+          <Button size="sm" onClick={quickNewBooking} disabled={!data?.rooms.length}>
+            <Plus className="h-4 w-4" /> Новая бронь
+          </Button>
+        </div>
+      </div>
+
+      {/* Occupancy header */}
       {effectiveBranchId && data && data.rooms.length > 0 && (
         <Card className="mb-4">
-          <div className="grid grid-cols-2 divide-x divide-y divide-border lg:grid-cols-4 lg:divide-y-0">
+          <div className="grid grid-cols-2 divide-x divide-y divide-border sm:grid-cols-3 lg:grid-cols-6 lg:divide-y-0">
             {statCards.map((c) => (
               <div key={c.label} className="flex items-center gap-3 p-4">
                 <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${c.tint}`}>
                   <c.icon className="h-4 w-4" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="text-lg font-semibold leading-tight tabular-nums text-foreground">{c.value}</div>
-                  <p className="text-[11px] text-muted-foreground">{c.label}</p>
+                  <p className="truncate text-[11px] text-muted-foreground">{c.label}</p>
                 </div>
               </div>
             ))}
@@ -490,25 +510,33 @@ export default function CalendarPage() {
       )}
 
       {/* Легенда + фильтр по статусу */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        {statusFilters.map((s) => {
-          const active = statusFilter === s.key;
-          return (
-            <button
-              key={s.key}
-              onClick={() => setStatusFilter(active ? null : s.key)}
-              className={cn(
-                "flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                active
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border bg-card text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <span className={cn("h-2.5 w-2.5 rounded-full", s.dot)} />
-              {s.label}
-            </button>
-          );
-        })}
+      <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-border bg-card px-3 py-2.5">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {statusFilters.map((s) => {
+            const active = statusFilter === s.key;
+            return (
+              <button
+                key={s.key}
+                onClick={() => setStatusFilter(active ? null : s.key)}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                  active ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <span className={cn("h-2.5 w-2.5 rounded-full", s.dot)} />
+                {s.label}
+              </button>
+            );
+          })}
+        </div>
+        <div className="h-4 w-px bg-border" />
+        <div className="flex flex-wrap items-center gap-2.5 text-[11px] text-muted-foreground">
+          {(Object.entries(stageMeta) as [StayStage, typeof stageMeta.upcoming][]).map(([key, m]) => (
+            <span key={key} className="flex items-center gap-1">
+              <m.icon className="h-3 w-3" /> {m.label}
+            </span>
+          ))}
+        </div>
         {filterActive && (
           <button
             onClick={() => {
@@ -535,6 +563,15 @@ export default function CalendarPage() {
         <Card className="overflow-hidden">
           <CardContent className="overflow-x-auto p-0">
             <div style={{ width: gridWidth }} className="relative text-xs">
+              {/* Маркер текущего времени */}
+              {todayIndex >= 0 && (
+                <div
+                  className="pointer-events-none absolute top-0 z-20 h-full w-px bg-primary/70"
+                  style={{ left: LABEL_W + todayIndex * CELL_W + (new Date().getHours() / 24) * CELL_W }}
+                >
+                  <span className="absolute -left-[3px] -top-1 h-1.5 w-1.5 rounded-full bg-primary" />
+                </div>
+              )}
               {/* Заголовок: дни + загрузка % (sticky) */}
               <div className="sticky top-0 z-30 flex border-b border-border bg-card/95 backdrop-blur">
                 <div
@@ -1058,8 +1095,8 @@ function BookingBar({
       onContextMenu={onContextMenu}
       title={`${label} · ${formatMoney(booking.price, booking.currency)} · ${booking.paymentStatus} · ${stageInfo.label}`}
       className={cn(
-        "group/bar absolute flex cursor-grab items-center gap-1.5 overflow-hidden whitespace-nowrap bg-gradient-to-b px-1.5 text-[11px] font-semibold shadow-sm ring-1 ring-black/5 transition-[transform,box-shadow] duration-150 hover:z-30 hover:-translate-y-px hover:shadow-md active:cursor-grabbing",
-        statusBar[booking.paymentStatus] ?? "from-secondary to-secondary text-foreground",
+        "group/bar absolute flex cursor-grab items-center gap-1.5 overflow-hidden whitespace-nowrap px-1.5 text-[11px] font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.12)] ring-1 ring-black/10 transition-[transform,box-shadow] duration-150 hover:z-30 hover:-translate-y-[1.5px] hover:shadow-[0_6px_16px_rgba(16,24,40,0.18)] active:cursor-grabbing",
+        statusBar[booking.paymentStatus] ?? "bg-secondary text-foreground",
         dimmed && "opacity-20 grayscale",
         dragging && "z-40 opacity-90 shadow-lg ring-2 ring-primary"
       )}
@@ -1068,12 +1105,19 @@ function BookingBar({
         width,
         top: 5,
         height: ROW_H - 10,
-        borderTopLeftRadius: roundLeft ? 8 : 2,
-        borderBottomLeftRadius: roundLeft ? 8 : 2,
-        borderTopRightRadius: roundRight ? 8 : 2,
-        borderBottomRightRadius: roundRight ? 8 : 2,
+        borderTopLeftRadius: roundLeft ? 9 : 2,
+        borderBottomLeftRadius: roundLeft ? 9 : 2,
+        borderTopRightRadius: roundRight ? 9 : 2,
+        borderBottomRightRadius: roundRight ? 9 : 2,
       }}
     >
+      <span
+        className="absolute inset-y-0 left-0 w-[3px] opacity-70"
+        style={{
+          background: stage === "upcoming" ? "#0ea5e9" : stage === "active" ? "#ffffff" : "#0f172a",
+          borderRadius: roundLeft ? "9px 0 0 9px" : 0,
+        }}
+      />
       {/* долг — диагональная штриховка поверх */}
       {debt > 0 && (
         <span
