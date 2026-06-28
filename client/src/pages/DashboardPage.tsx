@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import {
   Building2,
   Users,
@@ -80,6 +81,15 @@ function rangeForPreset(key: PresetKey): { from: string; to: string } {
 }
 
 const fmt = (n: number) => Math.round(n).toLocaleString("ru-RU");
+
+const staggerContainer = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.06 } },
+};
+const staggerItem = {
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: [0.16, 1, 0.3, 1] as const } },
+};
 
 // Monochrome-leaning palette anchored on the brand accent, fanning out to a few
 // distinguishable hues so multi-series charts stay legible without looking like
@@ -280,7 +290,13 @@ export default function DashboardPage() {
       )}
 
       {/* Герой-метрика: выручка крупно, со спарклайном */}
-      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+      <motion.div
+        variants={staggerContainer}
+        initial="hidden"
+        animate="show"
+        className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-[1.4fr_1fr_1fr_1fr]"
+      >
+        <motion.div variants={staggerItem}>
         <Card className="relative overflow-hidden">
           <CardContent className="p-5">
             <div className="flex items-center gap-2 text-muted-foreground">
@@ -312,9 +328,11 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
+        </motion.div>
 
         {secondaryKpis.map((c) => (
-          <Card key={c.label}>
+          <motion.div key={c.label} variants={staggerItem}>
+          <Card>
             <CardContent className="p-5">
               <div className="mb-2.5 flex items-center gap-2">
                 <div className={cn("flex h-6 w-6 items-center justify-center rounded-lg", c.tint)}>
@@ -332,8 +350,9 @@ export default function DashboardPage() {
               )}
             </CardContent>
           </Card>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {/* Финансы */}
       <Card className="mb-6">
