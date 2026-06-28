@@ -23,6 +23,7 @@ import {
   ChevronsLeft,
   ChevronRight,
   ChevronDown,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -51,6 +52,7 @@ const superAdminSections: NavSection[] = [
       { to: "/expenses", label: "Расходы", icon: Wallet },
       { to: "/debtors", label: "Должники", icon: AlertTriangle },
       { to: "/guests", label: "Гости", icon: User2 },
+      { to: "/housekeeping", label: "Уборка номеров", icon: Sparkles },
     ],
   },
   {
