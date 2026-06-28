@@ -17,11 +17,13 @@ const DEFAULT_STATE: HKRoomState = { status: "Dirty", priority: "Medium", housek
  * Persisted client-side per browser so the board is usable without a schema change;
  * it will not sync across devices/users until a real housekeeping API exists.
  */
-export function useHousekeeping(branchId: string | undefined) {
-  const key = `housekeeping-${branchId ?? "none"}`;
+const STORAGE_KEY = "housekeeping-rooms";
+
+/** Room IDs are globally unique, so one shared bucket keeps Rooms/Housekeeping pages in sync. */
+export function useHousekeeping() {
   const [state, setState] = useState<Record<string, HKRoomState>>(() => {
     try {
-      const raw = localStorage.getItem(key);
+      const raw = localStorage.getItem(STORAGE_KEY);
       return raw ? JSON.parse(raw) : {};
     } catch {
       return {};
@@ -29,17 +31,21 @@ export function useHousekeeping(branchId: string | undefined) {
   });
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(key);
-      setState(raw ? JSON.parse(raw) : {});
-    } catch {
-      setState({});
+    function onStorage(e: StorageEvent) {
+      if (e.key !== STORAGE_KEY) return;
+      try {
+        setState(e.newValue ? JSON.parse(e.newValue) : {});
+      } catch {
+        setState({});
+      }
     }
-  }, [key]);
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   function persist(next: Record<string, HKRoomState>) {
     setState(next);
-    localStorage.setItem(key, JSON.stringify(next));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   }
 
   function get(roomId: string): HKRoomState {

@@ -42,7 +42,7 @@ export default function HousekeepingPage() {
   const effectiveBranchId = branchId ?? branches?.[0]?.id;
   const { data: rooms, isLoading } = useRooms();
   const { data: calendar } = useCalendar(effectiveBranchId, today, today);
-  const hk = useHousekeeping(effectiveBranchId);
+  const hk = useHousekeeping();
 
   const [mode, setMode] = useState<"kanban" | "list">("kanban");
   const [typeFilter, setTypeFilter] = useState<string | undefined>(undefined);
