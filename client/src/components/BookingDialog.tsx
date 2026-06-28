@@ -3,14 +3,19 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { Trash2, User2 } from "lucide-react";
 
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerBody,
+  DrawerFooter,
+  DrawerSection,
+  DrawerCloseButton,
+} from "@/components/ui/drawer";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CurrencyInput } from "@/components/ui/currency-input";
@@ -21,11 +26,12 @@ import { Segmented } from "@/components/ui/segmented";
 
 import { useAdmins } from "@/hooks/useAdmins";
 import { useSources } from "@/hooks/useSources";
-import { useCreateReport, useUpdateReport } from "@/hooks/useReports";
+import { useCreateReport, useUpdateReport, useDeleteReport } from "@/hooks/useReports";
+import { useSettleDebt } from "@/hooks/useDebtors";
 import { useAuth } from "@/contexts/AuthContext";
 import { MonthlyReport, Room, paymentMethods, paymentStatuses } from "@/types";
 import { getErrorMessage } from "@/lib/api";
-import { addDaysIso, nightsBetween } from "@/lib/utils";
+import { addDaysIso, nightsBetween, formatMoney, formatDateTime, reportDebt, paymentStatusClass } from "@/lib/utils";
 
 const currencies = ["UZS", "USD", "EUR"];
 
@@ -94,6 +100,8 @@ export default function BookingDialog({
   const { data: sources } = useSources();
   const createReport = useCreateReport();
   const updateReport = useUpdateReport();
+  const deleteReport = useDeleteReport();
+  const settleDebt = useSettleDebt();
 
   const branchAdmins = (admins ?? []).filter((a) => a.branchId === branchId);
 
@@ -156,6 +164,8 @@ export default function BookingDialog({
   const selectedStatus = form.watch("paymentStatus");
   const nights = Math.max(1, nightsBetween(form.watch("date"), form.watch("checkOut")));
   const totalPrice = (form.watch("pricePerNight") || 0) * nights;
+  const sourceName = (sources ?? []).find((s) => s.id === form.watch("sourceId"))?.name;
+  const debt = editing ? reportDebt(editing) : 0;
 
   async function onSubmit(values: FormValues) {
     try {
@@ -175,247 +185,311 @@ export default function BookingDialog({
     }
   }
 
+  async function handleDelete() {
+    if (!editing) return;
+    if (!window.confirm("Отменить и удалить эту бронь?")) return;
+    try {
+      await deleteReport.mutateAsync(editing.id);
+      toast.success("Бронь удалена");
+      onOpenChange(false);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  }
+
+  async function handleSettle() {
+    if (!editing) return;
+    try {
+      await settleDebt.mutateAsync(editing.id);
+      toast.success("Долг погашен");
+      onOpenChange(false);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  }
+
   const noAdmins = !isAdmin && branchAdmins.length === 0;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{editing ? "Редактировать бронь" : "Новое бронирование"}</DialogTitle>
-        </DialogHeader>
+    <Drawer open={open} onOpenChange={onOpenChange}>
+      <DrawerContent>
+        <DrawerHeader>
+          <div className="min-w-0">
+            <DrawerTitle>{editing?.guestName || form.watch("guestName") || (editing ? "Бронь" : "Новое бронирование")}</DrawerTitle>
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              {editing && <Badge className={paymentStatusClass(editing.paymentStatus)}>{editing.paymentStatus}</Badge>}
+              {sourceName && <Badge className="bg-secondary text-secondary-foreground">{sourceName}</Badge>}
+              {editing && <span className="text-[11px] text-muted-foreground">#{editing.id.slice(-6).toUpperCase()}</span>}
+            </div>
+          </div>
+          <DrawerCloseButton />
+        </DrawerHeader>
 
         {noAdmins ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">
-            В этом филиале нет администраторов. Сначала добавьте администратора в разделе «Администраторы».
-          </p>
+          <DrawerBody>
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              В этом филиале нет администраторов. Сначала добавьте администратора в разделе «Администраторы».
+            </p>
+          </DrawerBody>
         ) : (
-          <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="bd-date">Заезд</Label>
-              <Controller
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <Input
-                    id="bd-date"
-                    type="date"
-                    value={field.value}
-                    onChange={(e) => {
-                      field.onChange(e.target.value);
-                      const co = form.getValues("checkOut");
-                      if (!co || new Date(co) <= new Date(e.target.value)) {
-                        form.setValue("checkOut", addDaysIso(e.target.value, 1));
-                      }
-                    }}
-                  />
-                )}
-              />
-              {form.formState.errors.date && (
-                <p className="text-xs text-destructive">{form.formState.errors.date.message}</p>
-              )}
-            </div>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-1 flex-col overflow-hidden">
+            <DrawerBody>
+              <DrawerSection title="Проживание">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="bd-date">Заезд</Label>
+                    <Controller
+                      control={form.control}
+                      name="date"
+                      render={({ field }) => (
+                        <Input
+                          id="bd-date"
+                          type="date"
+                          value={field.value}
+                          onChange={(e) => {
+                            field.onChange(e.target.value);
+                            const co = form.getValues("checkOut");
+                            if (!co || new Date(co) <= new Date(e.target.value)) {
+                              form.setValue("checkOut", addDaysIso(e.target.value, 1));
+                            }
+                          }}
+                        />
+                      )}
+                    />
+                    {form.formState.errors.date && <p className="text-xs text-destructive">{form.formState.errors.date.message}</p>}
+                  </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="bd-checkout">Выезд</Label>
-              <Input id="bd-checkout" type="date" min={form.watch("date")} {...form.register("checkOut")} />
-              {form.formState.errors.checkOut && (
-                <p className="text-xs text-destructive">{form.formState.errors.checkOut.message}</p>
-              )}
-            </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="bd-checkout">Выезд</Label>
+                    <Input id="bd-checkout" type="date" min={form.watch("date")} {...form.register("checkOut")} />
+                    {form.formState.errors.checkOut && <p className="text-xs text-destructive">{form.formState.errors.checkOut.message}</p>}
+                  </div>
 
-            <div className="col-span-2 -mt-2">
-              <p className="text-xs text-muted-foreground">
-                Ночей: <span className="font-medium text-foreground">{nights}</span>
-              </p>
-            </div>
+                  <p className="col-span-2 -mt-1 text-xs text-muted-foreground">
+                    Ночей: <span className="font-medium text-foreground">{nights}</span>
+                  </p>
 
-            <div className="col-span-2 space-y-1.5">
-              <Label htmlFor="bd-guest">Имя гостя</Label>
-              <Input id="bd-guest" placeholder="например, Иван Иванов" {...form.register("guestName")} />
-            </div>
+                  <div className="space-y-1.5">
+                    <Label>Номер</Label>
+                    <Controller
+                      control={form.control}
+                      name="roomId"
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Выбрать" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {rooms.map((r) => (
+                              <SelectItem key={r.id} value={r.id}>
+                                {r.roomNumber}
+                                {r.type ? ` · ${r.type}` : ""}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    {form.formState.errors.roomId && <p className="text-xs text-destructive">{form.formState.errors.roomId.message}</p>}
+                  </div>
 
-            <div className="space-y-1.5">
-              <Label>Номер</Label>
-              <Controller
-                control={form.control}
-                name="roomId"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Выбрать" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {rooms.map((r) => (
-                        <SelectItem key={r.id} value={r.id}>
-                          {r.roomNumber}
-                          {r.type ? ` · ${r.type}` : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {form.formState.errors.roomId && (
-                <p className="text-xs text-destructive">{form.formState.errors.roomId.message}</p>
-              )}
-            </div>
+                  <div className="space-y-1.5">
+                    <Label>Источник</Label>
+                    <Controller
+                      control={form.control}
+                      name="sourceId"
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Выбрать" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(sources ?? []).map((s) => (
+                              <SelectItem key={s.id} value={s.id}>
+                                {s.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    {form.formState.errors.sourceId && <p className="text-xs text-destructive">{form.formState.errors.sourceId.message}</p>}
+                  </div>
 
-            <div className="space-y-1.5">
-              <Label>Источник</Label>
-              <Controller
-                control={form.control}
-                name="sourceId"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Выбрать" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(sources ?? []).map((s) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          {s.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {form.formState.errors.sourceId && (
-                <p className="text-xs text-destructive">{form.formState.errors.sourceId.message}</p>
-              )}
-            </div>
-
-            {!isAdmin && (
-              <div className="space-y-1.5">
-                <Label>Администратор</Label>
-                <Controller
-                  control={form.control}
-                  name="adminId"
-                  render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Выбрать" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {branchAdmins.map((a) => (
-                          <SelectItem key={a.id} value={a.id}>
-                            {a.fullName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  {!isAdmin && (
+                    <div className="col-span-2 space-y-1.5">
+                      <Label>Администратор</Label>
+                      <Controller
+                        control={form.control}
+                        name="adminId"
+                        render={({ field }) => (
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Выбрать" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {branchAdmins.map((a) => (
+                                <SelectItem key={a.id} value={a.id}>
+                                  {a.fullName}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                      {form.formState.errors.adminId && <p className="text-xs text-destructive">{form.formState.errors.adminId.message}</p>}
+                    </div>
                   )}
-                />
-                {form.formState.errors.adminId && (
-                  <p className="text-xs text-destructive">{form.formState.errors.adminId.message}</p>
-                )}
-              </div>
-            )}
+                </div>
+              </DrawerSection>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="bd-price">Цена за ночь</Label>
-              <Controller
-                control={form.control}
-                name="pricePerNight"
-                render={({ field }) => <CurrencyInput id="bd-price" value={field.value} onChange={field.onChange} />}
-              />
-              {form.formState.errors.pricePerNight && (
-                <p className="text-xs text-destructive">{form.formState.errors.pricePerNight.message}</p>
-              )}
-            </div>
+              <DrawerSection title="Гость">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground">
+                    <User2 className="h-4.5 w-4.5" />
+                  </div>
+                  <div className="flex-1 space-y-1.5">
+                    <Label htmlFor="bd-guest">Имя гостя</Label>
+                    <Input id="bd-guest" placeholder="например, Иван Иванов" {...form.register("guestName")} />
+                  </div>
+                </div>
+              </DrawerSection>
 
-            <div className="col-span-2 -mt-2 flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">
-              <span className="text-xs text-muted-foreground">
-                Итого за {nights} {nights === 1 ? "ночь" : "ночи"}
-              </span>
-              <span className="text-sm font-semibold text-foreground">
-                {totalPrice.toLocaleString("ru-RU")} {form.watch("currency")}
-              </span>
-            </div>
+              <DrawerSection title="Оплата">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="bd-price">Цена за ночь</Label>
+                    <Controller
+                      control={form.control}
+                      name="pricePerNight"
+                      render={({ field }) => <CurrencyInput id="bd-price" value={field.value} onChange={field.onChange} />}
+                    />
+                    {form.formState.errors.pricePerNight && (
+                      <p className="text-xs text-destructive">{form.formState.errors.pricePerNight.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Валюта</Label>
+                    <Controller
+                      control={form.control}
+                      name="currency"
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Валюта" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {currencies.map((c) => (
+                              <SelectItem key={c} value={c}>
+                                {c}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
 
-            <div className="space-y-1.5">
-              <Label>Валюта</Label>
-              <Controller
-                control={form.control}
-                name="currency"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Валюта" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {currencies.map((c) => (
-                        <SelectItem key={c} value={c}>
-                          {c}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </div>
+                  <div className="col-span-2 flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">
+                    <span className="text-xs text-muted-foreground">
+                      Итого за {nights} {nights === 1 ? "ночь" : "ночи"}
+                    </span>
+                    <span className="text-sm font-semibold tabular-nums text-foreground">
+                      {totalPrice.toLocaleString("ru-RU")} {form.watch("currency")}
+                    </span>
+                  </div>
 
-            <div className="col-span-2 space-y-1.5">
-              <Label>Способ оплаты</Label>
-              <Controller
-                control={form.control}
-                name="paymentMethod"
-                render={({ field }) => (
-                  <Segmented options={paymentMethodOptions} value={field.value} onChange={field.onChange} />
-                )}
-              />
-            </div>
-
-            <div className="col-span-2 space-y-1.5">
-              <Label>Статус оплаты</Label>
-              <Controller
-                control={form.control}
-                name="paymentStatus"
-                render={({ field }) => (
-                  <Segmented
-                    options={paymentStatusOptions}
-                    value={field.value}
-                    onChange={(v) => {
-                      field.onChange(v);
-                      if (v !== "Частично") form.setValue("paidAmount", undefined);
-                    }}
-                  />
-                )}
-              />
-            </div>
-
-            {selectedStatus === "Частично" && (
-              <div className="col-span-2 space-y-1.5">
-                <Label htmlFor="bd-paid">Оплачено сейчас</Label>
-                <Controller
-                  control={form.control}
-                  name="paidAmount"
-                  render={({ field }) => (
-                    <CurrencyInput id="bd-paid" value={field.value ?? 0} onChange={field.onChange} />
+                  {editing && debt > 0 && (
+                    <div className="col-span-2 flex items-center justify-between rounded-lg bg-destructive/5 px-3 py-2">
+                      <span className="text-xs text-destructive">Остаток долга</span>
+                      <span className="text-sm font-semibold tabular-nums text-destructive">{formatMoney(debt, editing.currency)}</span>
+                    </div>
                   )}
-                />
-                {form.formState.errors.paidAmount && (
-                  <p className="text-xs text-destructive">{form.formState.errors.paidAmount.message}</p>
-                )}
-              </div>
-            )}
 
-            <div className="col-span-2 space-y-1.5">
-              <Label htmlFor="bd-notes">Заметки</Label>
-              <Textarea id="bd-notes" placeholder="Необязательные заметки" {...form.register("notes")} />
-            </div>
+                  <div className="col-span-2 space-y-1.5">
+                    <Label>Способ оплаты</Label>
+                    <Controller
+                      control={form.control}
+                      name="paymentMethod"
+                      render={({ field }) => <Segmented options={paymentMethodOptions} value={field.value} onChange={field.onChange} />}
+                    />
+                  </div>
 
-            <DialogFooter className="col-span-2">
+                  <div className="col-span-2 space-y-1.5">
+                    <Label>Статус оплаты</Label>
+                    <Controller
+                      control={form.control}
+                      name="paymentStatus"
+                      render={({ field }) => (
+                        <Segmented
+                          options={paymentStatusOptions}
+                          value={field.value}
+                          onChange={(v) => {
+                            field.onChange(v);
+                            if (v !== "Частично") form.setValue("paidAmount", undefined);
+                          }}
+                        />
+                      )}
+                    />
+                  </div>
+
+                  {selectedStatus === "Частично" && (
+                    <div className="col-span-2 space-y-1.5">
+                      <Label htmlFor="bd-paid">Оплачено сейчас</Label>
+                      <Controller
+                        control={form.control}
+                        name="paidAmount"
+                        render={({ field }) => <CurrencyInput id="bd-paid" value={field.value ?? 0} onChange={field.onChange} />}
+                      />
+                      {form.formState.errors.paidAmount && (
+                        <p className="text-xs text-destructive">{form.formState.errors.paidAmount.message}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </DrawerSection>
+
+              <DrawerSection title="Заметки">
+                <Textarea id="bd-notes" placeholder="Необязательные заметки" {...form.register("notes")} className="min-h-[100px]" />
+              </DrawerSection>
+
+              {editing && (
+                <DrawerSection title="История">
+                  <div className="space-y-1.5 text-xs text-muted-foreground">
+                    <p>
+                      Создано: <span className="text-foreground">{formatDateTime(editing.createdAt)}</span>
+                    </p>
+                    {editing.updatedAt && (
+                      <p>
+                        Изменено: <span className="text-foreground">{formatDateTime(editing.updatedAt)}</span>
+                      </p>
+                    )}
+                  </div>
+                </DrawerSection>
+              )}
+            </DrawerBody>
+
+            <DrawerFooter>
+              {editing && debt > 0 && (
+                <Button type="button" variant="outline" onClick={handleSettle} disabled={settleDebt.isPending} className="mr-auto">
+                  Погасить долг
+                </Button>
+              )}
+              {editing && (
+                <Button type="button" variant="ghost" onClick={handleDelete} disabled={deleteReport.isPending} className="text-destructive hover:text-destructive">
+                  <Trash2 className="h-4 w-4" /> Удалить
+                </Button>
+              )}
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Отмена
               </Button>
               <Button type="submit" disabled={form.formState.isSubmitting}>
                 {editing ? "Сохранить" : "Создать бронь"}
               </Button>
-            </DialogFooter>
+            </DrawerFooter>
           </form>
         )}
-      </DialogContent>
-    </Dialog>
+      </DrawerContent>
+    </Drawer>
   );
 }

@@ -35,6 +35,8 @@
   --animate-overlay-in: overlay-in 0.18s ease-out forwards;
   --animate-overlay-out: overlay-out 0.15s ease-in forwards;
   --animate-pop-in: pop-in 0.15s ease-out;
+  --animate-drawer-in: drawer-in 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-drawer-out: drawer-out 0.22s ease-in forwards;
 
   @keyframes fade-in {
     from {
@@ -95,6 +97,24 @@
     to {
       opacity: 1;
       transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes drawer-in {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes drawer-out {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(100%);
     }
   }
 }
