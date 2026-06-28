@@ -13,6 +13,10 @@ import {
   DoorOpen,
   Pencil,
   MousePointerClick,
+  Trash2,
+  Clock,
+  LogIn,
+  LogOut,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -30,7 +34,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import BookingDialog, { BookingDraft } from "@/components/BookingDialog";
 import { useBranches } from "@/hooks/useBranches";
 import { useCalendar } from "@/hooks/useCalendar";
-import { useUpdateReport } from "@/hooks/useReports";
+import { useUpdateReport, useDeleteReport } from "@/hooks/useReports";
 import { useSettleDebt } from "@/hooks/useDebtors";
 import { MonthlyReport, Room } from "@/types";
 import { getErrorMessage } from "@/lib/api";
@@ -58,6 +62,21 @@ const statusFilters = [
   { key: "Частично", label: "Частично", dot: "bg-amber-500" },
   { key: "Долг", label: "Долг", dot: "bg-rose-500" },
 ] as const;
+
+type StayStage = "upcoming" | "active" | "past";
+function stayStageOf(b: MonthlyReport): StayStage {
+  const today = isoDay(new Date());
+  const inDate = b.date.slice(0, 10);
+  const outDate = b.checkOut ? b.checkOut.slice(0, 10) : null;
+  if (today < inDate) return "upcoming";
+  if (outDate && today >= outDate) return "past";
+  return "active";
+}
+const stageMeta: Record<StayStage, { label: string; icon: typeof Clock; cls: string }> = {
+  upcoming: { label: "Ожидается", icon: Clock, cls: "text-sky-700 bg-sky-100" },
+  active: { label: "Заселён", icon: LogIn, cls: "text-emerald-700 bg-emerald-100" },
+  past: { label: "Выехал", icon: LogOut, cls: "text-slate-600 bg-slate-100" },
+};
 
 function isoDay(d: Date) {
   const y = d.getFullYear();
@@ -97,6 +116,9 @@ export default function CalendarPage() {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [hover, setHover] = useState<{ b: MonthlyReport; x: number; y: number } | null>(null);
+  const [freeHover, setFreeHover] = useState<{ room: Room; day: Date; x: number; y: number } | null>(null);
+  const [menu, setMenu] = useState<{ b: MonthlyReport; x: number; y: number } | null>(null);
+  const deleteReport = useDeleteReport();
   // Drag-to-select on the grid → new booking.
   const [drag, setDrag] = useState<{ roomId: string; a: number; b: number } | null>(null);
   const [draft, setDraft] = useState<BookingDraft | null>(null);
@@ -112,6 +134,7 @@ export default function CalendarPage() {
     pointerStartDay: number;
     curStart: number;
     curEnd: number;
+    targetRoomId: string;
   } | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const updateReport = useUpdateReport();
@@ -240,24 +263,30 @@ export default function CalendarPage() {
       const delta = day - m.pointerStartDay;
       let curStart = m.origStart;
       let curEnd = m.origEnd;
+      let targetRoomId = m.targetRoomId;
       if (m.mode === "move") {
         curStart = m.origStart + delta;
         curEnd = m.origEnd + delta;
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        const rowEl = el?.closest("[data-room-row]") as HTMLElement | null;
+        if (rowEl?.dataset.roomId) targetRoomId = rowEl.dataset.roomId;
       } else {
         curEnd = Math.max(m.origStart + 1, m.origEnd + delta);
       }
-      if (curStart !== m.curStart || curEnd !== m.curEnd) setMove({ ...m, curStart, curEnd });
+      if (curStart !== m.curStart || curEnd !== m.curEnd || targetRoomId !== m.targetRoomId)
+        setMove({ ...m, curStart, curEnd, targetRoomId });
     }
     async function onMouseUp() {
       const m = moveRef.current;
       if (!m) return;
       setMove(null);
+      const roomChanged = m.targetRoomId !== m.booking.roomId;
       // No movement → it was a click → open details.
-      if (m.curStart === m.origStart && m.curEnd === m.origEnd) {
+      if (!roomChanged && m.curStart === m.origStart && m.curEnd === m.origEnd) {
         setSelected(m.booking);
         return;
       }
-      if (!rangeFree(m.booking.roomId, m.curStart, m.curEnd, m.booking.id)) {
+      if (!rangeFree(m.targetRoomId, m.curStart, m.curEnd, m.booking.id)) {
         toast.error("Пересекается с другой бронью");
         return;
       }
@@ -271,7 +300,7 @@ export default function CalendarPage() {
             guestName: b.guestName ?? "",
             branchId: b.branchId,
             adminId: b.adminId,
-            roomId: b.roomId,
+            roomId: m.targetRoomId,
             sourceId: b.sourceId,
             price: b.price,
             currency: b.currency,
@@ -281,7 +310,7 @@ export default function CalendarPage() {
             notes: b.notes ?? "",
           },
         });
-        toast.success(m.mode === "resize" ? "Срок брони изменён" : "Бронь перенесена");
+        toast.success(roomChanged ? "Бронь перенесена в другой номер" : m.mode === "resize" ? "Срок брони изменён" : "Бронь перенесена");
       } catch (err) {
         toast.error(getErrorMessage(err));
       }
@@ -303,7 +332,17 @@ export default function CalendarPage() {
     const gridLeft = gridEl.getBoundingClientRect().left;
     const [origStart, origEnd] = spanOf(booking);
     const pointerStartDay = Math.floor((e.clientX - gridLeft) / CELL_W);
-    setMove({ booking, mode, origStart, origEnd, gridLeft, pointerStartDay, curStart: origStart, curEnd: origEnd });
+    setMove({
+      booking,
+      mode,
+      origStart,
+      origEnd,
+      gridLeft,
+      pointerStartDay,
+      curStart: origStart,
+      curEnd: origEnd,
+      targetRoomId: booking.roomId,
+    });
   }
 
   // Quick stats strip.
@@ -571,9 +610,12 @@ export default function CalendarPage() {
                   {!collapsed.has(g.type) && g.rooms.map((room, ri) => (
                     <div
                       key={room.id}
+                      data-room-row
+                      data-room-id={room.id}
                       className={cn(
                         "group flex border-b border-border transition-colors hover:bg-primary/[0.03]",
-                        ri % 2 === 1 && "bg-muted/20"
+                        ri % 2 === 1 && "bg-muted/20",
+                        move && move.targetRoomId === room.id && move.targetRoomId !== move.booking.roomId && "bg-primary/10"
                       )}
                       style={{ height: ROW_H }}
                     >
@@ -597,6 +639,7 @@ export default function CalendarPage() {
                         <div className="absolute inset-0 flex">
                           {days.map((d, i) => {
                             const weekend = d.getDay() === 0 || d.getDay() === 6;
+                            const free = !occupiedByDay[i].has(room.id);
                             return (
                               <div
                                 key={i}
@@ -606,7 +649,7 @@ export default function CalendarPage() {
                                   dragRef.current = next;
                                   setDrag(next);
                                 }}
-                                onMouseEnter={() =>
+                                onMouseEnter={(e) => {
                                   setDrag((dr) => {
                                     if (dr && dr.roomId === room.id) {
                                       const next = { ...dr, b: i };
@@ -614,8 +657,17 @@ export default function CalendarPage() {
                                       return next;
                                     }
                                     return dr;
-                                  })
-                                }
+                                  });
+                                  if (free && !dragRef.current && !moveRef.current) {
+                                    setFreeHover({ room, day: d, x: e.clientX, y: e.clientY });
+                                  }
+                                }}
+                                onMouseMove={(e) => {
+                                  if (free && !dragRef.current && !moveRef.current) {
+                                    setFreeHover({ room, day: d, x: e.clientX, y: e.clientY });
+                                  }
+                                }}
+                                onMouseLeave={() => setFreeHover(null)}
                                 className={cn(
                                   "cursor-pointer border-l border-border/40 transition-colors hover:bg-primary/10",
                                   i === todayIndex && "bg-primary/[0.07]",
@@ -638,24 +690,47 @@ export default function CalendarPage() {
                           />
                         )}
                         {/* брони */}
-                        {(bookingsByRoom.get(room.id) ?? []).map((b) => {
-                          const beingMoved = move?.booking.id === b.id;
-                          const [s0, e0] = spanOf(b);
-                          return (
-                            <BookingBar
-                              key={b.id}
-                              booking={b}
-                              checkInIdx={beingMoved ? move!.curStart : s0}
-                              checkOutIdx={beingMoved ? move!.curEnd : e0}
-                              daysInMonth={daysInMonth}
-                              dimmed={filterActive && !matches(b)}
-                              dragging={beingMoved}
-                              onMoveStart={(e, mode) => startMove(e, b, mode)}
-                              onHover={(x, y) => !moveRef.current && setHover({ b, x, y })}
-                              onLeave={() => setHover(null)}
-                            />
-                          );
-                        })}
+                        {(bookingsByRoom.get(room.id) ?? [])
+                          .filter((b) => !(move?.booking.id === b.id && move.targetRoomId !== room.id))
+                          .map((b) => {
+                            const beingMoved = move?.booking.id === b.id;
+                            const [s0, e0] = spanOf(b);
+                            return (
+                              <BookingBar
+                                key={b.id}
+                                booking={b}
+                                stage={stayStageOf(b)}
+                                checkInIdx={beingMoved ? move!.curStart : s0}
+                                checkOutIdx={beingMoved ? move!.curEnd : e0}
+                                daysInMonth={daysInMonth}
+                                dimmed={filterActive && !matches(b)}
+                                dragging={beingMoved}
+                                onMoveStart={(e, mode) => startMove(e, b, mode)}
+                                onHover={(x, y) => !moveRef.current && setHover({ b, x, y })}
+                                onLeave={() => setHover(null)}
+                                onContextMenu={(e) => {
+                                  e.preventDefault();
+                                  setMenu({ b, x: e.clientX, y: e.clientY });
+                                }}
+                              />
+                            );
+                          })}
+                        {/* бронь, перетаскиваемая в этот номер из другого ряда */}
+                        {move && move.targetRoomId === room.id && move.booking.roomId !== room.id && (
+                          <BookingBar
+                            booking={move.booking}
+                            stage={stayStageOf(move.booking)}
+                            checkInIdx={move.curStart}
+                            checkOutIdx={move.curEnd}
+                            daysInMonth={daysInMonth}
+                            dimmed={false}
+                            dragging
+                            onMoveStart={() => {}}
+                            onHover={() => {}}
+                            onLeave={() => {}}
+                            onContextMenu={() => {}}
+                          />
+                        )}
                       </div>
                     </div>
                   ))}
@@ -667,7 +742,39 @@ export default function CalendarPage() {
       )}
 
       {/* Плавающая подсказка */}
-      {hover && !move && <HoverCard booking={hover.b} x={hover.x} y={hover.y} />}
+      {hover && !move && !menu && <HoverCard booking={hover.b} x={hover.x} y={hover.y} />}
+
+      {/* Превью свободной ячейки */}
+      {freeHover && !move && !drag && !menu && <FreeCellCard {...freeHover} />}
+
+      {/* Контекстное меню брони */}
+      {menu && (
+        <ContextMenu
+          x={menu.x}
+          y={menu.y}
+          onClose={() => setMenu(null)}
+          onEdit={() => {
+            setEditing(menu.b);
+            setDraft(null);
+            setBookingOpen(true);
+            setMenu(null);
+          }}
+          onDetails={() => {
+            setSelected(menu.b);
+            setMenu(null);
+          }}
+          onDelete={async () => {
+            setMenu(null);
+            if (!window.confirm("Удалить бронь?")) return;
+            try {
+              await deleteReport.mutateAsync(menu.b.id);
+              toast.success("Бронь удалена");
+            } catch (err) {
+              toast.error(getErrorMessage(err));
+            }
+          }}
+        />
+      )}
 
       {/* Детали брони */}
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
@@ -800,6 +907,90 @@ function HoverCard({ booking, x, y }: { booking: MonthlyReport; x: number; y: nu
   );
 }
 
+function FreeCellCard({ room, day, x, y }: { room: Room; day: Date; x: number; y: number }) {
+  const W = 200;
+  const left = Math.min(x + 16, window.innerWidth - W - 12);
+  const top = Math.min(y + 16, window.innerHeight - 90);
+  return (
+    <div
+      className="pointer-events-none fixed z-50 rounded-xl border border-border bg-card p-3 text-xs shadow-xl animate-fade-in"
+      style={{ left, top, width: W }}
+    >
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <span className="text-sm font-semibold text-foreground">{room.roomNumber}</span>
+        <Badge className="bg-emerald-100 text-emerald-700">Свободно</Badge>
+      </div>
+      <div className="text-muted-foreground">
+        {room.type && <span>{room.type} · </span>}
+        {formatDate(isoDay(day))}
+      </div>
+    </div>
+  );
+}
+
+function ContextMenu({
+  x,
+  y,
+  onClose,
+  onEdit,
+  onDetails,
+  onDelete,
+}: {
+  x: number;
+  y: number;
+  onClose: () => void;
+  onEdit: () => void;
+  onDetails: () => void;
+  onDelete: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    function onDown(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    }
+    function onEsc(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("mousedown", onDown);
+    window.addEventListener("keydown", onEsc);
+    return () => {
+      window.removeEventListener("mousedown", onDown);
+      window.removeEventListener("keydown", onEsc);
+    };
+  }, [onClose]);
+
+  const W = 180;
+  const left = Math.min(x, window.innerWidth - W - 8);
+  const top = Math.min(y, window.innerHeight - 140);
+
+  return (
+    <div
+      ref={ref}
+      className="fixed z-50 w-[180px] overflow-hidden rounded-lg border border-border bg-card py-1 text-sm shadow-xl animate-fade-in"
+      style={{ left, top }}
+    >
+      <button
+        onClick={onDetails}
+        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-foreground hover:bg-secondary"
+      >
+        <CalendarDays className="h-3.5 w-3.5" /> Подробности
+      </button>
+      <button
+        onClick={onEdit}
+        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-foreground hover:bg-secondary"
+      >
+        <Pencil className="h-3.5 w-3.5" /> Редактировать
+      </button>
+      <button
+        onClick={onDelete}
+        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-destructive hover:bg-destructive/10"
+      >
+        <Trash2 className="h-3.5 w-3.5" /> Удалить бронь
+      </button>
+    </div>
+  );
+}
+
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (!parts.length) return "?";
@@ -809,6 +1000,7 @@ function initials(name: string): string {
 
 function BookingBar({
   booking,
+  stage,
   checkInIdx,
   checkOutIdx,
   daysInMonth,
@@ -817,8 +1009,10 @@ function BookingBar({
   onMoveStart,
   onHover,
   onLeave,
+  onContextMenu,
 }: {
   booking: MonthlyReport;
+  stage: StayStage;
   checkInIdx: number;
   checkOutIdx: number;
   daysInMonth: number;
@@ -827,6 +1021,7 @@ function BookingBar({
   onMoveStart: (e: React.MouseEvent, mode: "move" | "resize") => void;
   onHover: (x: number, y: number) => void;
   onLeave: () => void;
+  onContextMenu: (e: React.MouseEvent) => void;
 }) {
   // Bar spans from mid check-in cell to mid check-out cell (half-day convention),
   // clipped to the visible month so multi-month stays don't overflow.
@@ -847,6 +1042,7 @@ function BookingBar({
   const label = booking.guestName || booking.source.name;
   const showAvatar = width > 70;
   const showPrice = width > 96;
+  const stageInfo = stageMeta[stage];
 
   return (
     <div
@@ -854,7 +1050,8 @@ function BookingBar({
       onMouseEnter={(e) => onHover(e.clientX, e.clientY)}
       onMouseMove={(e) => onHover(e.clientX, e.clientY)}
       onMouseLeave={onLeave}
-      title={`${label} · ${formatMoney(booking.price, booking.currency)} · ${booking.paymentStatus}`}
+      onContextMenu={onContextMenu}
+      title={`${label} · ${formatMoney(booking.price, booking.currency)} · ${booking.paymentStatus} · ${stageInfo.label}`}
       className={cn(
         "group/bar absolute flex cursor-grab items-center gap-1.5 overflow-hidden whitespace-nowrap bg-gradient-to-b px-1.5 text-[11px] font-semibold shadow-sm ring-1 ring-black/5 transition-[transform,box-shadow] duration-150 hover:z-30 hover:-translate-y-px hover:shadow-md active:cursor-grabbing",
         statusBar[booking.paymentStatus] ?? "from-secondary to-secondary text-foreground",
@@ -882,10 +1079,12 @@ function BookingBar({
           }}
         />
       )}
-      {showAvatar && (
+      {showAvatar ? (
         <span className="relative flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-black/15 text-[9px] font-bold">
           {initials(label)}
         </span>
+      ) : (
+        <stageInfo.icon className="relative h-3 w-3 shrink-0 opacity-80" />
       )}
       <span className="relative truncate">{label}</span>
       {showPrice && (
