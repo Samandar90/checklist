@@ -175,7 +175,7 @@ export default function BookingDialog({
     }
   }
 
-  const noAdmins = branchAdmins.length === 0;
+  const noAdmins = !isAdmin && branchAdmins.length === 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

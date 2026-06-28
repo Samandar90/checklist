@@ -261,26 +261,24 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* KPI */}
-      <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {kpis.map((c) => (
-          <Card key={c.label}>
-            <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle>{c.label}</CardTitle>
-              <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${c.tint}`}>
-                <c.icon className="h-4 w-4" />
+      {/* Метрики */}
+      <Card className="mb-6">
+        <div className="grid grid-cols-1 divide-y divide-border sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4 lg:divide-x">
+          {kpis.map((c) => (
+            <div key={c.label} className="p-5">
+              <div className="mb-2.5 flex items-center gap-2">
+                <c.icon className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-[12.5px] font-medium text-muted-foreground">{c.label}</span>
               </div>
-            </CardHeader>
-            <CardContent>
               {isLoading ? (
                 <Skeleton className="h-8 w-24" />
               ) : (
                 <>
-                  <div className="text-2xl font-semibold text-foreground">{c.value}</div>
+                  <div className="text-[26px] font-semibold tabular-nums tracking-tight text-foreground">{c.value}</div>
                   {c.delta && delta !== null && (
                     <p
                       className={cn(
-                        "mt-1 flex items-center gap-1 text-xs font-medium",
+                        "mt-1.5 flex items-center gap-1 text-xs font-medium",
                         delta >= 0 ? "text-emerald-600" : "text-destructive"
                       )}
                     >
@@ -292,60 +290,58 @@ export default function DashboardPage() {
                       {Math.abs(delta).toFixed(1)}% к прошлому периоду
                     </p>
                   )}
-                  {c.hint && <p className="mt-1 text-xs text-muted-foreground">{c.hint}</p>}
+                  {c.hint && <p className="mt-1.5 text-xs text-muted-foreground">{c.hint}</p>}
                 </>
               )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            </div>
+          ))}
+        </div>
+      </Card>
 
       {/* Финансы */}
-      <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {finance.map((c) => (
-          <Card key={c.label}>
-            <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle>{c.label}</CardTitle>
-              <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${c.tint}`}>
-                <c.icon className="h-4 w-4" />
+      <Card className="mb-6">
+        <div className="grid grid-cols-1 divide-y divide-border sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4 lg:divide-x">
+          {finance.map((c) => (
+            <div key={c.label} className="p-5">
+              <div className="mb-2.5 flex items-center gap-2">
+                <c.icon className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-[12.5px] font-medium text-muted-foreground">{c.label}</span>
               </div>
-            </CardHeader>
-            <CardContent>
               {isLoading ? (
                 <Skeleton className="h-8 w-24" />
               ) : (
                 <div
                   className={cn(
-                    "text-2xl font-semibold",
+                    "text-[26px] font-semibold tabular-nums tracking-tight",
                     c.negative ? "text-destructive" : "text-foreground"
                   )}
                 >
                   {c.value}
                 </div>
               )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            </div>
+          ))}
+        </div>
+      </Card>
 
       {/* Счётчики */}
-      <div className="mb-6 grid grid-cols-3 gap-4">
-        {counts.map((c) => (
-          <Card key={c.label}>
-            <CardContent className="flex items-center gap-3 p-4">
-              <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${c.tint}`}>
-                <c.icon className="h-5 w-5" />
+      <Card className="mb-6">
+        <div className="grid grid-cols-3 divide-x divide-border">
+          {counts.map((c) => (
+            <div key={c.label} className="flex items-center gap-3 p-4">
+              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${c.tint}`}>
+                <c.icon className="h-4.5 w-4.5" />
               </div>
               <div>
-                <div className="text-xl font-semibold text-foreground">
+                <div className="text-lg font-semibold tabular-nums text-foreground">
                   {isLoading ? <Skeleton className="h-6 w-10" /> : c.value}
                 </div>
                 <p className="text-xs text-muted-foreground">{c.label}</p>
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            </div>
+          ))}
+        </div>
+      </Card>
 
       {/* Динамика выручки */}
       <Card className="mb-6">

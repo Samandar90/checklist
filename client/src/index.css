@@ -3,31 +3,31 @@
 @theme {
   --font-sans: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
 
-  --color-border: #e8e9ee;
-  --color-input: #e5e7eb;
-  --color-ring: #6366f1;
-  --color-background: #fbfbfd;
-  --color-foreground: #14151f;
+  --color-border: #e6e6ea;
+  --color-input: #e6e6ea;
+  --color-ring: #635bff;
+  --color-background: #fafafa;
+  --color-foreground: #16161d;
 
-  --color-primary: #4f46e5;
+  --color-primary: #5b54f0;
   --color-primary-foreground: #ffffff;
 
-  --color-secondary: #f1f2f8;
-  --color-secondary-foreground: #14151f;
+  --color-secondary: #f1f1f4;
+  --color-secondary-foreground: #16161d;
 
-  --color-muted: #f6f6fa;
-  --color-muted-foreground: #6b7080;
+  --color-muted: #f5f5f7;
+  --color-muted-foreground: #6e6e7a;
 
-  --color-accent: #f1f2f8;
-  --color-accent-foreground: #14151f;
+  --color-accent: #f1f1f4;
+  --color-accent-foreground: #16161d;
 
-  --color-destructive: #e1123d;
+  --color-destructive: #d4183d;
   --color-destructive-foreground: #ffffff;
 
   --color-card: #ffffff;
-  --color-card-foreground: #14151f;
+  --color-card-foreground: #16161d;
 
-  --radius: 0.875rem;
+  --radius: 0.75rem;
 
   --animate-fade-in: fade-in 0.3s ease-out;
   --animate-scale-in: scale-in 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -101,29 +101,29 @@
 
 /* Class-based dark mode: override theme tokens when .dark is on <html>. */
 .dark {
-  --color-border: #262a38;
-  --color-input: #2b3040;
-  --color-ring: #6366f1;
-  --color-background: #0b0d14;
-  --color-foreground: #e7e8f0;
+  --color-border: #24242c;
+  --color-input: #292a33;
+  --color-ring: #7c75ff;
+  --color-background: #0a0a0d;
+  --color-foreground: #ededf0;
 
-  --color-primary: #6366f1;
+  --color-primary: #7c75ff;
   --color-primary-foreground: #ffffff;
 
-  --color-secondary: #1a1d28;
-  --color-secondary-foreground: #e7e8f0;
+  --color-secondary: #18181d;
+  --color-secondary-foreground: #ededf0;
 
-  --color-muted: #14161f;
-  --color-muted-foreground: #9499ab;
+  --color-muted: #131318;
+  --color-muted-foreground: #8e8e99;
 
-  --color-accent: #1a1d28;
-  --color-accent-foreground: #e7e8f0;
+  --color-accent: #18181d;
+  --color-accent-foreground: #ededf0;
 
   --color-destructive: #f0436a;
   --color-destructive-foreground: #ffffff;
 
-  --color-card: #13151e;
-  --color-card-foreground: #e7e8f0;
+  --color-card: #111114;
+  --color-card-foreground: #ededf0;
 }
 
 * {
@@ -140,10 +140,17 @@ html.dark {
 body {
   margin: 0;
   background: var(--color-background);
+  background-image: radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--color-primary) 6%, transparent), transparent 45%);
+  background-attachment: fixed;
   color: var(--color-foreground);
   font-family: var(--font-sans);
+  font-feature-settings: "tnum" 1, "cv11" 1;
   -webkit-font-smoothing: antialiased;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.012em;
+}
+
+.tabular-nums {
+  font-feature-settings: "tnum" 1;
 }
 
 ::-webkit-scrollbar {

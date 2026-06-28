@@ -56,17 +56,17 @@ export default function Layout() {
 
   return (
     <div className="flex min-h-screen bg-muted/40">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-border bg-card md:flex">
-        <div className="flex items-center gap-2.5 px-6 py-5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-indigo-500 text-primary-foreground shadow-sm">
-            <Hotel className="h-4.5 w-4.5" />
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-border bg-card/80 backdrop-blur-xl md:flex">
+        <div className="flex items-center gap-2.5 px-5 py-5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-primary text-primary-foreground shadow-[0_1px_2px_rgba(16,24,40,0.08),inset_0_1px_0_rgba(255,255,255,0.15)]">
+            <Hotel className="h-4 w-4" />
           </div>
           <div className="flex flex-col leading-tight">
-            <span className="text-sm font-semibold text-foreground">Hotel Reports</span>
+            <span className="text-[13px] font-semibold tracking-tight text-foreground">Hotel Reports</span>
             <span className="text-[11px] text-muted-foreground">Система отчётности</span>
           </div>
         </div>
-        <nav className="flex flex-1 flex-col gap-1 px-3 py-2">
+        <nav className="flex flex-1 flex-col gap-0.5 px-3 py-1">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -74,55 +74,57 @@ export default function Layout() {
               end={item.to === "/"}
               className={({ isActive }) =>
                 cn(
-                  "relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+                  "group relative flex items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13.5px] font-medium transition-colors",
                   isActive
-                    ? "bg-primary/10 text-primary"
+                    ? "bg-primary/[0.09] text-primary"
                     : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                 )
               }
             >
               {({ isActive }) => (
                 <>
-                  {isActive && (
-                    <span className="absolute left-0 top-1/2 h-4 w-1 -translate-y-1/2 rounded-full bg-primary" />
-                  )}
-                  <item.icon className="h-4 w-4" />
+                  <item.icon className={cn("h-[15px] w-[15px] shrink-0", isActive ? "text-primary" : "text-muted-foreground/80 group-hover:text-foreground")} />
                   {item.label}
                 </>
               )}
             </NavLink>
           ))}
         </nav>
-        <div className="border-t border-border px-4 py-3">
-          <div className="mb-2 px-2">
-            <p className="truncate text-sm font-medium text-foreground">
-              {user?.fullName ?? user?.username}
-            </p>
-            <p className="truncate text-xs text-muted-foreground">
-              {isSuperAdmin ? "Главный аккаунт" : user?.branchName}
-            </p>
+        <div className="border-t border-border/80 px-3 py-3">
+          <div className="mb-1 flex items-center gap-2.5 rounded-lg px-2 py-1.5">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary text-[11px] font-semibold text-foreground">
+              {(user?.fullName ?? user?.username ?? "?").slice(0, 1).toUpperCase()}
+            </span>
+            <div className="min-w-0 leading-tight">
+              <p className="truncate text-[13px] font-medium text-foreground">
+                {user?.fullName ?? user?.username}
+              </p>
+              <p className="truncate text-[11px] text-muted-foreground">
+                {isSuperAdmin ? "Главный аккаунт" : user?.branchName}
+              </p>
+            </div>
           </div>
           <button
             onClick={toggle}
-            className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
           >
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {theme === "dark" ? <Sun className="h-[15px] w-[15px]" /> : <Moon className="h-[15px] w-[15px]" />}
             {theme === "dark" ? "Светлая тема" : "Тёмная тема"}
           </button>
           {isSuperAdmin && (
             <button
               onClick={() => setPasswordDialogOpen(true)}
-              className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
             >
-              <KeyRound className="h-4 w-4" />
+              <KeyRound className="h-[15px] w-[15px]" />
               Сменить пароль
             </button>
           )}
           <button
             onClick={logout}
-            className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-[15px] w-[15px]" />
             Выйти
           </button>
         </div>
