@@ -5,7 +5,7 @@ import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import EmptyState from "@/components/EmptyState";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -63,48 +63,44 @@ export default function DebtorsPage() {
         </CardContent>
       </Card>
 
-      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle>Общая задолженность</CardTitle>
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50 text-red-600">
-              <AlertTriangle className="h-4 w-4" />
+      <Card className="mb-6">
+        <div className="grid grid-cols-1 divide-y divide-border lg:grid-cols-3 lg:divide-y-0 lg:divide-x">
+          <div className="p-5">
+            <div className="mb-2.5 flex items-center gap-2">
+              <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+              <span className="text-[12.5px] font-medium text-muted-foreground">Общая задолженность</span>
             </div>
-          </CardHeader>
-          <CardContent>
             {isLoading ? (
               <Skeleton className="h-8 w-24" />
             ) : (
               <>
-                <div className="text-2xl font-semibold text-destructive">
+                <div className="text-[26px] font-semibold tabular-nums tracking-tight text-destructive">
                   {(data?.totalDebt ?? 0).toLocaleString("ru-RU")}
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">{data?.items.length ?? 0} незакрытых записей</p>
+                <p className="mt-1.5 text-xs text-muted-foreground">{data?.items.length ?? 0} незакрытых записей</p>
               </>
             )}
-          </CardContent>
-        </Card>
+          </div>
 
-        <Card className="lg:col-span-2">
-          <CardHeader className="pb-2">
-            <CardTitle>Задолженность по филиалам</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1.5">
-            {(data?.byBranch ?? []).length === 0 ? (
-              <p className="text-xs text-muted-foreground">Нет данных</p>
-            ) : (
-              data?.byBranch.map((b) => (
-                <div key={b.name} className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    {b.name} <span className="text-xs">· {b.count}</span>
-                  </span>
-                  <span className="font-medium text-foreground">{b.total.toLocaleString("ru-RU")}</span>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
-      </div>
+          <div className="p-5 lg:col-span-2">
+            <span className="text-[12.5px] font-medium text-muted-foreground">Задолженность по филиалам</span>
+            <div className="mt-2.5 space-y-1.5">
+              {(data?.byBranch ?? []).length === 0 ? (
+                <p className="text-xs text-muted-foreground">Нет данных</p>
+              ) : (
+                data?.byBranch.map((b) => (
+                  <div key={b.name} className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      {b.name} <span className="text-xs">· {b.count}</span>
+                    </span>
+                    <span className="tabular-nums font-medium text-foreground">{b.total.toLocaleString("ru-RU")}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      </Card>
 
       {isLoading ? (
         <div className="space-y-2">

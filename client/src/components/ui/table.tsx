@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (
-    <div className="w-full animate-fade-in overflow-auto rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+    <div className="w-full animate-fade-in overflow-auto rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgba(16,24,40,0.03)]">
       <table ref={ref} className={cn("w-full caption-bottom text-sm", className)} {...props} />
     </div>
   )
@@ -12,7 +12,7 @@ Table.displayName = "Table";
 
 const TableHeader = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes<HTMLTableSectionElement>>(
   ({ className, ...props }, ref) => (
-    <thead ref={ref} className={cn("bg-muted/70 [&_tr]:border-b border-border", className)} {...props} />
+    <thead ref={ref} className={cn("[&_tr]:border-b border-border", className)} {...props} />
   )
 );
 TableHeader.displayName = "TableHeader";
@@ -28,7 +28,7 @@ const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTML
   ({ className, ...props }, ref) => (
     <tr
       ref={ref}
-      className={cn("border-b border-border transition-colors hover:bg-muted/50", className)}
+      className={cn("border-b border-border transition-colors hover:bg-muted/40", className)}
       {...props}
     />
   )
@@ -39,7 +39,10 @@ const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<
   ({ className, ...props }, ref) => (
     <th
       ref={ref}
-      className={cn("h-10 px-4 text-left align-middle font-medium text-muted-foreground whitespace-nowrap", className)}
+      className={cn(
+        "h-10 px-4 text-left align-middle text-[11px] font-semibold uppercase tracking-wide text-muted-foreground/80 whitespace-nowrap",
+        className
+      )}
       {...props}
     />
   )
@@ -48,7 +51,7 @@ TableHead.displayName = "TableHead";
 
 const TableCell = React.forwardRef<HTMLTableCellElement, React.TdHTMLAttributes<HTMLTableCellElement>>(
   ({ className, ...props }, ref) => (
-    <td ref={ref} className={cn("p-4 align-middle whitespace-nowrap", className)} {...props} />
+    <td ref={ref} className={cn("p-4 align-middle whitespace-nowrap tabular-nums", className)} {...props} />
   )
 );
 TableCell.displayName = "TableCell";

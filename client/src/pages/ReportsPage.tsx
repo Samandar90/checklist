@@ -14,7 +14,7 @@ import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -402,73 +402,65 @@ export default function ReportsPage() {
       </Card>
 
       {/* Сводка */}
-      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Общая выручка</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-semibold text-foreground">
+      <Card className="mb-6">
+        <div className="grid grid-cols-1 divide-y divide-border lg:grid-cols-4 lg:divide-y-0 lg:divide-x">
+          <div className="p-5">
+            <span className="text-[12.5px] font-medium text-muted-foreground">Общая выручка</span>
+            <div className="mt-2.5 text-[26px] font-semibold tabular-nums tracking-tight text-foreground">
               {(summary?.totalRevenue ?? 0).toLocaleString("ru-RU")}
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">{summary?.totalReports ?? 0} отчётов</p>
-          </CardContent>
-        </Card>
+            <p className="mt-1.5 text-xs text-muted-foreground">{summary?.totalReports ?? 0} отчётов</p>
+          </div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Выручка по филиалам</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1.5">
-            {(summary?.byBranch ?? []).length === 0 ? (
-              <p className="text-xs text-muted-foreground">Нет данных</p>
-            ) : (
-              summary?.byBranch.map((b) => (
-                <div key={b.name} className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{b.name}</span>
-                  <span className="font-medium text-foreground">{b.total.toLocaleString("ru-RU")}</span>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
+          <div className="p-5">
+            <span className="text-[12.5px] font-medium text-muted-foreground">По филиалам</span>
+            <div className="mt-2.5 space-y-1.5">
+              {(summary?.byBranch ?? []).length === 0 ? (
+                <p className="text-xs text-muted-foreground">Нет данных</p>
+              ) : (
+                summary?.byBranch.map((b) => (
+                  <div key={b.name} className="flex justify-between text-sm">
+                    <span className="truncate text-muted-foreground">{b.name}</span>
+                    <span className="tabular-nums font-medium text-foreground">{b.total.toLocaleString("ru-RU")}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Выручка по администраторам</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1.5">
-            {(summary?.byAdmin ?? []).length === 0 ? (
-              <p className="text-xs text-muted-foreground">Нет данных</p>
-            ) : (
-              summary?.byAdmin.map((a) => (
-                <div key={a.name} className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{a.name}</span>
-                  <span className="font-medium text-foreground">{a.total.toLocaleString("ru-RU")}</span>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
+          <div className="p-5">
+            <span className="text-[12.5px] font-medium text-muted-foreground">По администраторам</span>
+            <div className="mt-2.5 space-y-1.5">
+              {(summary?.byAdmin ?? []).length === 0 ? (
+                <p className="text-xs text-muted-foreground">Нет данных</p>
+              ) : (
+                summary?.byAdmin.map((a) => (
+                  <div key={a.name} className="flex justify-between text-sm">
+                    <span className="truncate text-muted-foreground">{a.name}</span>
+                    <span className="tabular-nums font-medium text-foreground">{a.total.toLocaleString("ru-RU")}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Выручка по источникам</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1.5">
-            {(summary?.bySource ?? []).length === 0 ? (
-              <p className="text-xs text-muted-foreground">Нет данных</p>
-            ) : (
-              summary?.bySource.map((s) => (
-                <div key={s.name} className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{s.name}</span>
-                  <span className="font-medium text-foreground">{s.total.toLocaleString("ru-RU")}</span>
-                </div>
-              ))
-            )}
-          </CardContent>
-        </Card>
-      </div>
+          <div className="p-5">
+            <span className="text-[12.5px] font-medium text-muted-foreground">По источникам</span>
+            <div className="mt-2.5 space-y-1.5">
+              {(summary?.bySource ?? []).length === 0 ? (
+                <p className="text-xs text-muted-foreground">Нет данных</p>
+              ) : (
+                summary?.bySource.map((s) => (
+                  <div key={s.name} className="flex justify-between text-sm">
+                    <span className="truncate text-muted-foreground">{s.name}</span>
+                    <span className="tabular-nums font-medium text-foreground">{s.total.toLocaleString("ru-RU")}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      </Card>
 
       {/* Таблица */}
       {isLoading ? (

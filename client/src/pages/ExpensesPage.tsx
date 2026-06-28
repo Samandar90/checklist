@@ -241,12 +241,12 @@ export default function ExpensesPage() {
       </Card>
 
       <Card className="mb-6 max-w-xs">
-        <CardHeader className="pb-2">
-          <CardTitle>Сумма расходов</CardTitle>
+        <CardHeader className="pb-1">
+          <CardTitle className="text-[12.5px]">Сумма расходов</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-semibold text-foreground">{total.toLocaleString("ru-RU")}</div>
-          <p className="mt-1 text-xs text-muted-foreground">{(expenses ?? []).length} записей</p>
+          <div className="text-[26px] font-semibold tabular-nums tracking-tight text-foreground">{total.toLocaleString("ru-RU")}</div>
+          <p className="mt-1.5 text-xs text-muted-foreground">{(expenses ?? []).length} записей</p>
         </CardContent>
       </Card>
 

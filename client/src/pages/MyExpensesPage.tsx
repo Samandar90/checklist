@@ -138,10 +138,10 @@ export default function MyExpensesPage() {
 
       <Card className="mb-6 max-w-xs">
         <CardHeader className="pb-2">
-          <CardTitle>Мои расходы</CardTitle>
+          <CardTitle className="text-[12.5px]">Мои расходы</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-semibold text-foreground">{total.toLocaleString("ru-RU")}</div>
+          <div className="text-[26px] font-semibold tabular-nums tracking-tight text-foreground">{total.toLocaleString("ru-RU")}</div>
           <p className="mt-1 text-xs text-muted-foreground">{(expenses ?? []).length} записей</p>
         </CardContent>
       </Card>
