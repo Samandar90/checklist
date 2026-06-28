@@ -6,7 +6,6 @@ import {
   Wallet,
   ClipboardList,
   Receipt,
-  CalendarDays,
   TrendingUp,
   TrendingDown,
   PiggyBank,
@@ -42,6 +41,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useDashboard } from "@/hooks/useDashboard";
 import { useBranches } from "@/hooks/useBranches";
+import { useCountUp } from "@/hooks/useCountUp";
 import { useTheme } from "@/contexts/ThemeContext";
 import { DashboardFilters } from "@/types";
 
@@ -74,19 +74,44 @@ function rangeForPreset(key: PresetKey): { from: string; to: string } {
   if (key === "month") {
     return { from: isoDay(new Date(today.getFullYear(), today.getMonth(), 1)), to };
   }
-  // 30d default
   const f = new Date(today);
   f.setDate(f.getDate() - 29);
   return { from: isoDay(f), to };
 }
 
-const fmt = (n: number) => n.toLocaleString("ru-RU");
+const fmt = (n: number) => Math.round(n).toLocaleString("ru-RU");
 
-const BAR_COLORS = ["#6366f1", "#0ea5e9", "#f59e0b", "#10b981", "#ec4899", "#8b5cf6", "#ef4444"];
+// Monochrome-leaning palette anchored on the brand accent, fanning out to a few
+// distinguishable hues so multi-series charts stay legible without looking like
+// a generic rainbow template.
+const BAR_COLORS = ["#5b54f0", "#0ea5e9", "#f59e0b", "#10b981", "#ec4899", "#8b5cf6", "#ef4444"];
 
 function shortDay(iso: string) {
   const d = new Date(iso);
   return d.toLocaleDateString("ru-RU", { day: "2-digit", month: "short" });
+}
+
+function CountUp({ value, className }: { value: number; className?: string }) {
+  const animated = useCountUp(value);
+  return <span className={className}>{fmt(animated)}</span>;
+}
+
+/** Tiny inline trend line used inside hero stat tiles — no axes, just a vibe. */
+function Sparkline({ data, color }: { data: { total: number }[]; color: string }) {
+  if (data.length < 2) return null;
+  return (
+    <ResponsiveContainer width="100%" height={40}>
+      <AreaChart data={data} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
+        <defs>
+          <linearGradient id="spark" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity={0.3} />
+            <stop offset="100%" stopColor={color} stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <Area type="monotone" dataKey="total" stroke={color} strokeWidth={1.75} fill="url(#spark)" isAnimationActive={false} />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
 }
 
 export default function DashboardPage() {
@@ -105,42 +130,38 @@ export default function DashboardPage() {
   const { data: branches } = useBranches();
   const { theme } = useTheme();
 
-  const gridStroke = theme === "dark" ? "#262a38" : "#eef0f4";
+  const gridStroke = theme === "dark" ? "#23232b" : "#ececf0";
+  const tickColor = theme === "dark" ? "#8e8e99" : "#9a9aa5";
   const tooltipStyle = {
     borderRadius: 12,
-    border: `1px solid ${theme === "dark" ? "#262a38" : "#e2e8f0"}`,
-    background: theme === "dark" ? "#13151e" : "#ffffff",
-    color: theme === "dark" ? "#e7e8f0" : "inherit",
+    border: `1px solid ${theme === "dark" ? "#24242c" : "#e6e6ea"}`,
+    background: theme === "dark" ? "#111114" : "#ffffff",
+    color: theme === "dark" ? "#ededf0" : "inherit",
     fontSize: 13,
+    boxShadow: "0 8px 24px rgba(16,24,40,0.08)",
   };
-  const chartCursor = { fill: theme === "dark" ? "#1a1d28" : "#f1f5f9" };
+  const chartCursor = { fill: theme === "dark" ? "#18181d" : "#f5f5f7" };
 
   const delta = data?.previous.deltaPct ?? null;
+  const timeSeries = data?.timeSeries ?? [];
 
-  const kpis = [
-    {
-      label: preset === "today" ? "Выручка за сегодня" : "Выручка за период",
-      value: fmt(data?.revenue ?? 0),
-      icon: Wallet,
-      tint: "bg-emerald-50 text-emerald-600",
-      delta: true,
-    },
+  const secondaryKpis = [
     {
       label: "Отчётов",
-      value: fmt(data?.reports ?? 0),
+      value: data?.reports ?? 0,
       icon: ClipboardList,
       tint: "bg-violet-50 text-violet-600",
     },
     {
       label: "Средний чек",
-      value: fmt(Math.round(data?.avgCheck ?? 0)),
+      value: Math.round(data?.avgCheck ?? 0),
       icon: Receipt,
       tint: "bg-amber-50 text-amber-600",
     },
     {
       label: "Выручка сегодня",
-      value: fmt(data?.today.revenue ?? 0),
-      icon: CalendarDays,
+      value: data?.today.revenue ?? 0,
+      icon: Wallet,
       tint: "bg-sky-50 text-sky-600",
       hint: `${data?.today.reports ?? 0} отчётов`,
     },
@@ -149,27 +170,28 @@ export default function DashboardPage() {
   const finance = [
     {
       label: "Чистая прибыль",
-      value: fmt(data?.netProfit ?? 0),
+      value: data?.netProfit ?? 0,
       icon: PiggyBank,
       tint: "bg-emerald-50 text-emerald-600",
       negative: (data?.netProfit ?? 0) < 0,
     },
     {
       label: "Расходы",
-      value: fmt(data?.totalExpenses ?? 0),
+      value: data?.totalExpenses ?? 0,
       icon: ArrowDownCircle,
       tint: "bg-rose-50 text-rose-600",
     },
     {
       label: "Задолженность",
-      value: fmt(data?.totalDebt ?? 0),
+      value: data?.totalDebt ?? 0,
       icon: AlertTriangle,
       tint: "bg-amber-50 text-amber-600",
       negative: (data?.totalDebt ?? 0) > 0,
     },
     {
       label: "Загрузка номеров",
-      value: `${(data?.occupancy ?? 0).toFixed(1)}%`,
+      value: data?.occupancy ?? 0,
+      suffix: "%",
       icon: Percent,
       tint: "bg-sky-50 text-sky-600",
     },
@@ -181,26 +203,25 @@ export default function DashboardPage() {
     { label: "Номера", value: data?.totals.rooms ?? 0, icon: BedDouble, tint: "bg-sky-50 text-sky-600" },
   ];
 
+  const maxAdmin = Math.max(1, ...(data?.byAdmin ?? []).map((a) => a.total));
+
   return (
     <div>
-      <PageHeader
-        title="Дашборд"
-        description="Ежедневная и периодическая аналитика по сети отелей."
-      />
+      <PageHeader title="Дашборд" description="Ежедневная и периодическая аналитика по сети отелей." />
 
-      {/* Панель фильтров */}
-      <Card className="mb-6">
-        <CardContent className="flex flex-wrap items-end gap-3 p-4">
-          <div className="flex flex-wrap gap-1.5">
+      {/* Панель фильтров — flush, без коробки */}
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-border pb-5">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex gap-1 rounded-full border border-border bg-secondary/60 p-1">
             {presets.map((p) => (
               <button
                 key={p.key}
                 onClick={() => setPreset(p.key)}
                 className={cn(
-                  "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                  "rounded-full px-3 py-1.5 text-[13px] font-medium transition-all",
                   preset === p.key
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-muted-foreground hover:text-foreground"
+                    ? "bg-card text-foreground shadow-[0_1px_2px_rgba(16,24,40,0.08)]"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 {p.label}
@@ -232,28 +253,25 @@ export default function DashboardPage() {
               </div>
             </div>
           )}
+        </div>
 
-          <div className="w-56 space-y-1.5">
-            <Label>Филиал</Label>
-            <Select
-              value={branchId ?? "all"}
-              onValueChange={(v) => setBranchId(v === "all" ? undefined : v)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Все филиалы" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Все филиалы</SelectItem>
-                {(branches ?? []).map((b) => (
-                  <SelectItem key={b.id} value={b.id}>
-                    {b.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+        <div className="w-56 space-y-1.5">
+          <Label>Филиал</Label>
+          <Select value={branchId ?? "all"} onValueChange={(v) => setBranchId(v === "all" ? undefined : v)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Все филиалы" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все филиалы</SelectItem>
+              {(branches ?? []).map((b) => (
+                <SelectItem key={b.id} value={b.id}>
+                  {b.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
       {isError && (
         <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
@@ -261,42 +279,61 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Метрики */}
-      <Card className="mb-6">
-        <div className="grid grid-cols-1 divide-y divide-border sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4 lg:divide-x">
-          {kpis.map((c) => (
-            <div key={c.label} className="p-5">
+      {/* Герой-метрика: выручка крупно, со спарклайном */}
+      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+        <Card className="relative overflow-hidden">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Wallet className="h-3.5 w-3.5" />
+              <span className="text-[12.5px] font-medium">
+                {preset === "today" ? "Выручка за сегодня" : "Выручка за период"}
+              </span>
+            </div>
+            {isLoading ? (
+              <Skeleton className="mt-3 h-9 w-36" />
+            ) : (
+              <div className="mt-1.5 flex items-baseline gap-2">
+                <CountUp value={data?.revenue ?? 0} className="text-[34px] font-semibold tabular-nums tracking-tight text-foreground" />
+                {delta !== null && (
+                  <span
+                    className={cn(
+                      "flex items-center gap-0.5 text-[12.5px] font-semibold",
+                      delta >= 0 ? "text-emerald-600" : "text-destructive"
+                    )}
+                  >
+                    {delta >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+                    {Math.abs(delta).toFixed(1)}%
+                  </span>
+                )}
+              </div>
+            )}
+            <div className="mt-3 -mx-1">
+              {!isLoading && timeSeries.length >= 2 && <Sparkline data={timeSeries} color="#5b54f0" />}
+            </div>
+          </CardContent>
+        </Card>
+
+        {secondaryKpis.map((c) => (
+          <Card key={c.label}>
+            <CardContent className="p-5">
               <div className="mb-2.5 flex items-center gap-2">
-                <c.icon className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className={cn("flex h-6 w-6 items-center justify-center rounded-lg", c.tint)}>
+                  <c.icon className="h-3.5 w-3.5" />
+                </div>
                 <span className="text-[12.5px] font-medium text-muted-foreground">{c.label}</span>
               </div>
               {isLoading ? (
-                <Skeleton className="h-8 w-24" />
+                <Skeleton className="h-8 w-20" />
               ) : (
                 <>
-                  <div className="text-[26px] font-semibold tabular-nums tracking-tight text-foreground">{c.value}</div>
-                  {c.delta && delta !== null && (
-                    <p
-                      className={cn(
-                        "mt-1.5 flex items-center gap-1 text-xs font-medium",
-                        delta >= 0 ? "text-emerald-600" : "text-destructive"
-                      )}
-                    >
-                      {delta >= 0 ? (
-                        <TrendingUp className="h-3.5 w-3.5" />
-                      ) : (
-                        <TrendingDown className="h-3.5 w-3.5" />
-                      )}
-                      {Math.abs(delta).toFixed(1)}% к прошлому периоду
-                    </p>
-                  )}
+                  <CountUp value={c.value} className="text-[26px] font-semibold tabular-nums tracking-tight text-foreground" />
                   {c.hint && <p className="mt-1.5 text-xs text-muted-foreground">{c.hint}</p>}
                 </>
               )}
-            </div>
-          ))}
-        </div>
-      </Card>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
       {/* Финансы */}
       <Card className="mb-6">
@@ -310,13 +347,9 @@ export default function DashboardPage() {
               {isLoading ? (
                 <Skeleton className="h-8 w-24" />
               ) : (
-                <div
-                  className={cn(
-                    "text-[26px] font-semibold tabular-nums tracking-tight",
-                    c.negative ? "text-destructive" : "text-foreground"
-                  )}
-                >
-                  {c.value}
+                <div className={cn("text-[26px] font-semibold tabular-nums tracking-tight", c.negative ? "text-destructive" : "text-foreground")}>
+                  <CountUp value={c.value} />
+                  {c.suffix}
                 </div>
               )}
             </div>
@@ -345,35 +378,40 @@ export default function DashboardPage() {
 
       {/* Динамика выручки */}
       <Card className="mb-6">
-        <CardHeader className="pb-2">
-          <CardTitle>Динамика выручки</CardTitle>
+        <CardHeader className="flex-row items-baseline justify-between space-y-0 pb-2">
+          <CardTitle className="text-[13px] font-medium text-foreground">Динамика выручки</CardTitle>
+          {!isLoading && timeSeries.length > 0 && (
+            <span className="text-xs text-muted-foreground">
+              {shortDay(timeSeries[0].date)} – {shortDay(timeSeries[timeSeries.length - 1].date)}
+            </span>
+          )}
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <Skeleton className="h-64 w-full" />
-          ) : (data?.timeSeries ?? []).length === 0 ? (
+          ) : timeSeries.length === 0 ? (
             <p className="py-12 text-center text-sm text-muted-foreground">Нет данных за выбранный период</p>
           ) : (
             <ResponsiveContainer width="100%" height={280}>
-              <AreaChart data={data?.timeSeries} margin={{ left: 8, right: 8, top: 8 }}>
+              <AreaChart data={timeSeries} margin={{ left: 8, right: 8, top: 8 }}>
                 <defs>
                   <linearGradient id="rev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#6366f1" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
+                    <stop offset="0%" stopColor="#5b54f0" stopOpacity={0.32} />
+                    <stop offset="100%" stopColor="#5b54f0" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
                 <XAxis
                   dataKey="date"
                   tickFormatter={shortDay}
-                  tick={{ fontSize: 11, fill: "#94a3b8" }}
+                  tick={{ fontSize: 11, fill: tickColor }}
                   tickLine={false}
                   axisLine={false}
                   minTickGap={24}
                 />
                 <YAxis
                   tickFormatter={(v) => (v >= 1000 ? `${Math.round(v / 1000)}к` : String(v))}
-                  tick={{ fontSize: 11, fill: "#94a3b8" }}
+                  tick={{ fontSize: 11, fill: tickColor }}
                   tickLine={false}
                   axisLine={false}
                   width={44}
@@ -383,7 +421,14 @@ export default function DashboardPage() {
                   labelFormatter={(l) => shortDay(String(l))}
                   contentStyle={tooltipStyle}
                 />
-                <Area type="monotone" dataKey="total" stroke="#6366f1" strokeWidth={2} fill="url(#rev)" />
+                <Area
+                  type="monotone"
+                  dataKey="total"
+                  stroke="#5b54f0"
+                  strokeWidth={2}
+                  fill="url(#rev)"
+                  activeDot={{ r: 4, strokeWidth: 2, stroke: "#fff" }}
+                />
               </AreaChart>
             </ResponsiveContainer>
           )}
@@ -394,7 +439,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle>Выручка по филиалам</CardTitle>
+            <CardTitle className="text-[13px] font-medium text-foreground">Выручка по филиалам</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -409,16 +454,12 @@ export default function DashboardPage() {
                   <YAxis
                     type="category"
                     dataKey="name"
-                    tick={{ fontSize: 12, fill: "#64748b" }}
+                    tick={{ fontSize: 12, fill: tickColor }}
                     tickLine={false}
                     axisLine={false}
                     width={110}
                   />
-                  <Tooltip
-                    formatter={(v: number) => [fmt(v), "Выручка"]}
-                    cursor={chartCursor}
-                    contentStyle={tooltipStyle}
-                  />
+                  <Tooltip formatter={(v: number) => [fmt(v), "Выручка"]} cursor={chartCursor} contentStyle={tooltipStyle} />
                   <Bar dataKey="total" radius={[0, 6, 6, 0]} barSize={22}>
                     {(data?.byBranch ?? []).map((_, i) => (
                       <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
@@ -432,7 +473,7 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle>Выручка по источникам</CardTitle>
+            <CardTitle className="text-[13px] font-medium text-foreground">Выручка по источникам</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -447,16 +488,12 @@ export default function DashboardPage() {
                   <YAxis
                     type="category"
                     dataKey="name"
-                    tick={{ fontSize: 12, fill: "#64748b" }}
+                    tick={{ fontSize: 12, fill: tickColor }}
                     tickLine={false}
                     axisLine={false}
                     width={110}
                   />
-                  <Tooltip
-                    formatter={(v: number) => [fmt(v), "Выручка"]}
-                    cursor={chartCursor}
-                    contentStyle={tooltipStyle}
-                  />
+                  <Tooltip formatter={(v: number) => [fmt(v), "Выручка"]} cursor={chartCursor} contentStyle={tooltipStyle} />
                   <Bar dataKey="total" radius={[0, 6, 6, 0]} barSize={22}>
                     {(data?.bySource ?? []).map((_, i) => (
                       <Cell key={i} fill={BAR_COLORS[(i + 2) % BAR_COLORS.length]} />
@@ -470,22 +507,30 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle>Топ администраторов</CardTitle>
+            <CardTitle className="text-[13px] font-medium text-foreground">Топ администраторов</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2.5">
+          <CardContent className="space-y-3">
             {isLoading ? (
               <Skeleton className="h-40 w-full" />
             ) : (data?.byAdmin ?? []).length === 0 ? (
               <p className="py-12 text-center text-sm text-muted-foreground">Нет данных</p>
             ) : (
               data?.byAdmin.map((a, i) => (
-                <div key={a.name} className="flex items-center gap-3">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-muted-foreground">
-                    {i + 1}
-                  </span>
-                  <span className="flex-1 truncate text-sm text-foreground">{a.name}</span>
-                  <span className="text-xs text-muted-foreground">{a.count} шт.</span>
-                  <span className="w-28 text-right text-sm font-medium text-foreground">{fmt(a.total)}</span>
+                <div key={a.name}>
+                  <div className="mb-1 flex items-center gap-2.5">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-secondary text-[10px] font-semibold text-muted-foreground">
+                      {i + 1}
+                    </span>
+                    <span className="flex-1 truncate text-sm text-foreground">{a.name}</span>
+                    <span className="text-xs text-muted-foreground">{a.count} шт.</span>
+                    <span className="w-24 shrink-0 text-right text-sm font-medium tabular-nums text-foreground">{fmt(a.total)}</span>
+                  </div>
+                  <div className="ml-7 h-1.5 overflow-hidden rounded-full bg-secondary">
+                    <div
+                      className="h-full rounded-full bg-primary/70 transition-all duration-500"
+                      style={{ width: `${Math.max(4, Math.round((a.total / maxAdmin) * 100))}%` }}
+                    />
+                  </div>
                 </div>
               ))
             )}
@@ -494,9 +539,9 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle>По способу оплаты</CardTitle>
+            <CardTitle className="text-[13px] font-medium text-foreground">По способу оплаты</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2.5">
+          <CardContent className="space-y-3">
             {isLoading ? (
               <Skeleton className="h-40 w-full" />
             ) : (data?.byPayment ?? []).length === 0 ? (
@@ -509,13 +554,13 @@ export default function DashboardPage() {
                   <div key={p.name}>
                     <div className="mb-1 flex justify-between text-sm">
                       <span className="text-muted-foreground">{p.name}</span>
-                      <span className="font-medium text-foreground">
+                      <span className="font-medium tabular-nums text-foreground">
                         {fmt(p.total)} <span className="text-muted-foreground">· {pct}%</span>
                       </span>
                     </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-secondary">
+                    <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
                       <div
-                        className="h-full rounded-full"
+                        className="h-full rounded-full transition-all duration-500"
                         style={{ width: `${pct}%`, backgroundColor: BAR_COLORS[i % BAR_COLORS.length] }}
                       />
                     </div>
@@ -528,7 +573,7 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle>Расходы по категориям</CardTitle>
+            <CardTitle className="text-[13px] font-medium text-foreground">Расходы по категориям</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -543,16 +588,12 @@ export default function DashboardPage() {
                   <YAxis
                     type="category"
                     dataKey="name"
-                    tick={{ fontSize: 12, fill: "#64748b" }}
+                    tick={{ fontSize: 12, fill: tickColor }}
                     tickLine={false}
                     axisLine={false}
                     width={110}
                   />
-                  <Tooltip
-                    formatter={(v: number) => [fmt(v), "Расход"]}
-                    cursor={chartCursor}
-                    contentStyle={tooltipStyle}
-                  />
+                  <Tooltip formatter={(v: number) => [fmt(v), "Расход"]} cursor={chartCursor} contentStyle={tooltipStyle} />
                   <Bar dataKey="total" radius={[0, 6, 6, 0]} barSize={22}>
                     {(data?.byExpense ?? []).map((_, i) => (
                       <Cell key={i} fill={BAR_COLORS[(i + 4) % BAR_COLORS.length]} />
