@@ -58,6 +58,7 @@ import { useExpenses } from "@/hooks/useExpenses";
 import { useAudit } from "@/hooks/useAudit";
 import { useCountUp } from "@/hooks/useCountUp";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useActiveBranch } from "@/contexts/BranchContext";
 import { DashboardFilters } from "@/types";
 
 function isoDay(d: Date) {
@@ -183,7 +184,9 @@ const quickActions = [
 export default function DashboardPage() {
   const [preset, setPreset] = useState<PresetKey>("30d");
   const [custom, setCustom] = useState<{ from: string; to: string }>(() => rangeForPreset("30d"));
-  const [branchId, setBranchId] = useState<string | undefined>(undefined);
+  const { activeBranchId, setActiveBranchId } = useActiveBranch();
+  const branchId = activeBranchId;
+  const setBranchId = setActiveBranchId;
 
   const range = preset === "custom" ? custom : rangeForPreset(preset);
   const filters: DashboardFilters = useMemo(

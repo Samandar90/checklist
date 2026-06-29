@@ -23,6 +23,7 @@ import PreferencesDialog from "@/components/PreferencesDialog";
 import ShortcutsDialog from "@/components/ShortcutsDialog";
 import CommandPalette from "@/components/CommandPalette";
 import NotificationCenter from "@/components/NotificationCenter";
+import BranchSwitcher from "@/components/BranchSwitcher";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useRecentPages } from "@/hooks/useRecentPages";
@@ -221,6 +222,8 @@ export default function Layout() {
           </div>
 
           <div className="flex items-center gap-1.5">
+            {isSuperAdmin && <BranchSwitcher />}
+
             <button
               onClick={() => setPaletteOpen(true)}
               className="flex items-center gap-2 rounded-lg border border-border px-2.5 py-1.5 text-[12.5px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"

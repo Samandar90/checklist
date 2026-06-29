@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { BranchProvider } from "@/contexts/BranchContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Layout from "@/components/Layout";
 import LoginPage from "@/pages/LoginPage";
@@ -26,12 +27,14 @@ const MyExpensesPage = lazy(() => import("@/pages/MyExpensesPage"));
 const CashRegisterPage = lazy(() => import("@/pages/CashRegisterPage"));
 const SmartAssignPage = lazy(() => import("@/pages/SmartAssignPage"));
 const TimelinePage = lazy(() => import("@/pages/TimelinePage"));
+const WorkspacePage = lazy(() => import("@/pages/WorkspacePage"));
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
 
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <BranchProvider>
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
@@ -46,6 +49,7 @@ export default function App() {
             <Route element={<ProtectedRoute allow={["SUPER_ADMIN"]} />}>
               <Route element={<Layout />}>
                 <Route path="/" element={<DashboardPage />} />
+                <Route path="/workspace" element={<WorkspacePage />} />
                 <Route path="/branches" element={<BranchesPage />} />
                 <Route path="/admins" element={<AdminsPage />} />
                 <Route path="/rooms" element={<RoomsPage />} />
@@ -78,6 +82,7 @@ export default function App() {
             </Route>
           </Routes>
         </Suspense>
+        </BranchProvider>
       </AuthProvider>
     </BrowserRouter>
   );

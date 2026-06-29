@@ -16,6 +16,7 @@ import {
   BarChart3,
   Wand2,
   GanttChartSquare,
+  LayoutGrid,
 } from "lucide-react";
 
 export interface NavItem {
@@ -30,7 +31,14 @@ export interface NavSection {
 }
 
 export const superAdminSections: NavSection[] = [
-  { label: null, items: [{ to: "/", label: "Дашборд", icon: LayoutDashboard }, { to: "/analytics", label: "Аналитика", icon: BarChart3 }] },
+  {
+    label: null,
+    items: [
+      { to: "/", label: "Дашборд", icon: LayoutDashboard },
+      { to: "/workspace", label: "Воркспейс", icon: LayoutGrid },
+      { to: "/analytics", label: "Аналитика", icon: BarChart3 },
+    ],
+  },
   {
     label: "Операции",
     items: [
