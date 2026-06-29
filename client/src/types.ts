@@ -70,6 +70,9 @@ export type PaymentMethod = (typeof paymentMethods)[number];
 export const paymentStatuses = ["Оплачено", "Частично", "Долг"] as const;
 export type PaymentStatus = (typeof paymentStatuses)[number];
 
+export const bookingStatuses = ["RESERVED", "CHECKED_IN", "CHECKED_OUT", "CANCELLED", "NO_SHOW"] as const;
+export type BookingStatus = (typeof bookingStatuses)[number];
+
 export interface MonthlyReport {
   id: string;
   date: string;
@@ -83,6 +86,7 @@ export interface MonthlyReport {
   currency: string;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
+  status: BookingStatus;
   paidAmount?: number | null;
   notes?: string | null;
   createdAt: string;
@@ -150,6 +154,7 @@ export interface AuditLog {
 
 export interface AuditFilters {
   entity?: string;
+  entityId?: string;
   action?: string;
   from?: string;
   to?: string;

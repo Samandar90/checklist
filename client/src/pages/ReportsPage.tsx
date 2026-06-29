@@ -3,7 +3,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, ClipboardList, Download, X, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, ClipboardList, Download, X, Search, Eye, LogIn, LogOut, Ban, UserX, Columns3, BookmarkPlus, Bookmark } from "lucide-react";
 
 import PageHeader from "@/components/PageHeader";
 import EmptyState from "@/components/EmptyState";
@@ -38,9 +38,15 @@ import {
   useCreateReport,
   useUpdateReport,
   useDeleteReport,
+  useBulkReportAction,
+  BulkBookingAction,
 } from "@/hooks/useReports";
+import { useColumnVisibility } from "@/hooks/useColumnVisibility";
+import { useSavedViews } from "@/hooks/useSavedViews";
 
 import { Badge } from "@/components/ui/badge";
+import BookingStatusBadge from "@/components/BookingStatusBadge";
+import BookingDetailsDrawer from "@/components/BookingDetailsDrawer";
 import { MonthlyReport, ReportFilters, paymentMethods, paymentStatuses } from "@/types";
 import { getErrorMessage } from "@/lib/api";
 import {
@@ -53,6 +59,26 @@ import {
   addDaysIso,
 } from "@/lib/utils";
 import { exportReportsToCsv } from "@/lib/csv";
+
+const COLUMNS = [
+  { id: "guest", label: "Гость" },
+  { id: "branch", label: "Филиал" },
+  { id: "admin", label: "Администратор" },
+  { id: "room", label: "Номер" },
+  { id: "source", label: "Источник" },
+  { id: "price", label: "Цена" },
+  { id: "payment", label: "Оплата" },
+  { id: "status", label: "Статус" },
+  { id: "notes", label: "Заметки" },
+];
+
+const BULK_ACTIONS: { action: BulkBookingAction; label: string; icon: typeof LogIn; destructive?: boolean }[] = [
+  { action: "CHECK_IN", label: "Заселить", icon: LogIn },
+  { action: "CHECK_OUT", label: "Выселить", icon: LogOut },
+  { action: "NO_SHOW", label: "Не заехал", icon: UserX },
+  { action: "CANCEL", label: "Отменить", icon: Ban },
+  { action: "DELETE", label: "Удалить", icon: Trash2, destructive: true },
+];
 
 const currencies = ["UZS", "USD", "EUR"];
 
@@ -132,10 +158,18 @@ export default function ReportsPage() {
   const createReport = useCreateReport();
   const updateReport = useUpdateReport();
   const deleteReport = useDeleteReport();
+  const bulkAction = useBulkReportAction();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<MonthlyReport | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<MonthlyReport | null>(null);
+  const [viewing, setViewing] = useState<MonthlyReport | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [columnsMenuOpen, setColumnsMenuOpen] = useState(false);
+  const [viewsMenuOpen, setViewsMenuOpen] = useState(false);
+  const columns = useColumnVisibility("reports-columns", COLUMNS.map((c) => c.id));
+  const savedViews = useSavedViews<ReportFilters>("reports-saved-views");
 
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportFormSchema),
@@ -215,7 +249,7 @@ export default function ReportsPage() {
   async function onSubmit(values: ReportFormValues) {
     try {
       if (editing) {
-        await updateReport.mutateAsync({ id: editing.id, data: values });
+        await updateReport.mutateAsync({ id: editing.id, data: { ...values, status: editing.status } });
         toast.success("Отчёт обновлён");
       } else {
         await createReport.mutateAsync(values);
@@ -238,17 +272,66 @@ export default function ReportsPage() {
     }
   }
 
-  function handleExport() {
-    if (!reports || reports.length === 0) {
+  function handleExport(subset?: MonthlyReport[]) {
+    const data = subset ?? reports ?? [];
+    if (data.length === 0) {
       toast.error("Нет отчётов для экспорта");
       return;
     }
-    exportReportsToCsv(reports);
+    exportReportsToCsv(data);
     toast.success("CSV-файл экспортирован");
   }
 
   function clearFilters() {
     setFilters({});
+  }
+
+  function toggleSelected(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectPage() {
+    const pageIds = controls.pageItems.map((r) => r.id);
+    const allSelected = pageIds.every((id) => selected.has(id));
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (allSelected) pageIds.forEach((id) => next.delete(id));
+      else pageIds.forEach((id) => next.add(id));
+      return next;
+    });
+  }
+
+  async function runBulkAction(action: BulkBookingAction) {
+    const ids = Array.from(selected);
+    if (ids.length === 0) return;
+    if (action === "DELETE") {
+      setBulkDeleteOpen(true);
+      return;
+    }
+    try {
+      await bulkAction.mutateAsync({ ids, action });
+      toast.success(`Применено к ${ids.length} бронированиям`);
+      setSelected(new Set());
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  }
+
+  async function confirmBulkDelete() {
+    const ids = Array.from(selected);
+    try {
+      await bulkAction.mutateAsync({ ids, action: "DELETE" });
+      toast.success(`Удалено ${ids.length} бронирований`);
+      setSelected(new Set());
+      setBulkDeleteOpen(false);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
   }
 
   const hasActiveFilters = Object.values(filters).some(Boolean);
@@ -261,7 +344,7 @@ export default function ReportsPage() {
         description="Фиксируйте и анализируйте ежемесячные отчёты по бронированиям."
         action={
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleExport}>
+            <Button variant="outline" onClick={() => handleExport()}>
               <Download className="h-4 w-4" /> Экспорт в CSV
             </Button>
             <Button onClick={openCreate} disabled={!hasRequiredData}>
@@ -398,6 +481,52 @@ export default function ReportsPage() {
               <X className="h-3.5 w-3.5" /> Сбросить фильтры
             </Button>
           )}
+
+          <div className="relative ml-auto">
+            <Button variant="outline" size="sm" onClick={() => setViewsMenuOpen((o) => !o)}>
+              <Bookmark className="h-3.5 w-3.5" /> Сохранённые виды
+            </Button>
+            {viewsMenuOpen && (
+              <div className="absolute right-0 top-[calc(100%+6px)] z-20 w-64 overflow-hidden rounded-xl border border-border bg-card py-1 text-sm shadow-xl animate-pop-in">
+                <button
+                  onClick={() => {
+                    const name = window.prompt("Название вида фильтров:");
+                    if (name) savedViews.save(name, filters);
+                  }}
+                  className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-foreground transition-colors hover:bg-secondary"
+                >
+                  <BookmarkPlus className="h-[15px] w-[15px] text-muted-foreground" /> Сохранить текущий вид
+                </button>
+                {savedViews.views.length > 0 && <div className="my-1 border-t border-border" />}
+                {savedViews.views.map((v) => (
+                  <div key={v.name} className="flex items-center justify-between px-3 py-2 hover:bg-secondary">
+                    <button onClick={() => { setFilters(v.filters); setViewsMenuOpen(false); }} className="truncate text-left text-foreground">
+                      {v.name}
+                    </button>
+                    <button onClick={() => savedViews.remove(v.name)} className="text-muted-foreground hover:text-destructive">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="relative">
+            <Button variant="outline" size="sm" onClick={() => setColumnsMenuOpen((o) => !o)}>
+              <Columns3 className="h-3.5 w-3.5" /> Колонки
+            </Button>
+            {columnsMenuOpen && (
+              <div className="absolute right-0 top-[calc(100%+6px)] z-20 w-56 overflow-hidden rounded-xl border border-border bg-card py-1 text-sm shadow-xl animate-pop-in">
+                {COLUMNS.map((c) => (
+                  <label key={c.id} className="flex items-center gap-2.5 px-3 py-2 text-foreground transition-colors hover:bg-secondary">
+                    <input type="checkbox" checked={columns.isVisible(c.id)} onChange={() => columns.toggle(c.id)} className="accent-primary" />
+                    {c.label}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -483,25 +612,66 @@ export default function ReportsPage() {
         />
       ) : (
         <>
+        {selected.size > 0 && (
+          <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 shadow-sm">
+            <span className="text-sm font-medium text-foreground">Выбрано: {selected.size}</span>
+            <div className="ml-auto flex flex-wrap gap-1.5">
+              {BULK_ACTIONS.map((a) => (
+                <Button
+                  key={a.action}
+                  variant="outline"
+                  size="sm"
+                  disabled={bulkAction.isPending}
+                  onClick={() => runBulkAction(a.action)}
+                  className={a.destructive ? "text-destructive hover:text-destructive" : undefined}
+                >
+                  <a.icon className="h-3.5 w-3.5" /> {a.label}
+                </Button>
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleExport((reports ?? []).filter((r) => selected.has(r.id)))}
+              >
+                <Download className="h-3.5 w-3.5" /> Экспорт
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>
+                Снять выбор
+              </Button>
+            </div>
+          </div>
+        )}
+        <div className="max-h-[65vh] overflow-y-auto rounded-2xl">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="sticky top-0 z-10 bg-card">
+              <TableHead className="w-8">
+                <input
+                  type="checkbox"
+                  className="accent-primary"
+                  checked={controls.pageItems.length > 0 && controls.pageItems.every((r) => selected.has(r.id))}
+                  onChange={toggleSelectPage}
+                />
+              </TableHead>
               <TableHead>Дата</TableHead>
-              <TableHead>Филиал</TableHead>
-              <TableHead>Администратор</TableHead>
-              <TableHead>Номер</TableHead>
-              <TableHead>Источник</TableHead>
-              <TableHead>Гость</TableHead>
-              <TableHead>Цена</TableHead>
-              <TableHead>Оплата</TableHead>
-              <TableHead>Статус</TableHead>
-              <TableHead>Заметки</TableHead>
+              {columns.isVisible("branch") && <TableHead>Филиал</TableHead>}
+              {columns.isVisible("admin") && <TableHead>Администратор</TableHead>}
+              {columns.isVisible("room") && <TableHead>Номер</TableHead>}
+              {columns.isVisible("source") && <TableHead>Источник</TableHead>}
+              {columns.isVisible("guest") && <TableHead>Гость</TableHead>}
+              {columns.isVisible("price") && <TableHead>Цена</TableHead>}
+              {columns.isVisible("payment") && <TableHead>Оплата</TableHead>}
+              {columns.isVisible("status") && <TableHead>Статус</TableHead>}
+              {columns.isVisible("notes") && <TableHead>Заметки</TableHead>}
               <TableHead className="text-right">Действия</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {controls.pageItems.map((report) => (
-              <TableRow key={report.id}>
+              <TableRow key={report.id} className={selected.has(report.id) ? "bg-primary/[0.04]" : undefined}>
+                <TableCell>
+                  <input type="checkbox" className="accent-primary" checked={selected.has(report.id)} onChange={() => toggleSelected(report.id)} />
+                </TableCell>
                 <TableCell>
                   {formatDate(report.date)}
                   <span className="block text-[11px] text-muted-foreground">
@@ -516,28 +686,40 @@ export default function ReportsPage() {
                     </span>
                   )}
                 </TableCell>
-                <TableCell>{report.branch.name}</TableCell>
-                <TableCell>{report.admin.fullName}</TableCell>
-                <TableCell>{report.room.roomNumber}</TableCell>
-                <TableCell>{report.source.name}</TableCell>
-                <TableCell>{report.guestName || "-"}</TableCell>
-                <TableCell className="font-medium text-foreground">
-                  {formatMoney(report.price, report.currency)}
-                </TableCell>
-                <TableCell>{report.paymentMethod}</TableCell>
-                <TableCell>
-                  <Badge className={paymentStatusClass(report.paymentStatus)}>{report.paymentStatus}</Badge>
-                  {reportDebt(report) > 0 && (
-                    <span className="mt-0.5 block text-xs text-destructive">
-                      Долг: {formatMoney(reportDebt(report), report.currency)}
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell className="max-w-[200px] truncate text-muted-foreground">
-                  {report.notes || "-"}
-                </TableCell>
+                {columns.isVisible("branch") && <TableCell>{report.branch.name}</TableCell>}
+                {columns.isVisible("admin") && <TableCell>{report.admin.fullName}</TableCell>}
+                {columns.isVisible("room") && <TableCell>{report.room.roomNumber}</TableCell>}
+                {columns.isVisible("source") && <TableCell>{report.source.name}</TableCell>}
+                {columns.isVisible("guest") && <TableCell>{report.guestName || "-"}</TableCell>}
+                {columns.isVisible("price") && (
+                  <TableCell className="font-medium text-foreground">
+                    {formatMoney(report.price, report.currency)}
+                  </TableCell>
+                )}
+                {columns.isVisible("payment") && <TableCell>{report.paymentMethod}</TableCell>}
+                {columns.isVisible("status") && (
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      <BookingStatusBadge status={report.status} />
+                      <Badge className={paymentStatusClass(report.paymentStatus)} title="Статус оплаты">{report.paymentStatus}</Badge>
+                    </div>
+                    {reportDebt(report) > 0 && (
+                      <span className="mt-0.5 block text-xs text-destructive">
+                        Долг: {formatMoney(reportDebt(report), report.currency)}
+                      </span>
+                    )}
+                  </TableCell>
+                )}
+                {columns.isVisible("notes") && (
+                  <TableCell className="max-w-[200px] truncate text-muted-foreground">
+                    {report.notes || "-"}
+                  </TableCell>
+                )}
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => setViewing(report)}>
+                      <Eye className="h-4 w-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => openEdit(report)}>
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -550,6 +732,7 @@ export default function ReportsPage() {
             ))}
           </TableBody>
         </Table>
+        </div>
         <Pagination
           page={controls.page}
           totalPages={controls.totalPages}
@@ -846,6 +1029,29 @@ export default function ReportsPage() {
         loading={deleteReport.isPending}
         title="Удалить отчёт?"
         description="Эта запись отчёта будет удалена без возможности восстановления."
+      />
+
+      <ConfirmDeleteDialog
+        open={bulkDeleteOpen}
+        onOpenChange={setBulkDeleteOpen}
+        onConfirm={confirmBulkDelete}
+        loading={bulkAction.isPending}
+        title={`Удалить ${selected.size} бронирований?`}
+        description="Выбранные записи будут удалены без возможности восстановления."
+      />
+
+      <BookingDetailsDrawer
+        report={viewing}
+        open={!!viewing}
+        onOpenChange={(open) => !open && setViewing(null)}
+        onEdit={(r) => {
+          setViewing(null);
+          openEdit(r);
+        }}
+        onDelete={(r) => {
+          setViewing(null);
+          setDeleteTarget(r);
+        }}
       />
     </div>
   );

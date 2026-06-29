@@ -12,6 +12,7 @@ router.get("/", async (req, res, next) => {
     const where: any = {};
     if (typeof req.query.entity === "string" && req.query.entity) where.entity = req.query.entity;
     if (typeof req.query.action === "string" && req.query.action) where.action = req.query.action;
+    if (typeof req.query.entityId === "string" && req.query.entityId) where.entityId = req.query.entityId;
 
     const from = req.query.from ? new Date(String(req.query.from)) : undefined;
     const to = req.query.to ? new Date(String(req.query.to)) : undefined;

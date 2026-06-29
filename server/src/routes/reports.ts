@@ -4,7 +4,15 @@ import { reportSchema } from "../validation";
 import { requireSuperAdmin } from "../middleware/auth";
 import { recordAudit, buildChanges, summarize } from "../audit";
 
-const REPORT_AUDIT_FIELDS = ["date", "checkOut", "guestName", "price", "currency", "paymentMethod", "paymentStatus", "paidAmount", "notes"];
+const REPORT_AUDIT_FIELDS = ["date", "checkOut", "guestName", "price", "currency", "paymentMethod", "paymentStatus", "status", "paidAmount", "notes", "roomId"];
+
+const STATUS_LABELS: Record<string, string> = {
+  RESERVED: "Забронировано",
+  CHECKED_IN: "Заселён",
+  CHECKED_OUT: "Выехал",
+  CANCELLED: "Отменено",
+  NO_SHOW: "Не заехал",
+};
 
 const money = (n: number) => n.toLocaleString("ru-RU");
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -156,6 +164,98 @@ router.post("/:id/settle", requireSuperAdmin, async (req, res, next) => {
     });
 
     res.json(report);
+  } catch (err) {
+    next(err);
+  }
+});
+
+function canManage(req: any, existing: { adminId: string }) {
+  return req.user!.role !== "ADMIN" || existing.adminId === req.user!.adminId;
+}
+
+router.patch("/:id/status", async (req, res, next) => {
+  try {
+    const existing = await prisma.monthlyReport.findUnique({ where: { id: req.params.id }, include: { room: true } });
+    if (!existing) return res.status(404).json({ message: "Запись не найдена" });
+    if (!canManage(req, existing)) return res.status(403).json({ message: "Недостаточно прав" });
+
+    const status = String(req.body.status);
+    if (!STATUS_LABELS[status]) return res.status(400).json({ message: "Неизвестный статус" });
+
+    const report = await prisma.monthlyReport.update({
+      where: { id: req.params.id },
+      data: { status },
+      include: { branch: true, admin: true, room: true, source: true },
+    });
+
+    await recordAudit(req, {
+      action: "UPDATE",
+      entity: "report",
+      entityId: report.id,
+      summary: `Статус брони изменён: ${STATUS_LABELS[existing.status] ?? existing.status} → ${STATUS_LABELS[status]} — номер ${existing.room.roomNumber}`,
+      changes: [{ field: "status", label: "Статус", from: existing.status, to: status }],
+    });
+
+    res.json(report);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post("/bulk", async (req, res, next) => {
+  try {
+    const ids: string[] = Array.isArray(req.body.ids) ? req.body.ids.map(String) : [];
+    const action = String(req.body.action);
+    if (ids.length === 0) return res.status(400).json({ message: "Не выбраны записи" });
+
+    const existing = await prisma.monthlyReport.findMany({ where: { id: { in: ids } }, include: { room: true } });
+    const allowed = existing.filter((r) => canManage(req, r));
+    if (allowed.length === 0) return res.status(403).json({ message: "Недостаточно прав" });
+    const allowedIds = allowed.map((r) => r.id);
+
+    if (action === "DELETE") {
+      await prisma.monthlyReport.deleteMany({ where: { id: { in: allowedIds } } });
+      await recordAudit(req, {
+        action: "DELETE",
+        entity: "report",
+        entityId: null,
+        summary: `Массовое удаление: ${allowed.length} бронирований`,
+      });
+      return res.json({ count: allowed.length });
+    }
+
+    if (action === "MOVE_ROOM") {
+      const roomId = String(req.body.roomId ?? "");
+      if (!roomId) return res.status(400).json({ message: "Укажите номер" });
+      const room = await prisma.room.findUnique({ where: { id: roomId } });
+      if (!room) return res.status(404).json({ message: "Номер не найден" });
+      await prisma.monthlyReport.updateMany({ where: { id: { in: allowedIds } }, data: { roomId } });
+      await recordAudit(req, {
+        action: "UPDATE",
+        entity: "report",
+        entityId: null,
+        summary: `Массовый перенос ${allowed.length} бронирований в номер ${room.roomNumber}`,
+      });
+      return res.json({ count: allowed.length });
+    }
+
+    const statusByAction: Record<string, string> = {
+      CHECK_IN: "CHECKED_IN",
+      CHECK_OUT: "CHECKED_OUT",
+      CANCEL: "CANCELLED",
+      NO_SHOW: "NO_SHOW",
+    };
+    const status = statusByAction[action];
+    if (!status) return res.status(400).json({ message: "Неизвестное действие" });
+
+    await prisma.monthlyReport.updateMany({ where: { id: { in: allowedIds } }, data: { status } });
+    await recordAudit(req, {
+      action: "UPDATE",
+      entity: "report",
+      entityId: null,
+      summary: `Массовое изменение статуса (${STATUS_LABELS[status]}): ${allowed.length} бронирований`,
+    });
+    res.json({ count: allowed.length });
   } catch (err) {
     next(err);
   }

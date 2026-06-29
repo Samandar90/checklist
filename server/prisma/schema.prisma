@@ -76,6 +76,7 @@ model MonthlyReport {
   currency      String
   paymentMethod String   @default("Наличные")
   paymentStatus String   @default("Оплачено")
+  status        String   @default("RESERVED") // RESERVED | CHECKED_IN | CHECKED_OUT | CANCELLED | NO_SHOW
   paidAmount    Float?
   notes         String?
   createdAt     DateTime  @default(now())

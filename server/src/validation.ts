@@ -42,6 +42,7 @@ export const sourceSchema = z.object({
 
 export const paymentMethods = ["Наличные", "Карта", "Терминал"] as const;
 export const paymentStatuses = ["Оплачено", "Частично", "Долг"] as const;
+export const bookingStatuses = ["RESERVED", "CHECKED_IN", "CHECKED_OUT", "CANCELLED", "NO_SHOW"] as const;
 
 export const reportSchema = z
   .object({
@@ -60,6 +61,7 @@ export const reportSchema = z
     paymentStatus: z.enum(paymentStatuses, {
       errorMap: () => ({ message: "Выберите статус оплаты" }),
     }).default("Оплачено"),
+    status: z.enum(bookingStatuses).default("RESERVED"),
     paidAmount: z.number({ invalid_type_error: "Сумма должна быть числом" }).min(0).optional().nullable(),
     notes: z.string().trim().optional().nullable(),
   })

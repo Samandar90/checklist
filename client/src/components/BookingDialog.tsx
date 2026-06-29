@@ -3,7 +3,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Trash2, User2 } from "lucide-react";
+import { Trash2, User2, LogIn, LogOut, Ban, UserX } from "lucide-react";
 
 import {
   Drawer,
@@ -26,12 +26,22 @@ import { Segmented } from "@/components/ui/segmented";
 
 import { useAdmins } from "@/hooks/useAdmins";
 import { useSources } from "@/hooks/useSources";
-import { useCreateReport, useUpdateReport, useDeleteReport } from "@/hooks/useReports";
+import { useCreateReport, useUpdateReport, useDeleteReport, useUpdateReportStatus } from "@/hooks/useReports";
 import { useSettleDebt } from "@/hooks/useDebtors";
 import { useAuth } from "@/contexts/AuthContext";
-import { MonthlyReport, Room, paymentMethods, paymentStatuses } from "@/types";
+import { useAudit } from "@/hooks/useAudit";
+import { MonthlyReport, Room, paymentMethods, paymentStatuses, BookingStatus } from "@/types";
 import { getErrorMessage } from "@/lib/api";
 import { addDaysIso, nightsBetween, formatMoney, formatDateTime, reportDebt, paymentStatusClass } from "@/lib/utils";
+import BookingStatusBadge from "@/components/BookingStatusBadge";
+import ActivityTimeline from "@/components/ActivityTimeline";
+
+const STATUS_ACTIONS: { status: BookingStatus; label: string; icon: typeof LogIn }[] = [
+  { status: "CHECKED_IN", label: "Заселить", icon: LogIn },
+  { status: "CHECKED_OUT", label: "Выселить", icon: LogOut },
+  { status: "NO_SHOW", label: "Не заехал", icon: UserX },
+  { status: "CANCELLED", label: "Отменить", icon: Ban },
+];
 
 const currencies = ["UZS", "USD", "EUR"];
 
@@ -102,6 +112,9 @@ export default function BookingDialog({
   const updateReport = useUpdateReport();
   const deleteReport = useDeleteReport();
   const settleDebt = useSettleDebt();
+  const updateStatus = useUpdateReportStatus();
+  const isSuperAdmin = user?.role === "SUPER_ADMIN";
+  const { data: history } = useAudit({ entity: "report", entityId: editing?.id }, !!editing && isSuperAdmin);
 
   const branchAdmins = (admins ?? []).filter((a) => a.branchId === branchId);
 
@@ -171,7 +184,7 @@ export default function BookingDialog({
     try {
       const { pricePerNight, ...rest } = values;
       const total = pricePerNight * Math.max(1, nightsBetween(values.date, values.checkOut));
-      const payload = { ...rest, price: total, branchId };
+      const payload = { ...rest, price: total, branchId, status: editing?.status ?? "RESERVED" };
       if (editing) {
         await updateReport.mutateAsync({ id: editing.id, data: payload });
         toast.success("Бронь обновлена");
@@ -208,6 +221,16 @@ export default function BookingDialog({
     }
   }
 
+  async function handleStatusChange(status: BookingStatus) {
+    if (!editing) return;
+    try {
+      await updateStatus.mutateAsync({ id: editing.id, status });
+      toast.success("Статус брони обновлён");
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  }
+
   const noAdmins = !isAdmin && branchAdmins.length === 0;
 
   return (
@@ -217,6 +240,7 @@ export default function BookingDialog({
           <div className="min-w-0">
             <DrawerTitle>{editing?.guestName || form.watch("guestName") || (editing ? "Бронь" : "Новое бронирование")}</DrawerTitle>
             <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              {editing && <BookingStatusBadge status={editing.status} />}
               {editing && <Badge className={paymentStatusClass(editing.paymentStatus)}>{editing.paymentStatus}</Badge>}
               {sourceName && <Badge className="bg-secondary text-secondary-foreground">{sourceName}</Badge>}
               {editing && <span className="text-[11px] text-muted-foreground">#{editing.id.slice(-6).toUpperCase()}</span>}
@@ -224,6 +248,23 @@ export default function BookingDialog({
           </div>
           <DrawerCloseButton />
         </DrawerHeader>
+
+        {editing && (
+          <div className="flex flex-wrap gap-1.5 border-b border-border px-6 py-3">
+            {STATUS_ACTIONS.filter((a) => a.status !== editing.status).map((a) => (
+              <Button
+                key={a.status}
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={updateStatus.isPending}
+                onClick={() => handleStatusChange(a.status)}
+              >
+                <a.icon className="h-3.5 w-3.5" /> {a.label}
+              </Button>
+            ))}
+          </div>
+        )}
 
         {noAdmins ? (
           <DrawerBody>
@@ -455,16 +496,19 @@ export default function BookingDialog({
 
               {editing && (
                 <DrawerSection title="История">
-                  <div className="space-y-1.5 text-xs text-muted-foreground">
-                    <p>
-                      Создано: <span className="text-foreground">{formatDateTime(editing.createdAt)}</span>
-                    </p>
+                  <p className="mb-2 text-xs text-muted-foreground">
+                    Создано: <span className="text-foreground">{formatDateTime(editing.createdAt)}</span>
                     {editing.updatedAt && (
-                      <p>
-                        Изменено: <span className="text-foreground">{formatDateTime(editing.updatedAt)}</span>
-                      </p>
+                      <>
+                        {" "}· Изменено: <span className="text-foreground">{formatDateTime(editing.updatedAt)}</span>
+                      </>
                     )}
-                  </div>
+                  </p>
+                  {isSuperAdmin ? (
+                    <ActivityTimeline items={history?.items ?? []} emptyText="Нет записей об изменениях" />
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Полная история доступна главному аккаунту.</p>
+                  )}
                 </DrawerSection>
               )}
             </DrawerBody>

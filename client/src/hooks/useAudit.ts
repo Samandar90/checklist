@@ -9,6 +9,7 @@ export function useAudit(filters: AuditFilters = {}, enabled = true) {
     queryFn: async () => {
       const params: Record<string, string> = {};
       if (filters.entity) params.entity = filters.entity;
+      if (filters.entityId) params.entityId = filters.entityId;
       if (filters.action) params.action = filters.action;
       if (filters.from) params.from = filters.from;
       if (filters.to) params.to = filters.to;
