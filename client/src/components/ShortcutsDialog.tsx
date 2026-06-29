@@ -1,10 +1,11 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const SHORTCUTS: { keys: string; label: string }[] = [
-  { keys: "Ctrl/⌘ + K", label: "Открыть командную палитру" },
+  { keys: "Ctrl/⌘ + K", label: "Открыть командный центр" },
+  { keys: "↑ / ↓", label: "Навигация по списку" },
+  { keys: "Enter", label: "Выполнить команду / перейти" },
+  { keys: "Backspace", label: "Выйти из режима заселения/выселения" },
   { keys: "?", label: "Показать клавиатурные сочетания" },
-  { keys: "↑ / ↓", label: "Навигация по палитре" },
-  { keys: "Enter", label: "Перейти к выбранному пункту" },
   { keys: "Esc", label: "Закрыть диалог" },
 ];
 

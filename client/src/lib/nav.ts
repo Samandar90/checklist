@@ -94,8 +94,12 @@ export interface QuickAction {
   icon: typeof LayoutDashboard;
 }
 
-export const QUICK_ACTIONS: QuickAction[] = [
-  { id: "new-booking", label: "Новое бронирование", to: "/calendar?new=1", icon: CalendarRange },
-  { id: "new-expense", label: "Добавить расход", to: "/expenses?new=1", icon: Wallet },
-  { id: "new-guest", label: "Новый гость", to: "/guests?new=1", icon: User2 },
-];
+export function getQuickActions(isAdmin: boolean): QuickAction[] {
+  return [
+    { id: "new-booking", label: "Создать бронирование", to: "/calendar?new=1", icon: CalendarRange },
+    ...(isAdmin ? [] : [{ id: "new-guest", label: "Создать гостя", to: "/guests?new=1", icon: User2 }]),
+    { id: "open-calendar", label: "Открыть календарь", to: "/calendar", icon: CalendarRange },
+    { id: "open-reports", label: "Открыть отчёты", to: isAdmin ? "/my-reports" : "/reports", icon: ClipboardList },
+    { id: "open-expenses", label: "Открыть расходы", to: isAdmin ? "/my-expenses" : "/expenses", icon: Wallet },
+  ];
+}
