@@ -76,6 +76,7 @@ export const adminSections: NavSection[] = [
   {
     label: null,
     items: [
+      { to: "/staff", label: "Рабочее место", icon: LayoutGrid },
       { to: "/calendar", label: "Шахматка", icon: CalendarRange },
       { to: "/smart-assign", label: "Умное распределение номеров", icon: Wand2 },
       { to: "/cash-register", label: "Касса", icon: Banknote },

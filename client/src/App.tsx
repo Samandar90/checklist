@@ -28,6 +28,7 @@ const CashRegisterPage = lazy(() => import("@/pages/CashRegisterPage"));
 const SmartAssignPage = lazy(() => import("@/pages/SmartAssignPage"));
 const TimelinePage = lazy(() => import("@/pages/TimelinePage"));
 const WorkspacePage = lazy(() => import("@/pages/WorkspacePage"));
+const StaffWorkspacePage = lazy(() => import("@/pages/StaffWorkspacePage"));
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
 
 export default function App() {
@@ -41,6 +42,7 @@ export default function App() {
 
             <Route element={<ProtectedRoute allow={["ADMIN"]} />}>
               <Route element={<Layout />}>
+                <Route path="/staff" element={<StaffWorkspacePage />} />
                 <Route path="/my-reports" element={<MyReportsPage />} />
                 <Route path="/my-expenses" element={<MyExpensesPage />} />
               </Route>
