@@ -21,7 +21,6 @@ import {
   CalendarRange,
   Banknote,
   FileText,
-  History,
   Clock,
   ArrowRight,
 } from "lucide-react";
@@ -39,6 +38,7 @@ import {
 } from "recharts";
 
 import PageHeader from "@/components/PageHeader";
+import ActivityTimeline from "@/components/ActivityTimeline";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
@@ -615,25 +615,11 @@ export default function DashboardPage() {
                 Все <ArrowRight className="h-3 w-3" />
               </Link>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent>
               {!activity ? (
                 <Skeleton className="h-40 w-full" />
-              ) : activity.items.length === 0 ? (
-                <p className="py-10 text-center text-sm text-muted-foreground">Пока нет записей</p>
               ) : (
-                activity.items.slice(0, 6).map((a) => (
-                  <div key={a.id} className="flex items-start gap-2.5">
-                    <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg tint-slate">
-                      <History className="h-3 w-3" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-[12.5px] text-foreground">{a.summary}</p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {a.actorName} · {formatDate(a.createdAt)}
-                      </p>
-                    </div>
-                  </div>
-                ))
+                <ActivityTimeline items={activity.items.slice(0, 6)} emptyText="Пока нет записей" />
               )}
             </CardContent>
           </Card>

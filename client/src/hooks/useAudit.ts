@@ -2,9 +2,10 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { AuditFilters, AuditResponse } from "@/types";
 
-export function useAudit(filters: AuditFilters = {}) {
+export function useAudit(filters: AuditFilters = {}, enabled = true) {
   return useQuery({
     queryKey: ["audit", filters],
+    enabled,
     queryFn: async () => {
       const params: Record<string, string> = {};
       if (filters.entity) params.entity = filters.entity;

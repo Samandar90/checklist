@@ -19,6 +19,8 @@ import {
   Plus,
   Wallet,
   Gauge,
+  Maximize,
+  Minimize,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -114,6 +116,24 @@ export default function CalendarPage() {
   const isAdmin = user?.role === "ADMIN";
   const { data: branches } = useBranches({ enabled: !isAdmin });
   const [branchId, setBranchId] = useState<string | undefined>(undefined);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    function onChange() {
+      setIsFullscreen(document.fullscreenElement === rootRef.current);
+    }
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+
+  function toggleFullscreen() {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      rootRef.current?.requestFullscreen();
+    }
+  }
   const [cursor, setCursor] = useState(() => {
     const n = new Date();
     return { year: n.getFullYear(), month: n.getMonth() };
@@ -438,7 +458,7 @@ export default function CalendarPage() {
   }
 
   return (
-    <div>
+    <div ref={rootRef} className={cn(isFullscreen && "h-screen overflow-y-auto bg-background p-4")}>
       <PageHeader title="Шахматка" description="Загрузка номеров по датам заезда и выезда." />
 
       {/* Тулбар */}
@@ -482,6 +502,9 @@ export default function CalendarPage() {
             </div>
             <Button variant="outline" size="sm" onClick={goToday}>
               Сегодня
+            </Button>
+            <Button variant="outline" size="sm" onClick={toggleFullscreen} aria-label="Полноэкранный режим">
+              {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
             </Button>
           </div>
 

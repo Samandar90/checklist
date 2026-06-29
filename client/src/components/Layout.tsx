@@ -2,19 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  LayoutDashboard,
-  Building2,
-  Users,
-  BedDouble,
-  Megaphone,
-  ClipboardList,
-  CalendarRange,
-  Wallet,
-  AlertTriangle,
-  User2,
-  History,
-  DatabaseBackup,
-  Banknote,
   Hotel,
   LogOut,
   KeyRound,
@@ -23,71 +10,85 @@ import {
   ChevronsLeft,
   ChevronRight,
   ChevronDown,
-  Sparkles,
-  BarChart3,
+  Star,
+  Menu,
+  Command,
+  SlidersHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import ChangePasswordDialog from "@/components/ChangePasswordDialog";
+import PreferencesDialog from "@/components/PreferencesDialog";
+import ShortcutsDialog from "@/components/ShortcutsDialog";
+import CommandPalette from "@/components/CommandPalette";
+import NotificationCenter from "@/components/NotificationCenter";
+import { Drawer, DrawerContent } from "@/components/ui/drawer";
+import { useFavorites } from "@/hooks/useFavorites";
+import { useRecentPages } from "@/hooks/useRecentPages";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { superAdminSections, adminSections, ALL_NAV_ITEMS, NavItem } from "@/lib/nav";
 
-interface NavItem {
-  to: string;
-  label: string;
-  icon: typeof LayoutDashboard;
+const ALL_ITEMS = ALL_NAV_ITEMS;
+
+function NavItemLink({
+  item,
+  collapsed,
+  showStar,
+  favorited,
+  onToggleFavorite,
+}: {
+  item: NavItem;
+  collapsed: boolean;
+  showStar?: boolean;
+  favorited?: boolean;
+  onToggleFavorite: (to: string) => void;
+}) {
+  return (
+    <NavLink
+      to={item.to}
+      end={item.to === "/"}
+      title={collapsed ? item.label : undefined}
+      className={({ isActive }) =>
+        cn(
+          "group relative flex items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13.5px] font-medium transition-colors",
+          collapsed && "justify-center px-0",
+          isActive
+            ? "bg-primary/[0.09] text-primary"
+            : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+        )
+      }
+    >
+      {({ isActive }) => (
+        <>
+          <item.icon
+            className={cn(
+              "h-[15px] w-[15px] shrink-0",
+              isActive ? "text-primary" : "text-muted-foreground/80 group-hover:text-foreground"
+            )}
+          />
+          {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
+          {!collapsed && showStar && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onToggleFavorite(item.to);
+              }}
+              className={cn(
+                "shrink-0 rounded-md p-0.5 opacity-0 transition-opacity group-hover:opacity-100",
+                favorited && "opacity-100"
+              )}
+              aria-label="Закрепить в избранном"
+            >
+              <Star className={cn("h-3 w-3", favorited ? "fill-primary text-primary" : "text-muted-foreground")} />
+            </button>
+          )}
+        </>
+      )}
+    </NavLink>
+  );
 }
-
-interface NavSection {
-  label: string | null;
-  items: NavItem[];
-}
-
-const superAdminSections: NavSection[] = [
-  { label: null, items: [{ to: "/", label: "Дашборд", icon: LayoutDashboard }, { to: "/analytics", label: "Аналитика", icon: BarChart3 }] },
-  {
-    label: "Операции",
-    items: [
-      { to: "/calendar", label: "Шахматка", icon: CalendarRange },
-      { to: "/finance", label: "Финансовый центр", icon: Banknote },
-      { to: "/cash-register", label: "Касса (смены)", icon: Banknote },
-      { to: "/reports", label: "Ежемесячные отчёты", icon: ClipboardList },
-      { to: "/expenses", label: "Расходы", icon: Wallet },
-      { to: "/debtors", label: "Должники", icon: AlertTriangle },
-      { to: "/guests", label: "Гости", icon: User2 },
-      { to: "/housekeeping", label: "Уборка номеров", icon: Sparkles },
-    ],
-  },
-  {
-    label: "Структура",
-    items: [
-      { to: "/branches", label: "Филиалы", icon: Building2 },
-      { to: "/admins", label: "Администраторы", icon: Users },
-      { to: "/rooms", label: "Номера", icon: BedDouble },
-      { to: "/sources", label: "Источники бронирования", icon: Megaphone },
-    ],
-  },
-  {
-    label: "Система",
-    items: [
-      { to: "/audit", label: "Журнал изменений", icon: History },
-      { to: "/backups", label: "Резервные копии", icon: DatabaseBackup },
-    ],
-  },
-];
-
-const adminSections: NavSection[] = [
-  {
-    label: null,
-    items: [
-      { to: "/calendar", label: "Шахматка", icon: CalendarRange },
-      { to: "/cash-register", label: "Касса", icon: Banknote },
-      { to: "/my-reports", label: "Мои отчёты", icon: ClipboardList },
-      { to: "/my-expenses", label: "Расходы за смену", icon: Wallet },
-    ],
-  },
-];
-
-const ALL_ITEMS: NavItem[] = [...superAdminSections, ...adminSections].flatMap((s) => s.items);
 
 const SIDEBAR_W = 248;
 const SIDEBAR_W_COLLAPSED = 72;
@@ -99,9 +100,24 @@ export default function Layout() {
   const isSuperAdmin = user?.role === "SUPER_ADMIN";
   const sections = isSuperAdmin ? superAdminSections : adminSections;
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [preferencesOpen, setPreferencesOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem("sidebar-collapsed") === "1");
   const profileRef = useRef<HTMLDivElement>(null);
+  const { favorites, isFavorite, toggleFavorite } = useFavorites();
+  const { recent } = useRecentPages();
+
+  useKeyboardShortcuts({
+    onPalette: () => setPaletteOpen(true),
+    onShortcutsHelp: () => setShortcutsOpen(true),
+  });
+
+  const pinnedItems = favorites
+    .map((to) => ALL_ITEMS.find((i) => i.to === to))
+    .filter((i): i is (typeof ALL_ITEMS)[number] => !!i);
 
   useEffect(() => {
     localStorage.setItem("sidebar-collapsed", collapsed ? "1" : "0");
@@ -141,6 +157,20 @@ export default function Layout() {
         </div>
 
         <nav className="flex flex-1 flex-col gap-3 overflow-y-auto px-2.5 py-1">
+          {pinnedItems.length > 0 && (
+            <div>
+              {!collapsed && (
+                <p className="mb-1 px-2.5 text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground/70">
+                  Избранное
+                </p>
+              )}
+              <div className="flex flex-col gap-0.5">
+                {pinnedItems.map((item) => (
+                  <NavItemLink key={item.to} item={item} collapsed={collapsed} showStar favorited onToggleFavorite={toggleFavorite} />
+                ))}
+              </div>
+            </div>
+          )}
           {sections.map((section, si) => (
             <div key={si}>
               {section.label && !collapsed && (
@@ -150,33 +180,14 @@ export default function Layout() {
               )}
               <div className="flex flex-col gap-0.5">
                 {section.items.map((item) => (
-                  <NavLink
+                  <NavItemLink
                     key={item.to}
-                    to={item.to}
-                    end={item.to === "/"}
-                    title={collapsed ? item.label : undefined}
-                    className={({ isActive }) =>
-                      cn(
-                        "group relative flex items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13.5px] font-medium transition-colors",
-                        collapsed && "justify-center px-0",
-                        isActive
-                          ? "bg-primary/[0.09] text-primary"
-                          : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                      )
-                    }
-                  >
-                    {({ isActive }) => (
-                      <>
-                        <item.icon
-                          className={cn(
-                            "h-[15px] w-[15px] shrink-0",
-                            isActive ? "text-primary" : "text-muted-foreground/80 group-hover:text-foreground"
-                          )}
-                        />
-                        {!collapsed && <span className="truncate">{item.label}</span>}
-                      </>
-                    )}
-                  </NavLink>
+                    item={item}
+                    collapsed={collapsed}
+                    showStar
+                    favorited={isFavorite(item.to)}
+                    onToggleFavorite={toggleFavorite}
+                  />
                 ))}
               </div>
             </div>
@@ -211,6 +222,17 @@ export default function Layout() {
 
           <div className="flex items-center gap-1.5">
             <button
+              onClick={() => setPaletteOpen(true)}
+              className="flex items-center gap-2 rounded-lg border border-border px-2.5 py-1.5 text-[12.5px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            >
+              <Command className="h-[13px] w-[13px]" />
+              Поиск
+              <kbd className="rounded border border-border bg-secondary px-1 text-[10px]">Ctrl K</kbd>
+            </button>
+
+            <NotificationCenter />
+
+            <button
               onClick={toggle}
               aria-label="Переключить тему"
               className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
@@ -241,6 +263,26 @@ export default function Layout() {
 
               {profileOpen && (
                 <div className="absolute right-0 top-[calc(100%+6px)] w-52 overflow-hidden rounded-xl border border-border bg-card py-1 text-sm shadow-xl animate-pop-in">
+                  <button
+                    onClick={() => {
+                      setPreferencesOpen(true);
+                      setProfileOpen(false);
+                    }}
+                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-foreground transition-colors hover:bg-secondary"
+                  >
+                    <SlidersHorizontal className="h-[15px] w-[15px] text-muted-foreground" />
+                    Настройки интерфейса
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShortcutsOpen(true);
+                      setProfileOpen(false);
+                    }}
+                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-foreground transition-colors hover:bg-secondary"
+                  >
+                    <Command className="h-[15px] w-[15px] text-muted-foreground" />
+                    Клавиатурные сочетания
+                  </button>
                   {isSuperAdmin && (
                     <button
                       onClick={() => {
@@ -276,49 +318,90 @@ export default function Layout() {
           </div>
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setPaletteOpen(true)}
+              aria-label="Поиск"
+              className="flex items-center rounded-lg p-1.5 text-muted-foreground"
+            >
+              <Command className="h-4 w-4" />
+            </button>
+            <button
               onClick={toggle}
               aria-label="Переключить тему"
               className="flex items-center rounded-lg p-1.5 text-muted-foreground"
             >
               {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
-            {isSuperAdmin && (
-              <button
-                onClick={() => setPasswordDialogOpen(true)}
-                className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs text-muted-foreground"
-              >
-                <KeyRound className="h-3.5 w-3.5" />
-                Пароль
-              </button>
-            )}
             <button
-              onClick={logout}
-              className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs text-muted-foreground"
+              onClick={() => setMobileNavOpen(true)}
+              aria-label="Меню"
+              className="flex items-center rounded-lg p-1.5 text-muted-foreground"
             >
-              <LogOut className="h-3.5 w-3.5" />
-              Выйти
+              <Menu className="h-4 w-4" />
             </button>
           </div>
         </header>
 
-        <nav className="flex gap-1 overflow-x-auto border-b border-border bg-card px-3 py-2 md:hidden">
-          {sections.flatMap((s) => s.items).map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === "/"}
-              className={({ isActive }) =>
-                cn(
-                  "flex shrink-0 items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-medium",
-                  isActive ? "bg-primary/10 text-primary" : "text-muted-foreground"
-                )
-              }
-            >
-              <item.icon className="h-3.5 w-3.5" />
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
+        <Drawer open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+          <DrawerContent className="max-w-[300px]">
+            <div className="flex items-center gap-2.5 border-b border-border px-4 py-4">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-primary text-primary-foreground">
+                <Hotel className="h-4 w-4" />
+              </div>
+              <span className="text-[13px] font-semibold text-foreground">Hotel Reports</span>
+            </div>
+            <nav className="flex flex-1 flex-col gap-3 overflow-y-auto px-2.5 py-3">
+              {sections.map((section, si) => (
+                <div key={si}>
+                  {section.label && (
+                    <p className="mb-1 px-2.5 text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground/70">
+                      {section.label}
+                    </p>
+                  )}
+                  <div className="flex flex-col gap-0.5">
+                    {section.items.map((item) => (
+                      <NavLink
+                        key={item.to}
+                        to={item.to}
+                        end={item.to === "/"}
+                        onClick={() => setMobileNavOpen(false)}
+                        className={({ isActive }) =>
+                          cn(
+                            "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13.5px] font-medium",
+                            isActive ? "bg-primary/[0.09] text-primary" : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                          )
+                        }
+                      >
+                        <item.icon className="h-[15px] w-[15px] shrink-0" />
+                        {item.label}
+                      </NavLink>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </nav>
+            <div className="border-t border-border p-2.5">
+              {isSuperAdmin && (
+                <button
+                  onClick={() => {
+                    setPasswordDialogOpen(true);
+                    setMobileNavOpen(false);
+                  }}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] text-muted-foreground hover:bg-secondary"
+                >
+                  <KeyRound className="h-[15px] w-[15px]" />
+                  Сменить пароль
+                </button>
+              )}
+              <button
+                onClick={logout}
+                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] text-muted-foreground hover:bg-secondary"
+              >
+                <LogOut className="h-[15px] w-[15px]" />
+                Выйти
+              </button>
+            </div>
+          </DrawerContent>
+        </Drawer>
 
         <main className="flex-1 p-4 md:p-8">
           <PageTransition path={location.pathname}>
@@ -328,6 +411,9 @@ export default function Layout() {
       </div>
 
       <ChangePasswordDialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen} />
+      <PreferencesDialog open={preferencesOpen} onOpenChange={setPreferencesOpen} />
+      <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} favorites={favorites} recent={recent} />
     </div>
   );
 }
