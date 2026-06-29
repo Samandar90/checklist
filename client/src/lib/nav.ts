@@ -15,6 +15,7 @@ import {
   Sparkles,
   BarChart3,
   Wand2,
+  GanttChartSquare,
 } from "lucide-react";
 
 export interface NavItem {
@@ -56,6 +57,7 @@ export const superAdminSections: NavSection[] = [
   {
     label: "Система",
     items: [
+      { to: "/timeline", label: "Хронология", icon: GanttChartSquare },
       { to: "/audit", label: "Журнал изменений", icon: History },
       { to: "/backups", label: "Резервные копии", icon: DatabaseBackup },
     ],

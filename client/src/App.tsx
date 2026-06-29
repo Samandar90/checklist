@@ -25,6 +25,7 @@ const MyReportsPage = lazy(() => import("@/pages/MyReportsPage"));
 const MyExpensesPage = lazy(() => import("@/pages/MyExpensesPage"));
 const CashRegisterPage = lazy(() => import("@/pages/CashRegisterPage"));
 const SmartAssignPage = lazy(() => import("@/pages/SmartAssignPage"));
+const TimelinePage = lazy(() => import("@/pages/TimelinePage"));
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
 
 export default function App() {
@@ -57,6 +58,7 @@ export default function App() {
                 <Route path="/analytics" element={<AnalyticsPage />} />
                 <Route path="/finance" element={<FinanceCenterPage />} />
                 <Route path="/audit" element={<AuditPage />} />
+                <Route path="/timeline" element={<TimelinePage />} />
                 <Route path="/backups" element={<BackupPage />} />
               </Route>
             </Route>
