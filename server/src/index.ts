@@ -8,7 +8,7 @@ import { Prisma } from "@prisma/client";
 
 import { prisma } from "./prisma";
 import { hashPassword } from "./auth";
-import { authenticate } from "./middleware/auth";
+import { authenticate, requireSuperAdmin } from "./middleware/auth";
 import authRouter from "./routes/auth";
 import branchesRouter from "./routes/branches";
 import adminsRouter from "./routes/admins";
@@ -118,6 +118,19 @@ app.use("/api/audit", authenticate, auditRouter);
 app.use("/api/backup", authenticate, backupRouter);
 app.use("/api/dashboard", authenticate, dashboardRouter);
 app.use("/api/cash-shifts", authenticate, cashShiftsRouter);
+
+// TEMPORARY: one-time data purge endpoint — remove after use
+app.post("/api/admin/purge", authenticate, requireSuperAdmin, async (_req, res, next) => {
+  try {
+    await prisma.auditLog.deleteMany({});
+    await prisma.cashShift.deleteMany({});
+    await prisma.expense.deleteMany({});
+    await prisma.monthlyReport.deleteMany({});
+    res.json({ ok: true, message: "Все операционные данные удалены. Структура (филиалы, номера, персонал) сохранена." });
+  } catch (err) {
+    next(err);
+  }
+});
 
 const clientDistPath = path.join(__dirname, "../public");
 app.use(express.static(clientDistPath));
