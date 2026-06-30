@@ -119,18 +119,18 @@ function CountUp({ value, className }: { value: number; className?: string }) {
   return <span className={className}>{fmt(animated)}</span>;
 }
 
-function Sparkline({ data, color }: { data: { total: number }[]; color: string }) {
+function Sparkline({ data }: { data: { total: number }[] }) {
   if (data.length < 2) return null;
   return (
     <ResponsiveContainer width="100%" height={36}>
       <AreaChart data={data} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
         <defs>
           <linearGradient id="spark" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity={0.3} />
-            <stop offset="100%" stopColor={color} stopOpacity={0} />
+            <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.3} />
+            <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <Area type="monotone" dataKey="total" stroke={color} strokeWidth={1.75} fill="url(#spark)" isAnimationActive={false} />
+        <Area type="monotone" dataKey="total" stroke="var(--color-primary)" strokeWidth={1.75} fill="url(#spark)" isAnimationActive={false} />
       </AreaChart>
     </ResponsiveContainer>
   );
@@ -369,7 +369,7 @@ export default function DashboardPage() {
                       )}
                     </div>
                   )}
-                  <div className="mt-3 -mx-1">{!isLoading && timeSeries.length >= 2 && <Sparkline data={timeSeries} color="#5b54f0" />}</div>
+                  <div className="mt-3 -mx-1">{!isLoading && timeSeries.length >= 2 && <Sparkline data={timeSeries} />}</div>
                 </CardContent>
               </Card>
             </motion.div>
@@ -401,7 +401,7 @@ export default function DashboardPage() {
           {/* Динамика выручки */}
           <Card>
             <CardHeader className="flex-row items-baseline justify-between space-y-0 pb-2">
-              <CardTitle className="text-[13px] font-medium text-foreground">Динамика выручки</CardTitle>
+              <CardTitle>Динамика выручки</CardTitle>
               {!isLoading && timeSeries.length > 0 && (
                 <span className="text-xs text-muted-foreground">
                   {shortDay(timeSeries[0].date)} – {shortDay(timeSeries[timeSeries.length - 1].date)}
@@ -412,21 +412,21 @@ export default function DashboardPage() {
               {isLoading ? (
                 <Skeleton className="h-64 w-full" />
               ) : timeSeries.length === 0 ? (
-                <p className="py-12 text-center text-sm text-muted-foreground">Нет данных за выбранный период</p>
+                <p className="py-10 text-center text-sm text-muted-foreground">Нет данных за выбранный период</p>
               ) : (
                 <ResponsiveContainer width="100%" height={260}>
                   <AreaChart data={timeSeries} margin={{ left: 8, right: 8, top: 8 }}>
                     <defs>
                       <linearGradient id="rev" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#5b54f0" stopOpacity={0.32} />
-                        <stop offset="100%" stopColor="#5b54f0" stopOpacity={0} />
+                        <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.32} />
+                        <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
                     <XAxis dataKey="date" tickFormatter={shortDay} tick={{ fontSize: 11, fill: tickColor }} tickLine={false} axisLine={false} minTickGap={24} />
                     <YAxis tickFormatter={(v) => (v >= 1000 ? `${Math.round(v / 1000)}к` : String(v))} tick={{ fontSize: 11, fill: tickColor }} tickLine={false} axisLine={false} width={44} />
                     <Tooltip formatter={(v: number) => [fmt(v), "Выручка"]} labelFormatter={(l) => shortDay(String(l))} contentStyle={tooltipStyle} />
-                    <Area type="monotone" dataKey="total" stroke="#5b54f0" strokeWidth={2} fill="url(#rev)" activeDot={{ r: 4, strokeWidth: 2, stroke: "#fff" }} />
+                    <Area type="monotone" dataKey="total" stroke="var(--color-primary)" strokeWidth={2} fill="url(#rev)" activeDot={{ r: 4, strokeWidth: 2, stroke: "#fff" }} />
                   </AreaChart>
                 </ResponsiveContainer>
               )}
@@ -437,7 +437,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-[13px] font-medium text-foreground">Выручка по филиалам</CardTitle>
+                <CardTitle>Выручка по филиалам</CardTitle>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
@@ -464,7 +464,7 @@ export default function DashboardPage() {
 
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-[13px] font-medium text-foreground">Выручка по источникам</CardTitle>
+                <CardTitle>Выручка по источникам</CardTitle>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
@@ -491,7 +491,7 @@ export default function DashboardPage() {
 
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-[13px] font-medium text-foreground">Топ администраторов</CardTitle>
+                <CardTitle>Топ администраторов</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {isLoading ? (
@@ -519,7 +519,7 @@ export default function DashboardPage() {
 
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-[13px] font-medium text-foreground">По способу оплаты</CardTitle>
+                <CardTitle>По способу оплаты</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {isLoading ? (
@@ -571,7 +571,7 @@ export default function DashboardPage() {
         <div className="space-y-6">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-[13px] font-medium text-foreground">Сегодняшние операции</CardTitle>
+              <CardTitle>Сегодняшние операции</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <OpsRow icon={LogIn} tint="tint-sky" label="Заезды" count={arrivalsToday.length} items={arrivalsToday.slice(0, 3).map((r) => `${r.room.roomNumber} · ${r.guestName || r.source.name}`)} loading={reportsLoading} />
@@ -591,7 +591,7 @@ export default function DashboardPage() {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-[13px] font-medium text-foreground">Быстрые действия</CardTitle>
+              <CardTitle>Быстрые действия</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-2">
@@ -613,7 +613,7 @@ export default function DashboardPage() {
 
           <Card>
             <CardHeader className="flex-row items-baseline justify-between space-y-0 pb-2">
-              <CardTitle className="text-[13px] font-medium text-foreground">Последние действия</CardTitle>
+              <CardTitle>Последние действия</CardTitle>
               <Link to="/audit" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
                 Все <ArrowRight className="h-3 w-3" />
               </Link>

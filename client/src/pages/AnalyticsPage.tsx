@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { escapeCsv } from "@/lib/csv";
 import { useDashboard } from "@/hooks/useDashboard";
 import { useBranches } from "@/hooks/useBranches";
 import { useReports } from "@/hooks/useReports";
@@ -82,10 +83,6 @@ function CountUp({ value, suffix, className }: { value: number; suffix?: string;
       {suffix}
     </span>
   );
-}
-
-function escapeCsv(v: string) {
-  return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
 }
 
 export default function AnalyticsPage() {
@@ -243,27 +240,27 @@ export default function AnalyticsPage() {
       {/* Выручка */}
       <Card className="mb-6">
         <CardHeader className="pb-2">
-          <CardTitle className="text-[13px] font-medium text-foreground">Динамика выручки</CardTitle>
+          <CardTitle>Динамика выручки</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <Skeleton className="h-64 w-full" />
           ) : (data?.timeSeries ?? []).length === 0 ? (
-            <p className="py-12 text-center text-sm text-muted-foreground">Нет данных за период</p>
+            <p className="py-10 text-center text-sm text-muted-foreground">Нет данных за период</p>
           ) : (
             <ResponsiveContainer width="100%" height={260}>
               <AreaChart data={data?.timeSeries} margin={{ left: 8, right: 8, top: 8 }}>
                 <defs>
                   <linearGradient id="rev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#5b54f0" stopOpacity={0.32} />
-                    <stop offset="100%" stopColor="#5b54f0" stopOpacity={0} />
+                    <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.32} />
+                    <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
                 <XAxis dataKey="date" tickFormatter={shortDay} tick={{ fontSize: 11, fill: tickColor }} tickLine={false} axisLine={false} minTickGap={24} />
                 <YAxis tickFormatter={(v) => (v >= 1000 ? `${Math.round(v / 1000)}к` : String(v))} tick={{ fontSize: 11, fill: tickColor }} tickLine={false} axisLine={false} width={44} />
                 <Tooltip formatter={(v: number) => [fmt(v), "Выручка"]} labelFormatter={(l) => shortDay(String(l))} contentStyle={tooltipStyle} />
-                <Area type="monotone" dataKey="total" stroke="#5b54f0" strokeWidth={2} fill="url(#rev)" activeDot={{ r: 4, strokeWidth: 2, stroke: "#fff" }} />
+                <Area type="monotone" dataKey="total" stroke="var(--color-primary)" strokeWidth={2} fill="url(#rev)" activeDot={{ r: 4, strokeWidth: 2, stroke: "#fff" }} />
               </AreaChart>
             </ResponsiveContainer>
           )}
@@ -273,7 +270,7 @@ export default function AnalyticsPage() {
       {/* Прогноз (уже подтверждённые будущие брони) */}
       <Card className="mb-6">
         <CardHeader className="pb-2">
-          <CardTitle className="text-[13px] font-medium text-foreground">Подтверждённая выручка вперёд</CardTitle>
+          <CardTitle>Подтверждённая выручка вперёд</CardTitle>
           <p className="text-xs text-muted-foreground">Сумма уже оформленных будущих броней по дате заезда — не статистический прогноз.</p>
         </CardHeader>
         <CardContent>
@@ -302,7 +299,7 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-[13px] font-medium text-foreground">
+            <CardTitle className="flex items-center gap-2">
               <Building2 className="h-3.5 w-3.5" /> Сравнение филиалов
             </CardTitle>
           </CardHeader>
@@ -329,7 +326,7 @@ export default function AnalyticsPage() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-[13px] font-medium text-foreground">
+            <CardTitle className="flex items-center gap-2">
               <Users2 className="h-3.5 w-3.5" /> Эффективность администраторов
             </CardTitle>
           </CardHeader>
@@ -356,7 +353,7 @@ export default function AnalyticsPage() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-[13px] font-medium text-foreground">Источники бронирования</CardTitle>
+            <CardTitle>Источники бронирования</CardTitle>
           </CardHeader>
           <CardContent>
             {(data?.bySource ?? []).length === 0 ? (
@@ -382,7 +379,7 @@ export default function AnalyticsPage() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-[13px] font-medium text-foreground">Способы оплаты</CardTitle>
+            <CardTitle>Способы оплаты</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {(data?.byPayment ?? []).length === 0 ? (

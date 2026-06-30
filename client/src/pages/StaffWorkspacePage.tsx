@@ -245,7 +245,7 @@ export default function StaffWorkspacePage() {
           <CardContent className="p-5">
             <p className="mb-3 text-sm font-semibold text-foreground">Бронирования сегодня</p>
             {todayReports.length === 0 && todayDepartures.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">Нет заездов и выездов сегодня</p>
+              <p className="py-8 text-center text-sm text-muted-foreground">Нет заездов и выездов сегодня</p>
             ) : (
               <ul className="space-y-2">
                 {todayReports.map((r) => (
@@ -269,7 +269,7 @@ export default function StaffWorkspacePage() {
           <CardContent className="p-5">
             <p className="mb-3 text-sm font-semibold text-foreground">Недавние действия</p>
             {recentActions.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">Пока нет активности</p>
+              <p className="py-8 text-center text-sm text-muted-foreground">Пока нет активности</p>
             ) : (
               <ul className="space-y-2.5">
                 {recentActions.map((a, i) => (

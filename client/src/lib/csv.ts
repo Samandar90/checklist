@@ -1,7 +1,7 @@
 import { MonthlyReport, AuditLog } from "@/types";
 import { formatDate, formatDateTime, reportDebt, nightsBetween } from "@/lib/utils";
 
-function escapeCsv(value: string) {
+export function escapeCsv(value: string) {
   if (/[",\n]/.test(value)) {
     return `"${value.replace(/"/g, '""')}"`;
   }

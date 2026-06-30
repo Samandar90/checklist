@@ -211,7 +211,7 @@ export default function FinanceCenterPage() {
             onClick={() => setTab(t.key)}
             className={cn(
               "border-b-2 px-3 py-2 text-[13px] font-medium transition-colors",
-              tab === t.key ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+              tab === t.key ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground hover:border-border/60"
             )}
           >
             {t.label}
@@ -223,7 +223,7 @@ export default function FinanceCenterPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-[13px] font-medium text-foreground">Расходы по категориям</CardTitle>
+              <CardTitle>Расходы по категориям</CardTitle>
             </CardHeader>
             <CardContent>
               {(dashboard?.byExpense ?? []).length === 0 ? (
@@ -248,7 +248,7 @@ export default function FinanceCenterPage() {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-[13px] font-medium text-foreground">Способы оплаты</CardTitle>
+              <CardTitle>Способы оплаты</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {(dashboard?.byPayment ?? []).length === 0 ? (

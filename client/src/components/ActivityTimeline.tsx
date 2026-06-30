@@ -5,25 +5,32 @@ import { cn } from "@/lib/utils";
 import { AuditLog } from "@/types";
 
 const ACTION_META = {
-  CREATE: { icon: Plus, className: "bg-emerald-500/10 text-emerald-600" },
-  UPDATE: { icon: Pencil, className: "bg-amber-500/10 text-amber-600" },
-  DELETE: { icon: Trash2, className: "bg-rose-500/10 text-rose-600" },
+  CREATE: { icon: Plus,   tint: "tint-emerald" },
+  UPDATE: { icon: Pencil, tint: "tint-amber" },
+  DELETE: { icon: Trash2, tint: "tint-rose" },
 } as const;
 
 export default function ActivityTimeline({ items, emptyText }: { items: AuditLog[]; emptyText?: string }) {
   if (items.length === 0) {
-    return <p className="py-6 text-center text-sm text-muted-foreground">{emptyText ?? "Пока нет активности"}</p>;
+    return (
+      <p className="py-8 text-center text-sm text-muted-foreground">
+        {emptyText ?? "Пока нет активности"}
+      </p>
+    );
   }
 
   return (
-    <ul className="flex flex-col gap-1">
+    <ul className="flex flex-col gap-0.5">
       {items.map((log) => {
-        const meta = ACTION_META[log.action];
+        const meta = ACTION_META[log.action as keyof typeof ACTION_META] ?? ACTION_META.UPDATE;
         const Icon = meta.icon;
         return (
-          <li key={log.id} className="flex items-start gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-secondary">
-            <span className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full", meta.className)}>
-              <Icon className="h-3.5 w-3.5" />
+          <li
+            key={log.id}
+            className="flex items-start gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-secondary"
+          >
+            <span className={cn("mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg", meta.tint)}>
+              <Icon className="h-3 w-3" />
             </span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-[13px] text-foreground">{log.summary}</p>
