@@ -81,7 +81,7 @@ const DrawerSection = ({
 const DrawerCloseButton = () => (
   <DialogPrimitive.Close className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
     <X className="h-4 w-4" />
-    <span className="sr-only">Close</span>
+    <span className="sr-only">Закрыть</span>
   </DialogPrimitive.Close>
 );
 
