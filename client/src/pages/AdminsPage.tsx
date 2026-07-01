@@ -185,10 +185,10 @@ export default function AdminsPage() {
                 <TableCell className="text-muted-foreground">{formatDate(admin.createdAt)}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(admin)}>
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(admin)} aria-label="Редактировать">
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(admin)}>
+                    <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(admin)} aria-label="Удалить">
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>

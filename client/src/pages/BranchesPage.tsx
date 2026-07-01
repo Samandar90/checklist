@@ -158,10 +158,10 @@ export default function BranchesPage() {
                 <TableCell className="text-muted-foreground">{formatDate(branch.createdAt)}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(branch)}>
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(branch)} aria-label="Редактировать">
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(branch)}>
+                    <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(branch)} aria-label="Удалить">
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>

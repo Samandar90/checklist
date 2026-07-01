@@ -286,10 +286,10 @@ export default function RoomsPage() {
                     )}
                   </div>
                   <div className="mt-3 flex justify-end gap-1 border-t border-border pt-2.5">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(room)}>
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(room)} aria-label="Редактировать">
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(room)}>
+                    <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(room)} aria-label="Удалить">
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>

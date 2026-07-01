@@ -334,10 +334,10 @@ export default function MyReportsPage() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(report)}>
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(report)} aria-label="Редактировать">
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(report)}>
+                    <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(report)} aria-label="Удалить">
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
