@@ -123,6 +123,11 @@ export default function SourcesPage() {
           icon={Megaphone}
           title="Пока нет источников бронирования"
           description="Добавьте источник, чтобы начать работу."
+          action={
+            <Button onClick={openCreate}>
+              <Plus className="h-4 w-4" /> Добавить источник
+            </Button>
+          }
         />
       ) : (
         <Table>

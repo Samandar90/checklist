@@ -124,6 +124,11 @@ export default function BranchesPage() {
           icon={Building2}
           title="Пока нет филиалов"
           description="Создайте первый филиал, чтобы начать работу."
+          action={
+            <Button onClick={openCreate}>
+              <Plus className="h-4 w-4" /> Добавить филиал
+            </Button>
+          }
         />
       ) : (
         <Table>

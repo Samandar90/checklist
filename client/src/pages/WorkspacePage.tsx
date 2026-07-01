@@ -91,7 +91,18 @@ export default function WorkspacePage() {
           ))}
         </div>
       ) : !branches || branches.length === 0 ? (
-        <EmptyState icon={Building2} title="Филиалов пока нет" description="Добавьте первый филиал в разделе «Филиалы»." />
+        <EmptyState
+          icon={Building2}
+          title="Филиалов пока нет"
+          description="Добавьте первый филиал в разделе «Филиалы»."
+          action={
+            <Button asChild>
+              <Link to="/branches">
+                <Building2 className="h-4 w-4" /> Перейти к филиалам
+              </Link>
+            </Button>
+          }
+        />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {branches.map((branch, i) => {

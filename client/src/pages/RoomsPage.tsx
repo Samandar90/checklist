@@ -245,7 +245,16 @@ export default function RoomsPage() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <EmptyState icon={BedDouble} title="Номера не найдены" description="Измените фильтры или добавьте новый номер." />
+        <EmptyState
+          icon={BedDouble}
+          title="Номера не найдены"
+          description="Измените фильтры или добавьте новый номер."
+          action={
+            <Button onClick={openCreate} disabled={noBranches}>
+              <Plus className="h-4 w-4" /> Добавить номер
+            </Button>
+          }
+        />
       ) : view === "grid" ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((room) => {

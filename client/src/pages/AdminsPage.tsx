@@ -157,6 +157,11 @@ export default function AdminsPage() {
           icon={Users}
           title="Пока нет администраторов"
           description="Добавьте администратора, чтобы начать работу."
+          action={
+            <Button onClick={openCreate} disabled={noBranches}>
+              <Plus className="h-4 w-4" /> Добавить администратора
+            </Button>
+          }
         />
       ) : (
         <Table>
