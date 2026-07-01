@@ -21,16 +21,12 @@ import { useCreateReport } from "@/hooks/useReports";
 import { useAuth } from "@/contexts/AuthContext";
 import { Room, paymentMethods, paymentStatuses } from "@/types";
 import { getErrorMessage } from "@/lib/api";
-import { cn, addDaysIso, nightsBetween, formatMoney, formatDate } from "@/lib/utils";
+import { cn, addDaysIso, nightsBetween, formatMoney, formatDate, PAYMENT_STATUS_OPTIONS } from "@/lib/utils";
 
 const DRAFT_KEY = "booking-wizard-draft";
 
 const paymentMethodOptions = paymentMethods.map((m) => ({ value: m, label: m }));
-const paymentStatusOptions = [
-  { value: "Оплачено" as const, label: "Оплачено", activeCls: "bg-emerald-500 text-white shadow-sm" },
-  { value: "Частично" as const, label: "Частично", activeCls: "bg-amber-500 text-white shadow-sm" },
-  { value: "Долг" as const, label: "Долг", activeCls: "bg-red-500 text-white shadow-sm" },
-];
+const paymentStatusOptions = PAYMENT_STATUS_OPTIONS;
 
 const schema = z
   .object({

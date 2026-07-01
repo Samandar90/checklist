@@ -61,3 +61,10 @@ export function paymentStatusClass(status: string) {
       return "bg-secondary text-secondary-foreground";
   }
 }
+
+/** Shared options for the payment-status Segmented picker (solid, high-contrast active state). */
+export const PAYMENT_STATUS_OPTIONS = [
+  { value: "Оплачено" as const, label: "Оплачено", activeCls: "status-success shadow-sm" },
+  { value: "Частично" as const, label: "Частично", activeCls: "status-warning shadow-sm" },
+  { value: "Долг" as const, label: "Долг", activeCls: "status-danger shadow-sm" },
+];

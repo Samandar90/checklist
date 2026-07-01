@@ -24,6 +24,15 @@
   --color-destructive: #d4183d;
   --color-destructive-foreground: #ffffff;
 
+  --color-success: #059669;
+  --color-success-foreground: #ffffff;
+
+  --color-warning: #b45309;
+  --color-warning-foreground: #ffffff;
+
+  --color-info: #0284c7;
+  --color-info-foreground: #ffffff;
+
   --color-card: #ffffff;
   --color-card-foreground: #16161d;
 
@@ -142,6 +151,15 @@
   --color-destructive: #f0436a;
   --color-destructive-foreground: #ffffff;
 
+  --color-success: #10b981;
+  --color-success-foreground: #06150f;
+
+  --color-warning: #f59e0b;
+  --color-warning-foreground: #1a1203;
+
+  --color-info: #38bdf8;
+  --color-info-foreground: #05141c;
+
   --color-card: #111114;
   --color-card-foreground: #ededf0;
 }
@@ -203,6 +221,16 @@ body {
 .dark .tint-amber { background: color-mix(in srgb, #fbbf24 18%, transparent); color: #fcd34d; }
 .dark .tint-rose { background: color-mix(in srgb, #fb7185 18%, transparent); color: #fda4af; }
 .dark .tint-slate { background: color-mix(in srgb, #94a3b8 18%, transparent); color: #cbd5e1; }
+
+/*
+ * Solid status classes: high-contrast bg + white/dark text for selected
+ * states (payment status pickers, active toggles) where a tint would be
+ * indistinguishable from the unselected state.
+ */
+.status-success { background: var(--color-success); color: var(--color-success-foreground); }
+.status-warning { background: var(--color-warning); color: var(--color-warning-foreground); }
+.status-danger  { background: var(--color-destructive); color: var(--color-destructive-foreground); }
+.status-info    { background: var(--color-info); color: var(--color-info-foreground); }
 
 ::-webkit-scrollbar {
   width: 10px;

@@ -49,17 +49,14 @@ import {
   paymentStatusClass,
   nightsBetween,
   addDaysIso,
+  PAYMENT_STATUS_OPTIONS,
 } from "@/lib/utils";
 import { exportReportsToCsv } from "@/lib/csv";
 
 const currencies = ["UZS", "USD", "EUR"];
 
 const paymentMethodOptions = paymentMethods.map((m) => ({ value: m, label: m }));
-const paymentStatusOptions = [
-  { value: "Оплачено" as const, label: "Оплачено", activeCls: "bg-emerald-500 text-white shadow-sm" },
-  { value: "Частично" as const, label: "Частично", activeCls: "bg-amber-500 text-white shadow-sm" },
-  { value: "Долг" as const, label: "Долг", activeCls: "bg-red-500 text-white shadow-sm" },
-];
+const paymentStatusOptions = PAYMENT_STATUS_OPTIONS;
 
 const reportFormSchema = z
   .object({

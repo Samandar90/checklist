@@ -32,7 +32,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAudit } from "@/hooks/useAudit";
 import { MonthlyReport, Room, paymentMethods, paymentStatuses, BookingStatus } from "@/types";
 import { getErrorMessage } from "@/lib/api";
-import { addDaysIso, nightsBetween, formatMoney, formatDateTime, reportDebt, paymentStatusClass } from "@/lib/utils";
+import { addDaysIso, nightsBetween, formatMoney, formatDateTime, reportDebt, paymentStatusClass, PAYMENT_STATUS_OPTIONS } from "@/lib/utils";
 import BookingStatusBadge from "@/components/BookingStatusBadge";
 import ActivityTimeline from "@/components/ActivityTimeline";
 
@@ -46,11 +46,7 @@ const STATUS_ACTIONS: { status: BookingStatus; label: string; icon: typeof LogIn
 const currencies = ["UZS", "USD", "EUR"];
 
 const paymentMethodOptions = paymentMethods.map((m) => ({ value: m, label: m }));
-const paymentStatusOptions = [
-  { value: "Оплачено" as const, label: "Оплачено", activeCls: "bg-emerald-500 text-white shadow-sm" },
-  { value: "Частично" as const, label: "Частично", activeCls: "bg-amber-500 text-white shadow-sm" },
-  { value: "Долг" as const, label: "Долг", activeCls: "bg-red-500 text-white shadow-sm" },
-];
+const paymentStatusOptions = PAYMENT_STATUS_OPTIONS;
 
 const schema = z
   .object({
