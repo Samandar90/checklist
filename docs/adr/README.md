@@ -9,8 +9,8 @@ Foundational decisions identified by the architecture review (PMS-1.2-Architectu
 | [ADR-003](ADR-003-transactional-outbox-and-jobs.md) | Transactional outbox + background job infrastructure | **Proposed** | 17, 26, 30, 32, 33, 39, 40, 46 |
 | ADR-004 | Auth sessions: access/refresh tokens, revocation, storage | Planned | 15, 29 |
 | ADR-005 | Real-time transport (WebSocket vs SSE), reconnect protocol | Planned | 20, 21 |
-| ADR-006 | Reservation state machine: transition matrix, single executor | Planned | 22, 24, 27 |
-| ADR-007 | Business dates & timezones (hotel-local stay dates vs UTC instants) | Planned | 20, 22, 26, 27, 40, 48 |
+| [ADR-006](ADR-006-reservation-state-machine.md) | Reservation state machine: transition matrix, single executor | **Proposed** | 22, 24, 27 |
+| [ADR-007](ADR-007-business-dates-and-timezones.md) | Business dates & timezones (hotel-local stay dates vs UTC instants) | **Proposed** | 20, 22, 26, 27, 40, 48 |
 | ADR-008 | Authorization policy engine (RBAC+ABAC evaluation) | Planned | 29, 41 |
 | ADR-009 | Frontend server-state library & data-loading pattern | Planned | 11, 21 |
 | ADR-010 | Mobile framework & offline sync protocol | Planned | 43 |
