@@ -5,7 +5,7 @@ Foundational decisions identified by the architecture review (PMS-1.2-Architectu
 | # | Decision | Status | Blocks (spec chapters) |
 |---|---|---|---|
 | [ADR-001](ADR-001-multi-tenancy-data-model.md) | Multi-tenancy data model (pooled + RLS, tiered) | **Proposed** | 28, 40, 42, 45, 48 |
-| ADR-002 | Financial core: double-entry ledger, folios, night audit | Planned | 22, 26, 35, 36, 38, 46 |
+| [ADR-002](ADR-002-financial-core-ledger-folio-night-audit.md) | Financial core: double-entry ledger, folios, night audit | **Proposed** | 22, 26, 35, 36, 38, 46 |
 | ADR-003 | Transactional outbox + background job infrastructure | Planned | 17, 26, 30, 32, 33, 39, 40, 46 |
 | ADR-004 | Auth sessions: access/refresh tokens, revocation, storage | Planned | 15, 29 |
 | ADR-005 | Real-time transport (WebSocket vs SSE), reconnect protocol | Planned | 20, 21 |

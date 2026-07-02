@@ -6,7 +6,7 @@
 | **Date** | 2026-07-02 |
 | **Deciders** | LBL Architecture Owner |
 | **Spec chapters affected** | 28 (Multi-Hotel), 40 (Data Platform), 42 (Infrastructure), 45 (DR/Backup), 48 (Multi-Tenant Enterprise), 12 (Backend), 17 (Audit), 23 (Guest CRM) |
-| **Review finding resolved** | Blocker #3 / Improvement #3 in PMS-1.2-Architecture-Review.md |
+| **Review finding resolved** | Blocker #5 / Top-100 item #3 in PMS-1.2-Architecture-Review.md |
 
 ---
 
@@ -179,6 +179,6 @@ Tenant moves between tiers via the export/import machinery of 48.23–48.24 (log
 
 ## 7. References
 
-- PMS-1.2-Architecture-Review.md §6 Blockers #3, #5; Top-100 items 3, 78.
+- PMS-1.2-Architecture-Review.md §6 Blocker #5; Top-100 items 3, 78.
 - PMS-1.2-Architecture-Review-Detailed.md — Chapters 28, 45, 48 findings.
 - PostgreSQL docs: Row Security Policies; `FORCE ROW LEVEL SECURITY`; `SET LOCAL`.
