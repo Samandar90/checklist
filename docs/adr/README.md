@@ -11,8 +11,8 @@ Foundational decisions identified by the architecture review (PMS-1.2-Architectu
 | [ADR-005](ADR-005-realtime-transport.md) | Real-time transport (SSE), reconnect/backfill protocol | **Proposed** | 20, 21 |
 | [ADR-006](ADR-006-reservation-state-machine.md) | Reservation state machine: transition matrix, single executor | **Proposed** | 22, 24, 27 |
 | [ADR-007](ADR-007-business-dates-and-timezones.md) | Business dates & timezones (hotel-local stay dates vs UTC instants) | **Proposed** | 20, 22, 26, 27, 40, 48 |
-| ADR-008 | Authorization policy engine (RBAC+ABAC evaluation) | Planned | 29, 41 |
-| ADR-009 | Frontend server-state library & data-loading pattern | Planned | 11, 21 |
+| [ADR-008](ADR-008-authorization-policy-engine.md) | Authorization policy engine (RBAC+ABAC evaluation) | **Proposed** | 29, 41 |
+| [ADR-009](ADR-009-frontend-server-state.md) | Frontend server-state library & data-loading pattern | **Proposed** | 11, 21 |
 | ADR-010 | Mobile framework & offline sync protocol | Planned | 43 |
 | ADR-011 | Search architecture (Postgres FTS → OpenSearch triggers) | Planned | 14, 23, 28 |
 | ADR-012 | Secret management (KMS/Vault) | Planned | 12, 38, 41, 42 |
