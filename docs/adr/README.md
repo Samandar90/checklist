@@ -7,8 +7,8 @@ Foundational decisions identified by the architecture review (PMS-1.2-Architectu
 | [ADR-001](ADR-001-multi-tenancy-data-model.md) | Multi-tenancy data model (pooled + RLS, tiered) | **Proposed** | 28, 40, 42, 45, 48 |
 | [ADR-002](ADR-002-financial-core-ledger-folio-night-audit.md) | Financial core: double-entry ledger, folios, night audit | **Proposed** | 22, 26, 35, 36, 38, 46 |
 | [ADR-003](ADR-003-transactional-outbox-and-jobs.md) | Transactional outbox + background job infrastructure | **Proposed** | 17, 26, 30, 32, 33, 39, 40, 46 |
-| ADR-004 | Auth sessions: access/refresh tokens, revocation, storage | Planned | 15, 29 |
-| ADR-005 | Real-time transport (WebSocket vs SSE), reconnect protocol | Planned | 20, 21 |
+| [ADR-004](ADR-004-auth-sessions-tokens-revocation.md) | Auth sessions: access/refresh tokens, revocation, storage, MFA | **Proposed** | 15, 29 |
+| [ADR-005](ADR-005-realtime-transport.md) | Real-time transport (SSE), reconnect/backfill protocol | **Proposed** | 20, 21 |
 | [ADR-006](ADR-006-reservation-state-machine.md) | Reservation state machine: transition matrix, single executor | **Proposed** | 22, 24, 27 |
 | [ADR-007](ADR-007-business-dates-and-timezones.md) | Business dates & timezones (hotel-local stay dates vs UTC instants) | **Proposed** | 20, 22, 26, 27, 40, 48 |
 | ADR-008 | Authorization policy engine (RBAC+ABAC evaluation) | Planned | 29, 41 |
