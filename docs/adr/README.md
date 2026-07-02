@@ -13,8 +13,8 @@ Foundational decisions identified by the architecture review (PMS-1.2-Architectu
 | [ADR-007](ADR-007-business-dates-and-timezones.md) | Business dates & timezones (hotel-local stay dates vs UTC instants) | **Proposed** | 20, 22, 26, 27, 40, 48 |
 | [ADR-008](ADR-008-authorization-policy-engine.md) | Authorization policy engine (RBAC+ABAC evaluation) | **Proposed** | 29, 41 |
 | [ADR-009](ADR-009-frontend-server-state.md) | Frontend server-state library & data-loading pattern | **Proposed** | 11, 21 |
-| ADR-010 | Mobile framework & offline sync protocol | Planned | 43 |
-| ADR-011 | Search architecture (Postgres FTS → OpenSearch triggers) | Planned | 14, 23, 28 |
+| [ADR-010](ADR-010-mobile-framework-offline-sync.md) | Mobile framework (React Native) & offline sync protocol | **Proposed** | 43 |
+| [ADR-011](ADR-011-search-architecture.md) | Search architecture (Postgres trgm/FTS → engine triggers) | **Proposed** | 14, 23, 28 |
 | ADR-012 | Secret management (KMS/Vault) | Planned | 12, 38, 41, 42 |
 | ADR-013 | API gateway placement & rate-limiting enforcement | Planned | 14, 37, 42 |
 | ADR-014 | Extension sandbox runtime (webhook/iframe-first) | Planned | 46 |
