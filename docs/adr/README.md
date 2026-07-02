@@ -20,6 +20,8 @@ Foundational decisions identified by the architecture review (PMS-1.2-Architectu
 | [ADR-014](ADR-014-extension-sandbox-runtime.md) | Extension sandbox runtime (remote-first: webhooks + iframes) | **Proposed** | 46 |
 | [ADR-015](ADR-015-evolution-stage-triggers.md) | Evolution stages & transition triggers (resolves D-5) | **Proposed** | 12, 42, 50 |
 
-**Registry status: 15 of 15 written, all Proposed.** Next actions: owner review → Accepted; then Chapter 13 (Data Architecture) may be written (prerequisites ADR-001/002/003/006/007 satisfied on acceptance).
+**Registry status: 15 of 15 written, all Proposed.** Next action: owner review → Accepted.
+
+**Chapter 13 (Data Architecture):** drafted at [../architecture/Chapter-13-Data-Architecture.md](../architecture/Chapter-13-Data-Architecture.md) — consolidates ADR-001/002/003/006/007/008/011/012 into the normative persistence contract. Formally unblocked once those ADRs are Accepted.
 
 **Rules:** an ADR is ~1–3 pages: context, drivers, options with rejection reasons, decision, consequences, CI-enforceable compliance checks. No feature spec may cite a "Planned" ADR as resolved. Chapter 13 (Data Architecture) may be written only after ADR-001, -002, -003, -006, -007 are Accepted.
