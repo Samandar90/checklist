@@ -29,6 +29,50 @@ function normalizePaid(data: { paymentStatus: string; paidAmount?: number | null
   return data.paidAmount ?? 0;
 }
 
+// A room is only freed by a cancellation or a no-show; every other status still holds the nights.
+const ROOM_HOLDING_STATUSES = ["RESERVED", "CHECKED_IN", "CHECKED_OUT"];
+
+/** Floor a date to the start of its day so overlap is compared in whole hotel-nights. */
+const dayStart = (d: Date) => {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+};
+
+/** Half-open night range [start, end) for a booking; a missing checkout means a single night. */
+function nightRange(date: Date, checkOut: Date | null) {
+  const start = dayStart(date);
+  const out = checkOut ? dayStart(checkOut) : null;
+  const end = out && out.getTime() > start.getTime() ? out : new Date(start.getTime() + DAY_MS);
+  return { start, end };
+}
+
+/**
+ * Find an active booking that overlaps [start, end) on the same room, or null.
+ * Prevents double-booking one room for the same nights (adapted from the review's
+ * core invariant; enforced in the app layer because SQLite has no exclusion constraints).
+ */
+async function findRoomConflict(roomId: string, start: Date, end: Date, excludeId: string | null) {
+  const candidates = await prisma.monthlyReport.findMany({
+    where: {
+      roomId,
+      status: { in: ROOM_HOLDING_STATUSES },
+      date: { lt: end }, // existing.start < new.end (cheap pre-filter; exact end check below)
+      ...(excludeId ? { id: { not: excludeId } } : {}),
+    },
+    include: { room: true },
+    orderBy: { date: "asc" },
+  });
+  return (
+    candidates.find((r) => {
+      const range = nightRange(new Date(r.date), r.checkOut ? new Date(r.checkOut) : null);
+      return range.end.getTime() > start.getTime(); // existing.end > new.start
+    }) ?? null
+  );
+}
+
+const dmy = (d: Date) => d.toLocaleDateString("ru-RU");
+
 function buildWhere(query: any, isAdmin: boolean, ownAdminId: string | null) {
   const where: any = {};
 
@@ -317,6 +361,17 @@ router.post("/", async (req, res, next) => {
     }
 
     const data = reportSchema.parse(body);
+
+    const { start, end } = nightRange(new Date(data.date), data.checkOut ? new Date(data.checkOut) : null);
+    const conflict = await findRoomConflict(data.roomId, start, end, null);
+    if (conflict) {
+      return res.status(409).json({
+        message: `Номер ${conflict.room.roomNumber} уже занят на эти даты (${dmy(new Date(conflict.date))}${
+          conflict.checkOut ? `–${dmy(new Date(conflict.checkOut))}` : ""
+        }${conflict.guestName ? `, ${conflict.guestName}` : ""}). Выберите другой номер или даты.`,
+      });
+    }
+
     const report = await prisma.monthlyReport.create({
       data: {
         ...data,
@@ -355,6 +410,17 @@ router.put("/:id", async (req, res, next) => {
     }
 
     const data = reportSchema.parse(body);
+
+    const { start, end } = nightRange(new Date(data.date), data.checkOut ? new Date(data.checkOut) : null);
+    const conflict = await findRoomConflict(data.roomId, start, end, req.params.id);
+    if (conflict) {
+      return res.status(409).json({
+        message: `Номер ${conflict.room.roomNumber} уже занят на эти даты (${dmy(new Date(conflict.date))}${
+          conflict.checkOut ? `–${dmy(new Date(conflict.checkOut))}` : ""
+        }${conflict.guestName ? `, ${conflict.guestName}` : ""}). Выберите другой номер или даты.`,
+      });
+    }
+
     const report = await prisma.monthlyReport.update({
       where: { id: req.params.id },
       data: {
