@@ -6,6 +6,8 @@ export interface AdminInput {
   fullName: string;
   phone: string;
   branchId: string;
+  /** Every branch this admin should work in (server always includes branchId too). */
+  branchIds?: string[];
   username: string;
   password?: string;
 }

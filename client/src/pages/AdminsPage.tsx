@@ -31,6 +31,7 @@ const baseFields = {
   fullName: z.string().trim().min(1, "Укажите ФИО"),
   phone: z.string().trim().min(1, "Укажите телефон"),
   branchId: z.string().trim().min(1, "Выберите филиал"),
+  branchIds: z.array(z.string()).optional(),
   username: z.string().trim().min(3, "Логин должен быть не короче 3 символов"),
 };
 
@@ -60,12 +61,15 @@ export default function AdminsPage() {
 
   const form = useForm<AdminFormValues>({
     resolver: zodResolver(editing ? editFormSchema : createFormSchema),
-    defaultValues: { fullName: "", phone: "", branchId: "", username: "", password: "" },
+    defaultValues: { fullName: "", phone: "", branchId: "", branchIds: [], username: "", password: "" },
   });
+
+  const primaryBranchId = form.watch("branchId");
+  const secondaryBranchIds = form.watch("branchIds") ?? [];
 
   function openCreate() {
     setEditing(null);
-    form.reset({ fullName: "", phone: "", branchId: "", username: "", password: "" });
+    form.reset({ fullName: "", phone: "", branchId: "", branchIds: [], username: "", password: "" });
     setDialogOpen(true);
   }
 
@@ -75,6 +79,7 @@ export default function AdminsPage() {
       fullName: admin.fullName,
       phone: admin.phone,
       branchId: admin.branchId,
+      branchIds: (admin.branches ?? []).map((b) => b.id).filter((id) => id !== admin.branchId),
       username: admin.username ?? "",
       password: "",
     });
@@ -181,7 +186,11 @@ export default function AdminsPage() {
                 <TableCell className="font-medium text-foreground">{admin.fullName}</TableCell>
                 <TableCell className="text-muted-foreground">{admin.username ?? "-"}</TableCell>
                 <TableCell>{admin.phone}</TableCell>
-                <TableCell>{admin.branch?.name ?? "-"}</TableCell>
+                <TableCell>
+                  {admin.branches && admin.branches.length > 1
+                    ? admin.branches.map((b) => b.name).join(", ")
+                    : admin.branch?.name ?? "-"}
+                </TableCell>
                 <TableCell className="text-muted-foreground">{formatDate(admin.createdAt)}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
@@ -242,7 +251,43 @@ export default function AdminsPage() {
               {form.formState.errors.branchId && (
                 <p className="text-xs text-destructive">{form.formState.errors.branchId.message}</p>
               )}
+              <p className="text-xs text-muted-foreground">Основной филиал — используется по умолчанию.</p>
             </div>
+
+            {(branches ?? []).filter((b) => b.id !== primaryBranchId).length > 0 && (
+              <div className="space-y-1.5">
+                <Label>Дополнительные филиалы</Label>
+                <p className="text-xs text-muted-foreground">
+                  Отметьте, если этот администратор должен работать сразу в нескольких филиалах.
+                </p>
+                <div className="max-h-40 space-y-1 overflow-y-auto rounded-lg border border-border p-2">
+                  {(branches ?? [])
+                    .filter((b) => b.id !== primaryBranchId)
+                    .map((b) => {
+                      const checked = secondaryBranchIds.includes(b.id);
+                      return (
+                        <label
+                          key={b.id}
+                          className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-secondary"
+                        >
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 rounded border-border"
+                            checked={checked}
+                            onChange={(e) => {
+                              const next = e.target.checked
+                                ? [...secondaryBranchIds, b.id]
+                                : secondaryBranchIds.filter((id) => id !== b.id);
+                              form.setValue("branchIds", next, { shouldDirty: true });
+                            }}
+                          />
+                          {b.name}
+                        </label>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4 rounded-xl border border-border bg-muted/50 p-3">
               <div className="col-span-2 -mb-1 text-xs font-medium text-muted-foreground">

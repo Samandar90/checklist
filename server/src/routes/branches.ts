@@ -5,6 +5,31 @@ import { requireSuperAdmin } from "../middleware/auth";
 import { recordAudit, buildChanges, summarize } from "../audit";
 
 const router = Router();
+
+// Registered before the requireSuperAdmin gate below, so a regular branch
+// admin can fetch just the branches they're assigned to (used to power the
+// branch switcher for admins who work in more than one branch).
+router.get("/mine", async (req, res, next) => {
+  try {
+    if (req.user!.role !== "ADMIN") {
+      return res.status(403).json({ message: "Доступно только администраторам филиалов" });
+    }
+    const ids =
+      req.user!.branchIds && req.user!.branchIds.length
+        ? req.user!.branchIds
+        : req.user!.branchId
+          ? [req.user!.branchId]
+          : [];
+    const branches = await prisma.branch.findMany({
+      where: { id: { in: ids } },
+      orderBy: { createdAt: "desc" },
+    });
+    res.json(branches);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.use(requireSuperAdmin);
 
 router.get("/", async (_req, res, next) => {

@@ -10,6 +10,15 @@ export function useBranches(options: { enabled?: boolean } = {}) {
   });
 }
 
+/** Branches the current (non-super-admin) user is assigned to work in. */
+export function useMyBranches(options: { enabled?: boolean } = {}) {
+  return useQuery({
+    queryKey: ["branches", "mine"],
+    queryFn: async () => (await api.get<Branch[]>("/branches/mine")).data,
+    enabled: options.enabled ?? true,
+  });
+}
+
 export function useCreateBranch() {
   const qc = useQueryClient();
   return useMutation({

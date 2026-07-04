@@ -3,11 +3,18 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Building2, ChevronDown, Check, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useBranches } from "@/hooks/useBranches";
+import { useBranches, useMyBranches } from "@/hooks/useBranches";
 import { useActiveBranch } from "@/contexts/BranchContext";
 
-export default function BranchSwitcher() {
-  const { data: branches } = useBranches();
+/**
+ * `forAdmin`: rendered for a regular admin assigned to more than one branch.
+ * Lists only their own branches (via /branches/mine) and hides "Все отели" —
+ * an admin picks exactly one branch to work in, never a cross-branch view.
+ */
+export default function BranchSwitcher({ forAdmin = false }: { forAdmin?: boolean }) {
+  const { data: allBranches } = useBranches({ enabled: !forAdmin });
+  const { data: myBranches } = useMyBranches({ enabled: forAdmin });
+  const branches = forAdmin ? myBranches : allBranches;
   const { activeBranchId, setActiveBranchId } = useActiveBranch();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -21,7 +28,8 @@ export default function BranchSwitcher() {
     return () => window.removeEventListener("mousedown", onDown);
   }, []);
 
-  const activeName = activeBranchId ? branches?.find((b) => b.id === activeBranchId)?.name : "Все отели";
+  const fallbackName = forAdmin ? branches?.[0]?.name : "Все отели";
+  const activeName = activeBranchId ? branches?.find((b) => b.id === activeBranchId)?.name : fallbackName;
 
   return (
     <div className="relative" ref={ref}>
@@ -43,17 +51,21 @@ export default function BranchSwitcher() {
             transition={{ duration: 0.15 }}
             className="absolute right-0 top-[calc(100%+6px)] z-30 w-64 overflow-hidden rounded-xl border border-border bg-card py-1 text-sm shadow-xl"
           >
-            <button
-              onClick={() => {
-                setActiveBranchId(undefined);
-                setOpen(false);
-              }}
-              className="flex w-full items-center justify-between gap-2.5 px-3 py-2 text-left text-foreground transition-colors hover:bg-secondary"
-            >
-              <span>Все отели</span>
-              {!activeBranchId && <Check className="h-3.5 w-3.5 text-primary" />}
-            </button>
-            <div className="my-1 border-t border-border" />
+            {!forAdmin && (
+              <>
+                <button
+                  onClick={() => {
+                    setActiveBranchId(undefined);
+                    setOpen(false);
+                  }}
+                  className="flex w-full items-center justify-between gap-2.5 px-3 py-2 text-left text-foreground transition-colors hover:bg-secondary"
+                >
+                  <span>Все отели</span>
+                  {!activeBranchId && <Check className="h-3.5 w-3.5 text-primary" />}
+                </button>
+                <div className="my-1 border-t border-border" />
+              </>
+            )}
             {(branches ?? []).map((b) => (
               <button
                 key={b.id}
@@ -67,16 +79,20 @@ export default function BranchSwitcher() {
                 {activeBranchId === b.id && <Check className="h-3.5 w-3.5 text-primary" />}
               </button>
             ))}
-            <div className="my-1 border-t border-border" />
-            <button
-              onClick={() => {
-                setOpen(false);
-                navigate("/workspace");
-              }}
-              className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-            >
-              <LayoutGrid className="h-[14px] w-[14px]" /> Открыть воркспейс
-            </button>
+            {!forAdmin && (
+              <>
+                <div className="my-1 border-t border-border" />
+                <button
+                  onClick={() => {
+                    setOpen(false);
+                    navigate("/workspace");
+                  }}
+                  className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                >
+                  <LayoutGrid className="h-[14px] w-[14px]" /> Открыть воркспейс
+                </button>
+              </>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

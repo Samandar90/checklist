@@ -12,7 +12,7 @@ router.post("/login", async (req, res, next) => {
 
     const user = await prisma.user.findUnique({
       where: { username },
-      include: { admin: { include: { branch: true } } },
+      include: { admin: { include: { branch: true, branches: true } } },
     });
 
     if (!user) {
@@ -25,11 +25,13 @@ router.post("/login", async (req, res, next) => {
     }
 
     const branchId = user.admin?.branchId ?? null;
+    const branchIds = user.admin?.branches.map((b) => b.id) ?? [];
     const token = signToken({
       sub: user.id,
       role: user.role as "SUPER_ADMIN" | "ADMIN",
       adminId: user.adminId,
       branchId,
+      branchIds,
     });
 
     res.json({
@@ -40,6 +42,7 @@ router.post("/login", async (req, res, next) => {
         role: user.role,
         adminId: user.adminId,
         branchId,
+        branchIds,
         fullName: user.admin?.fullName ?? null,
         branchName: user.admin?.branch.name ?? null,
       },
@@ -53,7 +56,7 @@ router.get("/me", authenticate, async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user!.sub },
-      include: { admin: { include: { branch: true } } },
+      include: { admin: { include: { branch: true, branches: true } } },
     });
 
     if (!user) {
@@ -66,6 +69,7 @@ router.get("/me", authenticate, async (req, res, next) => {
       role: user.role,
       adminId: user.adminId,
       branchId: user.admin?.branchId ?? null,
+      branchIds: user.admin?.branches.map((b) => b.id) ?? [],
       fullName: user.admin?.fullName ?? null,
       branchName: user.admin?.branch.name ?? null,
     });

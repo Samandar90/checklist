@@ -9,7 +9,10 @@ export interface TokenPayload {
   sub: string;
   role: Role;
   adminId: string | null;
+  /** Primary/home branch — used as the default when creating records. */
   branchId: string | null;
+  /** Every branch this admin may work in (always includes branchId). Empty for SUPER_ADMIN. */
+  branchIds: string[];
 }
 
 export function hashPassword(password: string) {

@@ -12,21 +12,26 @@ model Branch {
   name      String
   createdAt DateTime @default(now())
 
-  admins     Admin[]
-  rooms      Room[]
-  reports    MonthlyReport[]
-  expenses   Expense[]
-  cashShifts CashShift[]
+  admins       Admin[]
+  staffAdmins  Admin[]         @relation("AdminBranches")
+  rooms        Room[]
+  reports      MonthlyReport[]
+  expenses     Expense[]
+  cashShifts   CashShift[]
 }
 
 model Admin {
   id        String   @id @default(cuid())
   fullName  String
   phone     String
-  branchId  String
+  branchId  String // primary/home branch — used as the default when creating records
   createdAt DateTime @default(now())
 
   branch     Branch          @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  // All branches this admin may work in. Always includes the primary branch above.
+  // A regular single-branch admin has exactly one entry here; this is what makes
+  // "one admin working in two branches at once" possible.
+  branches   Branch[]        @relation("AdminBranches")
   reports    MonthlyReport[]
   expenses   Expense[]
   cashShifts CashShift[]

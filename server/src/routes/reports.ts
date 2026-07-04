@@ -3,6 +3,7 @@ import { prisma } from "../prisma";
 import { reportSchema } from "../validation";
 import { requireSuperAdmin } from "../middleware/auth";
 import { recordAudit, buildChanges, summarize } from "../audit";
+import { resolveBranchId, hasBranchAccess } from "../branchScope";
 
 const REPORT_AUDIT_FIELDS = ["date", "checkOut", "guestName", "price", "currency", "paymentMethod", "paymentStatus", "status", "paidAmount", "notes", "roomId"];
 
@@ -213,8 +214,13 @@ router.post("/:id/settle", requireSuperAdmin, async (req, res, next) => {
   }
 });
 
-function canManage(req: any, existing: { adminId: string }) {
-  return req.user!.role !== "ADMIN" || existing.adminId === req.user!.adminId;
+/**
+ * Any admin assigned to this reservation's branch may manage it — not only
+ * the admin who originally created it. A different receptionist on the same
+ * branch (e.g. the next shift) must be able to check a guest in or out.
+ */
+function canManage(req: any, existing: { branchId: string }) {
+  return hasBranchAccess(req.user!, existing.branchId);
 }
 
 router.patch("/:id/status", async (req, res, next) => {
@@ -307,12 +313,8 @@ router.post("/bulk", async (req, res, next) => {
 
 router.get("/calendar", async (req, res, next) => {
   try {
-    const isAdmin = req.user!.role === "ADMIN";
-    const branchId = isAdmin
-      ? req.user!.branchId ?? ""
-      : typeof req.query.branchId === "string"
-        ? req.query.branchId
-        : "";
+    const requestedBranchId = typeof req.query.branchId === "string" ? req.query.branchId : undefined;
+    const branchId = resolveBranchId(req.user!, requestedBranchId);
     if (!branchId) {
       return res.status(400).json({ message: "Укажите филиал" });
     }
@@ -332,7 +334,7 @@ router.get("/calendar", async (req, res, next) => {
       prisma.room.findMany({ where: { branchId }, orderBy: { createdAt: "asc" } }),
       prisma.monthlyReport.findMany({
         where: { branchId, date: { gte: windowStart, lt: toExclusive } },
-        include: { room: true, admin: true, source: true },
+        include: { room: true, admin: true, source: true, branch: true },
         orderBy: { date: "asc" },
       }),
     ]);
@@ -357,7 +359,7 @@ router.post("/", async (req, res, next) => {
         return res.status(403).json({ message: "Ваш аккаунт не привязан к администратору филиала" });
       }
       body.adminId = req.user!.adminId;
-      body.branchId = req.user!.branchId;
+      body.branchId = resolveBranchId(req.user!, body.branchId);
     }
 
     const data = reportSchema.parse(body);
@@ -399,14 +401,14 @@ router.put("/:id", async (req, res, next) => {
     if (!existing) {
       return res.status(404).json({ message: "Запись не найдена" });
     }
-    if (req.user!.role === "ADMIN" && existing.adminId !== req.user!.adminId) {
+    if (!canManage(req, existing)) {
       return res.status(403).json({ message: "Недостаточно прав для изменения этого отчёта" });
     }
 
     const body = { ...req.body };
     if (req.user!.role === "ADMIN") {
       body.adminId = req.user!.adminId;
-      body.branchId = req.user!.branchId;
+      body.branchId = resolveBranchId(req.user!, body.branchId ?? existing.branchId);
     }
 
     const data = reportSchema.parse(body);
@@ -461,7 +463,7 @@ router.delete("/:id", async (req, res, next) => {
     if (!existing) {
       return res.status(404).json({ message: "Запись не найдена" });
     }
-    if (req.user!.role === "ADMIN" && existing.adminId !== req.user!.adminId) {
+    if (!canManage(req, existing)) {
       return res.status(403).json({ message: "Недостаточно прав для удаления этого отчёта" });
     }
 

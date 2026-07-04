@@ -17,7 +17,7 @@ router.get("/", async (_req, res, next) => {
   try {
     const admins = await prisma.admin.findMany({
       orderBy: { createdAt: "desc" },
-      include: { branch: true, user: true },
+      include: { branch: true, branches: true, user: true },
     });
     res.json(admins.map(serializeAdmin));
   } catch (err) {
@@ -27,10 +27,15 @@ router.get("/", async (_req, res, next) => {
 
 router.post("/", async (req, res, next) => {
   try {
-    const { username, password, ...data } = adminCreateSchema.parse(req.body);
+    const { username, password, branchIds, ...data } = adminCreateSchema.parse(req.body);
+    // Always include the primary branch, even if the caller forgot to list it.
+    const uniqueBranchIds = Array.from(new Set([data.branchId, ...(branchIds ?? [])]));
 
     const admin = await prisma.$transaction(async (tx) => {
-      const created = await tx.admin.create({ data, include: { branch: true } });
+      const created = await tx.admin.create({
+        data: { ...data, branches: { connect: uniqueBranchIds.map((id) => ({ id })) } },
+        include: { branch: true, branches: true },
+      });
       await tx.user.create({
         data: {
           username,
@@ -56,7 +61,8 @@ router.post("/", async (req, res, next) => {
 
 router.put("/:id", async (req, res, next) => {
   try {
-    const { username, password, ...data } = adminUpdateSchema.parse(req.body);
+    const { username, password, branchIds, ...data } = adminUpdateSchema.parse(req.body);
+    const uniqueBranchIds = Array.from(new Set([data.branchId, ...(branchIds ?? [])]));
 
     const existing = await prisma.admin.findUnique({
       where: { id: req.params.id },
@@ -69,8 +75,8 @@ router.put("/:id", async (req, res, next) => {
     const admin = await prisma.$transaction(async (tx) => {
       const updated = await tx.admin.update({
         where: { id: req.params.id },
-        data,
-        include: { branch: true },
+        data: { ...data, branches: { set: uniqueBranchIds.map((id) => ({ id })) } },
+        include: { branch: true, branches: true },
       });
 
       const userUpdate: { username: string; passwordHash?: string } = { username };

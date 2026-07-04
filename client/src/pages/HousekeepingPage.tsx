@@ -10,10 +10,11 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useBranches } from "@/hooks/useBranches";
+import { useBranches, useMyBranches } from "@/hooks/useBranches";
 import { useRooms } from "@/hooks/useRooms";
 import { useCalendar } from "@/hooks/useCalendar";
 import { useHousekeeping, HKStatus, HKPriority } from "@/hooks/useHousekeeping";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn, formatDateTime } from "@/lib/utils";
 
 function isoDay(d: Date) {
@@ -37,9 +38,17 @@ const priorityMeta: Record<HKPriority, { label: string; cls: string }> = {
 const kanbanCols: HKStatus[] = ["Dirty", "Cleaning", "Inspection", "Clean"];
 
 export default function HousekeepingPage() {
-  const { data: branches } = useBranches();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
+  const isMultiBranchAdmin = isAdmin && (user?.branchIds?.length ?? 0) > 1;
+  const { data: branches } = useBranches({ enabled: !isAdmin });
+  const { data: myBranches } = useMyBranches({ enabled: isMultiBranchAdmin });
   const [branchId, setBranchId] = useState<string | undefined>(undefined);
-  const effectiveBranchId = branchId ?? branches?.[0]?.id;
+  const effectiveBranchId = isMultiBranchAdmin
+    ? branchId ?? user?.branchId ?? myBranches?.[0]?.id
+    : isAdmin
+      ? user?.branchId ?? undefined
+      : branchId ?? branches?.[0]?.id;
   const { data: rooms, isLoading } = useRooms();
   const { data: calendar } = useCalendar(effectiveBranchId, today, today);
   const hk = useHousekeeping();
@@ -89,6 +98,7 @@ export default function HousekeepingPage() {
 
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3 border-b border-border pb-4">
         <div className="flex flex-wrap items-end gap-3">
+          {(!isAdmin || isMultiBranchAdmin) && (
           <div className="w-48 space-y-1.5">
             <Label>Филиал</Label>
             <Select value={effectiveBranchId ?? ""} onValueChange={setBranchId}>
@@ -96,7 +106,7 @@ export default function HousekeepingPage() {
                 <SelectValue placeholder="Выберите филиал" />
               </SelectTrigger>
               <SelectContent>
-                {(branches ?? []).map((b) => (
+                {(isMultiBranchAdmin ? myBranches ?? [] : branches ?? []).map((b) => (
                   <SelectItem key={b.id} value={b.id}>
                     {b.name}
                   </SelectItem>
@@ -104,6 +114,7 @@ export default function HousekeepingPage() {
               </SelectContent>
             </Select>
           </div>
+          )}
           <FilterSelect label="Этаж" value={floorFilter} onChange={setFloorFilter} options={floors.map((f) => ({ value: f, label: f }))} />
           <FilterSelect label="Тип номера" value={typeFilter} onChange={setTypeFilter} options={types.map((t) => ({ value: t, label: t }))} />
           <FilterSelect
