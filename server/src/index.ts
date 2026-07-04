@@ -20,6 +20,9 @@ import auditRouter from "./routes/audit";
 import backupRouter from "./routes/backup";
 import dashboardRouter from "./routes/dashboard";
 import cashShiftsRouter from "./routes/cashShifts";
+import integrationsRouter from "./routes/integrations";
+import webhooksRouter from "./routes/webhooks";
+import { seedIntegrationProviders } from "./integrations/seed";
 import { scheduleBackups } from "./backup";
 import crypto from "crypto";
 
@@ -33,6 +36,9 @@ async function ensureSeedData() {
       create: { name },
     });
   }
+
+  // Keep the IntegrationProvider registry in sync with the in-code adapters.
+  await seedIntegrationProviders();
 
   const superAdminUsername = process.env.SUPER_ADMIN_USERNAME || "admin";
   const existing = await prisma.user.findUnique({ where: { username: superAdminUsername } });
@@ -118,6 +124,10 @@ app.use("/api/audit", authenticate, auditRouter);
 app.use("/api/backup", authenticate, backupRouter);
 app.use("/api/dashboard", authenticate, dashboardRouter);
 app.use("/api/cash-shifts", authenticate, cashShiftsRouter);
+app.use("/api/integrations", authenticate, integrationsRouter);
+// Webhooks are provider-to-server callbacks — unauthenticated by design, but
+// rate-limited and provider-gated inside the router.
+app.use("/api/webhooks", webhooksRouter);
 
 // TEMPORARY: one-time data purge endpoint — remove after use
 app.post("/api/admin/purge", authenticate, requireSuperAdmin, async (_req, res, next) => {
