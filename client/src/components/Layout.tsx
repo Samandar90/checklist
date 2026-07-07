@@ -99,6 +99,7 @@ export default function Layout() {
   const { theme, toggle } = useTheme();
   const location = useLocation();
   const isSuperAdmin = user?.role === "SUPER_ADMIN";
+  const isMultiBranchAdmin = !isSuperAdmin && (user?.branchIds?.length ?? 0) > 1;
   const sections = isSuperAdmin ? superAdminSections : adminSections;
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [preferencesOpen, setPreferencesOpen] = useState(false);
@@ -222,7 +223,7 @@ export default function Layout() {
           </div>
 
           <div className="flex items-center gap-1.5">
-            {isSuperAdmin && <BranchSwitcher />}
+            {(isSuperAdmin || isMultiBranchAdmin) && <BranchSwitcher forAdmin={isMultiBranchAdmin} />}
 
             <button
               onClick={() => setPaletteOpen(true)}
@@ -260,8 +261,8 @@ export default function Layout() {
                   <span className="max-w-[160px] truncate text-[11px] text-muted-foreground">
                     {isSuperAdmin
                       ? "Главный аккаунт"
-                      : (user?.branches?.length ?? 0) > 1
-                        ? user?.branches?.map((b) => b.name).join(", ")
+                      : (user?.branchIds?.length ?? 0) > 1
+                        ? `${user?.branchName} +${(user?.branchIds?.length ?? 1) - 1}`
                         : user?.branchName}
                   </span>
                 </span>

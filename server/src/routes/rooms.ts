@@ -1,14 +1,22 @@
 import { Router } from "express";
 import { prisma } from "../prisma";
 import { roomSchema } from "../validation";
-import { requireSuperAdmin, allowedBranchIds } from "../middleware/auth";
+import { requireSuperAdmin } from "../middleware/auth";
 import { recordAudit, buildChanges, summarize } from "../audit";
 
 const router = Router();
 
 router.get("/", async (req, res, next) => {
   try {
-    const where = req.user!.role === "ADMIN" ? { branchId: { in: allowedBranchIds(req.user!) } } : {};
+    // A multi-branch admin sees rooms across every branch they're assigned to,
+    // not just their primary one — the client filters down to the active branch.
+    const allowedBranchIds =
+      req.user!.branchIds && req.user!.branchIds.length
+        ? req.user!.branchIds
+        : req.user!.branchId
+          ? [req.user!.branchId]
+          : [];
+    const where = req.user!.role === "ADMIN" ? { branchId: { in: allowedBranchIds } } : {};
     const rooms = await prisma.room.findMany({
       where,
       orderBy: { createdAt: "desc" },

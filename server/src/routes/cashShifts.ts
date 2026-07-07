@@ -2,7 +2,7 @@ import { Router } from "express";
 import { prisma } from "../prisma";
 import { cashShiftOpenSchema, cashShiftCloseSchema } from "../validation";
 import { recordAudit, summarize } from "../audit";
-import { resolveAdminBranch } from "../middleware/auth";
+import { resolveBranchId } from "../branchScope";
 
 const router = Router();
 const money = (n: number) => n.toLocaleString("ru-RU");
@@ -86,8 +86,9 @@ router.post("/", async (req, res, next) => {
     }
 
     const data = cashShiftOpenSchema.parse(req.body);
-    // Смена открывается в выбранном филиале (из назначенных), по умолчанию — основной.
-    const branchId = resolveAdminBranch(req.user!, data.branchId || null);
+    // A multi-branch admin may open a shift for whichever of their branches
+    // they're currently working in (falls back to their primary branch).
+    const branchId = resolveBranchId(req.user!, data.branchId || null);
     if (!branchId) {
       return res.status(403).json({ message: "Этот филиал вам не назначен" });
     }

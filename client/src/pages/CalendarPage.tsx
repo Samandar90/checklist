@@ -4,16 +4,11 @@ import {
   ChevronRight,
   CalendarDays,
   BedDouble,
-  CheckCircle2,
-  AlertCircle,
   Search,
   X,
   TrendingUp,
   DoorOpen,
-  Pencil,
   MousePointerClick,
-  Trash2,
-  Clock,
   LogIn,
   LogOut,
   Plus,
@@ -26,23 +21,25 @@ import { toast } from "sonner";
 
 import PageHeader from "@/components/PageHeader";
 import EmptyState from "@/components/EmptyState";
+import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
+import ReservationCard from "@/components/ReservationCard";
+import ReservationModal from "@/components/ReservationModal";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import BookingDialog, { BookingDraft } from "@/components/BookingDialog";
 import BookingWizard from "@/components/BookingWizard";
-import { useBranches } from "@/hooks/useBranches";
+import { useBranches, useMyBranches } from "@/hooks/useBranches";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCalendar } from "@/hooks/useCalendar";
 import { useUpdateReport, useDeleteReport } from "@/hooks/useReports";
-import { useSettleDebt } from "@/hooks/useDebtors";
-import { MonthlyReport, Room } from "@/types";
+import { STATUS_META, STATUS_DOT_CLASS } from "@/lib/bookingStatus";
+import { MonthlyReport, Room, BookingStatus, bookingStatuses } from "@/types";
 import { getErrorMessage } from "@/lib/api";
 import { cn, formatDate, formatMoney, nightsBetween, reportDebt, paymentStatusClass } from "@/lib/utils";
 
@@ -57,32 +54,8 @@ const ROW_H = 42;
 const LABEL_W = 148;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-const statusBar: Record<string, string> = {
-  Оплачено: "bg-emerald-500/90 text-white",
-  Частично: "bg-amber-500/90 text-white",
-  Долг: "bg-rose-500/90 text-white",
-};
-
-const statusFilters = [
-  { key: "Оплачено", label: "Оплачено", dot: "bg-emerald-500" },
-  { key: "Частично", label: "Частично", dot: "bg-amber-500" },
-  { key: "Долг", label: "Долг", dot: "bg-rose-500" },
-] as const;
-
-type StayStage = "upcoming" | "active" | "past";
-function stayStageOf(b: MonthlyReport): StayStage {
-  const today = isoDay(new Date());
-  const inDate = b.date.slice(0, 10);
-  const outDate = b.checkOut ? b.checkOut.slice(0, 10) : null;
-  if (today < inDate) return "upcoming";
-  if (outDate && today >= outDate) return "past";
-  return "active";
-}
-const stageMeta: Record<StayStage, { label: string; icon: typeof Clock; cls: string }> = {
-  upcoming: { label: "Ожидается", icon: Clock, cls: "tint-sky" },
-  active: { label: "Заселён", icon: LogIn, cls: "tint-emerald" },
-  past: { label: "Выехал", icon: LogOut, cls: "tint-slate" },
-};
+/** Status filter chips — driven by the same status metadata every other page uses. */
+const STATUS_FILTERS = bookingStatuses.map((status) => ({ status, ...STATUS_META[status] }));
 
 function isoDay(d: Date) {
   const y = d.getFullYear();
@@ -114,8 +87,9 @@ interface Group {
 export default function CalendarPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === "ADMIN";
-  // Сервер сам ограничивает список: админ видит только свои филиалы.
-  const { data: branches } = useBranches();
+  const isMultiBranchAdmin = isAdmin && (user?.branchIds?.length ?? 0) > 1;
+  const { data: branches } = useBranches({ enabled: !isAdmin });
+  const { data: myBranches } = useMyBranches({ enabled: isMultiBranchAdmin });
   const [branchId, setBranchId] = useState<string | undefined>(undefined);
   const rootRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -140,11 +114,11 @@ export default function CalendarPage() {
     return { year: n.getFullYear(), month: n.getMonth() };
   });
   const [selected, setSelected] = useState<MonthlyReport | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MonthlyReport | null>(null);
+  const [statusFilter, setStatusFilter] = useState<BookingStatus | null>(null);
   const [search, setSearch] = useState("");
   const [hover, setHover] = useState<{ b: MonthlyReport; x: number; y: number } | null>(null);
   const [freeHover, setFreeHover] = useState<{ room: Room; day: Date; x: number; y: number } | null>(null);
-  const [menu, setMenu] = useState<{ b: MonthlyReport; x: number; y: number } | null>(null);
   const deleteReport = useDeleteReport();
   // Drag-to-select on the grid → new booking.
   const [drag, setDrag] = useState<{ roomId: string; a: number; b: number } | null>(null);
@@ -166,11 +140,11 @@ export default function CalendarPage() {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const updateReport = useUpdateReport();
 
-  const myBranchIds = user?.branchIds ?? (user?.branchId ? [user.branchId] : []);
-  const canPickBranch = !isAdmin || myBranchIds.length > 1;
-  const effectiveBranchId = isAdmin
-    ? (branchId && myBranchIds.includes(branchId) ? branchId : user?.branchId ?? undefined)
-    : branchId ?? branches?.[0]?.id;
+  const effectiveBranchId = isMultiBranchAdmin
+    ? branchId ?? user?.branchId ?? myBranches?.[0]?.id
+    : isAdmin
+      ? user?.branchId ?? undefined
+      : branchId ?? branches?.[0]?.id;
 
   const monthStart = new Date(cursor.year, cursor.month, 1);
   const monthEnd = new Date(cursor.year, cursor.month + 1, 0);
@@ -178,7 +152,12 @@ export default function CalendarPage() {
   const monthStartMs = dayStartMs(monthStart);
 
   const { data, isLoading } = useCalendar(effectiveBranchId, isoDay(monthStart), isoDay(monthEnd));
-  const settle = useSettleDebt();
+
+  // The modal must reflect live query data, not the click-time snapshot in
+  // `selected` — otherwise a status change made from inside the modal (via
+  // ReservationActions) would leave the open modal showing the stale status
+  // even though the mutation succeeded and the chessboard behind it updated.
+  const selectedReport = selected ? data?.bookings.find((b) => b.id === selected.id) ?? selected : null;
 
   const days = useMemo(
     () => Array.from({ length: daysInMonth }, (_, i) => new Date(cursor.year, cursor.month, i + 1)),
@@ -420,12 +399,12 @@ export default function CalendarPage() {
     setCursor({ year: n.getFullYear(), month: n.getMonth() });
   }
 
-  async function handleSettle() {
-    if (!selected) return;
+  async function handleDeleteConfirmed() {
+    if (!deleteTarget) return;
     try {
-      await settle.mutateAsync(selected.id);
-      toast.success("Долг погашен");
-      setSelected(null);
+      await deleteReport.mutateAsync(deleteTarget.id);
+      toast.success("Бронь удалена");
+      setDeleteTarget(null);
     } catch (err) {
       toast.error(getErrorMessage(err));
     }
@@ -433,7 +412,7 @@ export default function CalendarPage() {
 
   const q = search.trim().toLowerCase();
   function matches(b: MonthlyReport) {
-    if (statusFilter && b.paymentStatus !== statusFilter) return false;
+    if (statusFilter && b.status !== statusFilter) return false;
     if (q) {
       const hay = `${b.guestName ?? ""} ${b.room.roomNumber} ${b.source.name}`.toLowerCase();
       if (!hay.includes(q)) return false;
@@ -470,7 +449,7 @@ export default function CalendarPage() {
       <div className="sticky top-0 z-30 -mx-4 mb-4 border-b border-border bg-background/85 px-4 py-3 backdrop-blur-xl md:-mx-8 md:px-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="flex flex-wrap items-end gap-3">
-            {canPickBranch && (
+            {(!isAdmin || isMultiBranchAdmin) && (
               <div className="w-48 space-y-1.5">
                 <Label>Филиал</Label>
                 <Select value={effectiveBranchId ?? ""} onValueChange={(v) => setBranchId(v)}>
@@ -478,7 +457,7 @@ export default function CalendarPage() {
                     <SelectValue placeholder="Выберите филиал" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(branches ?? []).map((b) => (
+                    {(isMultiBranchAdmin ? myBranches ?? [] : branches ?? []).map((b) => (
                       <SelectItem key={b.id} value={b.id}>
                         {b.name}
                       </SelectItem>
@@ -538,33 +517,25 @@ export default function CalendarPage() {
         </Card>
       )}
 
-      {/* Легенда + фильтр по статусу */}
+      {/* Фильтр по статусу брони — matches the exact colors used on the chessboard */}
       <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-border bg-card px-3 py-2.5">
         <div className="flex flex-wrap items-center gap-1.5">
-          {statusFilters.map((s) => {
-            const active = statusFilter === s.key;
+          {STATUS_FILTERS.map((s) => {
+            const active = statusFilter === s.status;
             return (
               <button
-                key={s.key}
-                onClick={() => setStatusFilter(active ? null : s.key)}
+                key={s.status}
+                onClick={() => setStatusFilter(active ? null : s.status)}
                 className={cn(
                   "flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
                   active ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground hover:text-foreground"
                 )}
               >
-                <span className={cn("h-2.5 w-2.5 rounded-full", s.dot)} />
+                <span className={cn("h-2.5 w-2.5 rounded-full", STATUS_DOT_CLASS[s.status])} />
                 {s.label}
               </button>
             );
           })}
-        </div>
-        <div className="h-4 w-px bg-border" />
-        <div className="flex flex-wrap items-center gap-2.5 text-[11px] text-muted-foreground">
-          {(Object.entries(stageMeta) as [StayStage, typeof stageMeta.upcoming][]).map(([key, m]) => (
-            <span key={key} className="flex items-center gap-1">
-              <m.icon className="h-3 w-3" /> {m.label}
-            </span>
-          ))}
         </div>
         {filterActive && (
           <button
@@ -767,36 +738,38 @@ export default function CalendarPage() {
                             const beingMoved = move?.booking.id === b.id;
                             const [s0, e0] = spanOf(b);
                             return (
-                              <BookingBar
+                              <ReservationCard
                                 key={b.id}
                                 booking={b}
-                                stage={stayStageOf(b)}
                                 checkInIdx={beingMoved ? move!.curStart : s0}
                                 checkOutIdx={beingMoved ? move!.curEnd : e0}
                                 daysInMonth={daysInMonth}
+                                cellWidth={CELL_W}
                                 dimmed={filterActive && !matches(b)}
                                 dragging={beingMoved}
                                 onMoveStart={(e, mode) => startMove(e, b, mode)}
+                                onOpenDetails={() => setSelected(b)}
                                 onHover={(x, y) => !moveRef.current && setHover({ b, x, y })}
                                 onLeave={() => setHover(null)}
                                 onContextMenu={(e) => {
                                   e.preventDefault();
-                                  setMenu({ b, x: e.clientX, y: e.clientY });
+                                  setSelected(b);
                                 }}
                               />
                             );
                           })}
                         {/* бронь, перетаскиваемая в этот номер из другого ряда */}
                         {move && move.targetRoomId === room.id && move.booking.roomId !== room.id && (
-                          <BookingBar
+                          <ReservationCard
                             booking={move.booking}
-                            stage={stayStageOf(move.booking)}
                             checkInIdx={move.curStart}
                             checkOutIdx={move.curEnd}
                             daysInMonth={daysInMonth}
+                            cellWidth={CELL_W}
                             dimmed={false}
                             dragging
                             onMoveStart={() => {}}
+                            onOpenDetails={() => {}}
                             onHover={() => {}}
                             onLeave={() => {}}
                             onContextMenu={() => {}}
@@ -813,91 +786,36 @@ export default function CalendarPage() {
       )}
 
       {/* Плавающая подсказка */}
-      {hover && !move && !menu && <HoverCard booking={hover.b} x={hover.x} y={hover.y} />}
+      {hover && !move && !selected && <HoverCard booking={hover.b} x={hover.x} y={hover.y} />}
 
       {/* Превью свободной ячейки */}
-      {freeHover && !move && !drag && !menu && <FreeCellCard {...freeHover} />}
+      {freeHover && !move && !drag && !selected && <FreeCellCard {...freeHover} />}
 
-      {/* Контекстное меню брони */}
-      {menu && (
-        <ContextMenu
-          x={menu.x}
-          y={menu.y}
-          onClose={() => setMenu(null)}
-          onEdit={() => {
-            setEditing(menu.b);
-            setDraft(null);
-            setBookingOpen(true);
-            setMenu(null);
-          }}
-          onDetails={() => {
-            setSelected(menu.b);
-            setMenu(null);
-          }}
-          onDelete={async () => {
-            setMenu(null);
-            if (!window.confirm("Удалить бронь?")) return;
-            try {
-              await deleteReport.mutateAsync(menu.b.id);
-              toast.success("Бронь удалена");
-            } catch (err) {
-              toast.error(getErrorMessage(err));
-            }
-          }}
-        />
-      )}
+      {/* Детали брони — единственное место, откуда выполняются все действия */}
+      <ReservationModal
+        report={selectedReport}
+        open={!!selected}
+        onOpenChange={(o) => !o && setSelected(null)}
+        onEdit={(r) => {
+          setEditing(r);
+          setDraft(null);
+          setBookingOpen(true);
+          setSelected(null);
+        }}
+        onDeleteRequest={(r) => {
+          setSelected(null);
+          setDeleteTarget(r);
+        }}
+      />
 
-      {/* Детали брони */}
-      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <DialogContent className="max-w-md">
-          {selected && (
-            <>
-              <DialogHeader>
-                <DialogTitle>{selected.guestName || "Бронь"}</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-2 text-sm">
-                <Row label="Номер" value={`${selected.room.roomNumber}${selected.room.type ? ` · ${selected.room.type}` : ""}`} />
-                <Row
-                  label="Период"
-                  value={`${formatDate(selected.date)} → ${selected.checkOut ? formatDate(selected.checkOut) : "+1"} · ${nightsBetween(selected.date, selected.checkOut)} ноч.`}
-                />
-                <Row label="Источник" value={selected.source.name} />
-                <Row label="Администратор" value={selected.admin.fullName} />
-                <Row label="Цена" value={formatMoney(selected.price, selected.currency)} />
-                <Row label="Оплата" value={selected.paymentMethod} />
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Статус</span>
-                  <Badge className={paymentStatusClass(selected.paymentStatus)}>{selected.paymentStatus}</Badge>
-                </div>
-                {reportDebt(selected) > 0 && (
-                  <Row label="Долг" value={formatMoney(reportDebt(selected), selected.currency)} valueClass="text-destructive font-semibold" />
-                )}
-              </div>
-              <DialogFooter>
-                {reportDebt(selected) > 0 && (
-                  <Button onClick={handleSettle} disabled={settle.isPending}>
-                    <CheckCircle2 className="h-4 w-4" /> Погасить долг
-                  </Button>
-                )}
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setEditing(selected);
-                    setDraft(null);
-                    setBookingOpen(true);
-                    setSelected(null);
-                  }}
-                >
-                  <Pencil className="h-4 w-4" /> Редактировать
-                </Button>
-                <Button variant="outline" onClick={() => setSelected(null)}>
-                  Закрыть
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      <ConfirmDeleteDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        onConfirm={handleDeleteConfirmed}
+        loading={deleteReport.isPending}
+        title="Удалить бронь?"
+        description="Эта бронь будет удалена без возможности восстановления."
+      />
 
       {/* Редактирование существующей брони */}
       {effectiveBranchId && editing && (
@@ -930,15 +848,6 @@ export default function CalendarPage() {
           draft={draft}
         />
       )}
-    </div>
-  );
-}
-
-function Row({ label, value, valueClass }: { label: string; value: string; valueClass?: string }) {
-  return (
-    <div className="flex items-center justify-between gap-4">
-      <span className="text-muted-foreground">{label}</span>
-      <span className={cn("text-right text-foreground", valueClass)}>{value}</span>
     </div>
   );
 }
@@ -1013,188 +922,3 @@ function FreeCellCard({ room, day, x, y }: { room: Room; day: Date; x: number; y
   );
 }
 
-function ContextMenu({
-  x,
-  y,
-  onClose,
-  onEdit,
-  onDetails,
-  onDelete,
-}: {
-  x: number;
-  y: number;
-  onClose: () => void;
-  onEdit: () => void;
-  onDetails: () => void;
-  onDelete: () => void;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    function onDown(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
-    }
-    function onEsc(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    window.addEventListener("mousedown", onDown);
-    window.addEventListener("keydown", onEsc);
-    return () => {
-      window.removeEventListener("mousedown", onDown);
-      window.removeEventListener("keydown", onEsc);
-    };
-  }, [onClose]);
-
-  const W = 180;
-  const left = Math.min(x, window.innerWidth - W - 8);
-  const top = Math.min(y, window.innerHeight - 140);
-
-  return (
-    <div
-      ref={ref}
-      className="fixed z-50 w-[180px] overflow-hidden rounded-lg border border-border bg-card py-1 text-sm shadow-xl animate-fade-in"
-      style={{ left, top }}
-    >
-      <button
-        onClick={onDetails}
-        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-foreground hover:bg-secondary"
-      >
-        <CalendarDays className="h-3.5 w-3.5" /> Подробности
-      </button>
-      <button
-        onClick={onEdit}
-        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-foreground hover:bg-secondary"
-      >
-        <Pencil className="h-3.5 w-3.5" /> Редактировать
-      </button>
-      <button
-        onClick={onDelete}
-        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-destructive hover:bg-destructive/10"
-      >
-        <Trash2 className="h-3.5 w-3.5" /> Удалить бронь
-      </button>
-    </div>
-  );
-}
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
-}
-
-function BookingBar({
-  booking,
-  stage,
-  checkInIdx,
-  checkOutIdx,
-  daysInMonth,
-  dimmed,
-  dragging,
-  onMoveStart,
-  onHover,
-  onLeave,
-  onContextMenu,
-}: {
-  booking: MonthlyReport;
-  stage: StayStage;
-  checkInIdx: number;
-  checkOutIdx: number;
-  daysInMonth: number;
-  dimmed: boolean;
-  dragging: boolean;
-  onMoveStart: (e: React.MouseEvent, mode: "move" | "resize") => void;
-  onHover: (x: number, y: number) => void;
-  onLeave: () => void;
-  onContextMenu: (e: React.MouseEvent) => void;
-}) {
-  // Bar spans from mid check-in cell to mid check-out cell (half-day convention),
-  // clipped to the visible month so multi-month stays don't overflow.
-  const rawStart = checkInIdx + 0.5;
-  const rawEnd = checkOutIdx + 0.5;
-  const startUnit = Math.max(0, rawStart);
-  const endUnit = Math.min(daysInMonth, rawEnd);
-  if (endUnit <= startUnit) return null;
-
-  // Rounded only where the real check-in / check-out is visible in this month.
-  const roundLeft = rawStart >= 0;
-  const roundRight = rawEnd <= daysInMonth;
-
-  const left = startUnit * CELL_W + 2;
-  const width = (endUnit - startUnit) * CELL_W - 4;
-
-  const debt = reportDebt(booking);
-  const label = booking.guestName || booking.source.name;
-  const showAvatar = width > 70;
-  const showPrice = width > 96;
-  const stageInfo = stageMeta[stage];
-
-  return (
-    <div
-      onMouseDown={(e) => onMoveStart(e, "move")}
-      onMouseEnter={(e) => onHover(e.clientX, e.clientY)}
-      onMouseMove={(e) => onHover(e.clientX, e.clientY)}
-      onMouseLeave={onLeave}
-      onContextMenu={onContextMenu}
-      title={`${label} · ${formatMoney(booking.price, booking.currency)} · ${booking.paymentStatus} · ${stageInfo.label}`}
-      className={cn(
-        "group/bar absolute flex cursor-grab items-center gap-1.5 overflow-hidden whitespace-nowrap px-1.5 text-[11px] font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.12)] ring-1 ring-black/10 transition-[transform,box-shadow] duration-150 hover:z-30 hover:-translate-y-[1.5px] hover:shadow-[0_6px_16px_rgba(16,24,40,0.18)] active:cursor-grabbing",
-        statusBar[booking.paymentStatus] ?? "bg-secondary text-foreground",
-        dimmed && "opacity-20 grayscale",
-        dragging && "z-40 opacity-90 shadow-lg ring-2 ring-primary"
-      )}
-      style={{
-        left,
-        width,
-        top: 5,
-        height: ROW_H - 10,
-        borderTopLeftRadius: roundLeft ? 9 : 2,
-        borderBottomLeftRadius: roundLeft ? 9 : 2,
-        borderTopRightRadius: roundRight ? 9 : 2,
-        borderBottomRightRadius: roundRight ? 9 : 2,
-      }}
-    >
-      <span
-        className="absolute inset-y-0 left-0 w-[3px] opacity-70"
-        style={{
-          background: stage === "upcoming" ? "#0ea5e9" : stage === "active" ? "#ffffff" : "#0f172a",
-          borderRadius: roundLeft ? "9px 0 0 9px" : 0,
-        }}
-      />
-      {/* долг — диагональная штриховка поверх */}
-      {debt > 0 && (
-        <span
-          className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage:
-              "repeating-linear-gradient(45deg, rgba(0,0,0,0.14) 0 5px, transparent 5px 10px)",
-          }}
-        />
-      )}
-      {showAvatar ? (
-        <span className="relative flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-black/15 text-[9px] font-bold">
-          {initials(label)}
-        </span>
-      ) : (
-        <stageInfo.icon className="relative h-3 w-3 shrink-0 opacity-80" />
-      )}
-      <span className="relative truncate">{label}</span>
-      {showPrice && (
-        <span className="relative ml-auto shrink-0 font-medium opacity-80">
-          {Math.round(booking.price / 1000)}к
-        </span>
-      )}
-      {debt > 0 && <AlertCircle className="relative h-3 w-3 shrink-0" />}
-      {/* ручка изменения срока (правый край) */}
-      {roundRight && (
-        <span
-          onMouseDown={(e) => onMoveStart(e, "resize")}
-          className="absolute inset-y-0 right-0 z-10 w-2 cursor-ew-resize opacity-0 transition-opacity group-hover/bar:opacity-100"
-          title="Потяните, чтобы изменить срок"
-        >
-          <span className="absolute inset-y-1.5 right-0.5 w-0.5 rounded-full bg-black/30" />
-        </span>
-      )}
-    </div>
-  );
-}

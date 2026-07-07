@@ -30,7 +30,8 @@ import { formatDate } from "@/lib/utils";
 const baseFields = {
   fullName: z.string().trim().min(1, "Укажите ФИО"),
   phone: z.string().trim().min(1, "Укажите телефон"),
-  branchIds: z.array(z.string()).min(1, "Выберите хотя бы один филиал"),
+  branchId: z.string().trim().min(1, "Выберите филиал"),
+  branchIds: z.array(z.string()).optional(),
   username: z.string().trim().min(3, "Логин должен быть не короче 3 символов"),
 };
 
@@ -60,12 +61,15 @@ export default function AdminsPage() {
 
   const form = useForm<AdminFormValues>({
     resolver: zodResolver(editing ? editFormSchema : createFormSchema),
-    defaultValues: { fullName: "", phone: "", branchIds: [], username: "", password: "" },
+    defaultValues: { fullName: "", phone: "", branchId: "", branchIds: [], username: "", password: "" },
   });
+
+  const primaryBranchId = form.watch("branchId");
+  const secondaryBranchIds = form.watch("branchIds") ?? [];
 
   function openCreate() {
     setEditing(null);
-    form.reset({ fullName: "", phone: "", branchIds: [], username: "", password: "" });
+    form.reset({ fullName: "", phone: "", branchId: "", branchIds: [], username: "", password: "" });
     setDialogOpen(true);
   }
 
@@ -74,7 +78,8 @@ export default function AdminsPage() {
     form.reset({
       fullName: admin.fullName,
       phone: admin.phone,
-      branchIds: admin.branchIds?.length ? admin.branchIds : [admin.branchId],
+      branchId: admin.branchId,
+      branchIds: (admin.branches ?? []).map((b) => b.id).filter((id) => id !== admin.branchId),
       username: admin.username ?? "",
       password: "",
     });
@@ -170,7 +175,7 @@ export default function AdminsPage() {
               <TableHead>ФИО</TableHead>
               <TableHead>Логин</TableHead>
               <TableHead>Телефон</TableHead>
-              <TableHead>Филиалы</TableHead>
+              <TableHead>Филиал</TableHead>
               <TableHead>Создан</TableHead>
               <TableHead className="text-right">Действия</TableHead>
             </TableRow>
@@ -182,7 +187,7 @@ export default function AdminsPage() {
                 <TableCell className="text-muted-foreground">{admin.username ?? "-"}</TableCell>
                 <TableCell>{admin.phone}</TableCell>
                 <TableCell>
-                  {admin.branches?.length
+                  {admin.branches && admin.branches.length > 1
                     ? admin.branches.map((b) => b.name).join(", ")
                     : admin.branch?.name ?? "-"}
                 </TableCell>
@@ -224,51 +229,65 @@ export default function AdminsPage() {
               )}
             </div>
             <div className="space-y-1.5">
-              <Label>Филиалы</Label>
+              <Label>Филиал</Label>
               <Controller
                 control={form.control}
-                name="branchIds"
+                name="branchId"
                 render={({ field }) => (
-                  <div className="space-y-1 rounded-xl border border-border p-2">
-                    {(branches ?? []).map((b) => {
-                      const checked = field.value.includes(b.id);
-                      const isPrimary = field.value[0] === b.id;
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Выбрать" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(branches ?? []).map((b) => (
+                        <SelectItem key={b.id} value={b.id}>
+                          {b.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {form.formState.errors.branchId && (
+                <p className="text-xs text-destructive">{form.formState.errors.branchId.message}</p>
+              )}
+              <p className="text-xs text-muted-foreground">Основной филиал — используется по умолчанию.</p>
+            </div>
+
+            {(branches ?? []).filter((b) => b.id !== primaryBranchId).length > 0 && (
+              <div className="space-y-1.5">
+                <Label>Дополнительные филиалы</Label>
+                <p className="text-xs text-muted-foreground">
+                  Отметьте, если этот администратор должен работать сразу в нескольких филиалах.
+                </p>
+                <div className="max-h-40 space-y-1 overflow-y-auto rounded-lg border border-border p-2">
+                  {(branches ?? [])
+                    .filter((b) => b.id !== primaryBranchId)
+                    .map((b) => {
+                      const checked = secondaryBranchIds.includes(b.id);
                       return (
                         <label
                           key={b.id}
-                          className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-secondary"
+                          className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-secondary"
                         >
                           <input
                             type="checkbox"
+                            className="h-4 w-4 rounded border-border"
                             checked={checked}
                             onChange={(e) => {
-                              field.onChange(
-                                e.target.checked
-                                  ? [...field.value, b.id]
-                                  : field.value.filter((id: string) => id !== b.id)
-                              );
+                              const next = e.target.checked
+                                ? [...secondaryBranchIds, b.id]
+                                : secondaryBranchIds.filter((id) => id !== b.id);
+                              form.setValue("branchIds", next, { shouldDirty: true });
                             }}
-                            className="h-4 w-4 rounded border-border accent-primary"
                           />
-                          <span className="flex-1 text-foreground">{b.name}</span>
-                          {isPrimary && (
-                            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
-                              основной
-                            </span>
-                          )}
+                          {b.name}
                         </label>
                       );
                     })}
-                  </div>
-                )}
-              />
-              <p className="text-xs text-muted-foreground">
-                Можно выбрать несколько филиалов — админ сможет работать в каждом из них. Первый отмеченный станет основным.
-              </p>
-              {form.formState.errors.branchIds && (
-                <p className="text-xs text-destructive">{form.formState.errors.branchIds.message as string}</p>
-              )}
-            </div>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4 rounded-xl border border-border bg-muted/50 p-3">
               <div className="col-span-2 -mb-1 text-xs font-medium text-muted-foreground">

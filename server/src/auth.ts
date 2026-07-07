@@ -14,8 +14,14 @@ export interface TokenPayload {
   sub: string;
   role: Role;
   adminId: string | null;
+  /** Primary/home branch — used as the default when creating records. */
   branchId: string | null;
-  /** Все филиалы админа; заполняется middleware'ом на каждый запрос. */
+  /**
+   * Every branch this admin may work in (always includes branchId).
+   * Optional in the token (older tokens lack it); the authenticate middleware
+   * refreshes it from the DB on every request so assignment changes apply
+   * immediately without re-login.
+   */
   branchIds?: string[];
 }
 

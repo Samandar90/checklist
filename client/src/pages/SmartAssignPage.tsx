@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-import { useBranches } from "@/hooks/useBranches";
+import { useBranches, useMyBranches } from "@/hooks/useBranches";
 import { useRooms } from "@/hooks/useRooms";
 import { useCalendar } from "@/hooks/useCalendar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,12 +30,12 @@ function todayIso() {
 export default function SmartAssignPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === "ADMIN";
-  // Сервер сам ограничивает список: админ видит только свои филиалы.
-  const { data: branches } = useBranches();
+  const isMultiBranchAdmin = isAdmin && (user?.branchIds?.length ?? 0) > 1;
+  const { data: branches } = useBranches({ enabled: !isAdmin });
+  const { data: myBranches } = useMyBranches({ enabled: isMultiBranchAdmin });
   const { data: rooms } = useRooms();
 
   const [branchId, setBranchId] = useState<string>(isAdmin ? user?.branchId ?? "" : "");
-  const canPickBranch = !isAdmin || (user?.branchIds?.length ?? 0) > 1;
   const [checkIn, setCheckIn] = useState(todayIso());
   const [checkOut, setCheckOut] = useState(addDaysIso(todayIso(), 2));
   const [guests, setGuests] = useState(2);
@@ -80,7 +80,7 @@ export default function SmartAssignPage() {
 
       <Card className="mb-6">
         <CardContent className="flex flex-wrap items-end gap-3 p-4">
-          {canPickBranch && (
+          {(!isAdmin || isMultiBranchAdmin) && (
             <div className="w-52 space-y-1.5">
               <Label>Филиал</Label>
               <Select value={branchId} onValueChange={setBranchId}>
@@ -88,7 +88,7 @@ export default function SmartAssignPage() {
                   <SelectValue placeholder="Выберите филиал" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(branches ?? []).map((b) => (
+                  {(isMultiBranchAdmin ? myBranches ?? [] : branches ?? []).map((b) => (
                     <SelectItem key={b.id} value={b.id}>
                       {b.name}
                     </SelectItem>

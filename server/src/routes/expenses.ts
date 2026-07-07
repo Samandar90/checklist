@@ -2,7 +2,12 @@ import { Router } from "express";
 import { prisma } from "../prisma";
 import { expenseSchema } from "../validation";
 import { recordAudit, buildChanges, summarize } from "../audit";
-import { resolveAdminBranch } from "../middleware/auth";
+import { resolveBranchId, hasBranchAccess } from "../branchScope";
+
+/** Any admin assigned to the expense's branch may manage it, not only its creator. */
+function canManage(req: any, existing: { branchId: string }) {
+  return hasBranchAccess(req.user!, existing.branchId);
+}
 
 const router = Router();
 
@@ -61,7 +66,7 @@ router.post("/", async (req, res, next) => {
         errors: [{ path: "branchId", message: "Филиал обязателен" }],
       });
     }
-    const branchId = isAdmin ? resolveAdminBranch(req.user!, data.branchId || null) : data.branchId!;
+    const branchId = isAdmin ? resolveBranchId(req.user!, data.branchId) : data.branchId!;
     if (!branchId) {
       return res.status(403).json({ message: "Этот филиал вам не назначен" });
     }
@@ -90,7 +95,7 @@ router.put("/:id", async (req, res, next) => {
     if (!existing) {
       return res.status(404).json({ message: "Запись не найдена" });
     }
-    if (isAdmin && existing.adminId !== req.user!.adminId) {
+    if (isAdmin && !canManage(req, existing)) {
       return res.status(403).json({ message: "Недостаточно прав для изменения этого расхода" });
     }
 
@@ -101,7 +106,7 @@ router.put("/:id", async (req, res, next) => {
         errors: [{ path: "branchId", message: "Филиал обязателен" }],
       });
     }
-    const branchId = isAdmin ? resolveAdminBranch(req.user!, data.branchId || null) ?? existing.branchId : data.branchId!;
+    const branchId = isAdmin ? resolveBranchId(req.user!, data.branchId ?? existing.branchId) : data.branchId!;
 
     const expense = await prisma.expense.update({
       where: { id: req.params.id },
@@ -136,7 +141,7 @@ router.delete("/:id", async (req, res, next) => {
     if (!existing) {
       return res.status(404).json({ message: "Запись не найдена" });
     }
-    if (isAdmin && existing.adminId !== req.user!.adminId) {
+    if (isAdmin && !canManage(req, existing)) {
       return res.status(403).json({ message: "Недостаточно прав для удаления этого расхода" });
     }
 

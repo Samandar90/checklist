@@ -25,6 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { useMyBranches } from "@/hooks/useBranches";
 import {
   useActiveCashShift,
   useCashShifts,
@@ -66,8 +67,9 @@ export default function CashRegisterPage() {
   const [openDialogOpen, setOpenDialogOpen] = useState(false);
   const [closeDialogOpen, setCloseDialogOpen] = useState(false);
 
-  const myBranches = user?.branches ?? [];
-  const multiBranch = isAdmin && myBranches.length > 1;
+  const multiBranch = isAdmin && (user?.branchIds?.length ?? 0) > 1;
+  const { data: myBranchesData } = useMyBranches({ enabled: multiBranch });
+  const myBranches = myBranchesData ?? [];
 
   const openForm = useForm<OpenValues>({
     resolver: zodResolver(openSchema),

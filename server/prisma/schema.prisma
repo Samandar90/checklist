@@ -13,9 +13,10 @@ model Branch {
   createdAt DateTime @default(now())
 
   admins       Admin[]
-  adminBranches AdminBranch[]
+  staffAdmins  Admin[]         @relation("AdminBranches")
   rooms        Room[]
   reports      MonthlyReport[]
+  integrationAccounts IntegrationAccount[]
   expenses     Expense[]
   cashShifts   CashShift[]
 }
@@ -24,27 +25,18 @@ model Admin {
   id        String   @id @default(cuid())
   fullName  String
   phone     String
-  branchId  String // основной (домашний) филиал
+  branchId  String // primary/home branch — used as the default when creating records
   createdAt DateTime @default(now())
 
-  branch       Branch          @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  branches     AdminBranch[] // все филиалы, где работает админ (включая основной)
-  reports      MonthlyReport[]
-  expenses     Expense[]
-  cashShifts   CashShift[]
-  user         User?
-}
-
-// Многие-ко-многим: админ может работать в нескольких филиалах.
-model AdminBranch {
-  adminId  String
-  branchId String
-
-  admin  Admin  @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
-
-  @@id([adminId, branchId])
-  @@index([branchId])
+  branch     Branch          @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  // All branches this admin may work in. Always includes the primary branch above.
+  // A regular single-branch admin has exactly one entry here; this is what makes
+  // "one admin working in two branches at once" possible.
+  branches   Branch[]        @relation("AdminBranches")
+  reports    MonthlyReport[]
+  expenses   Expense[]
+  cashShifts CashShift[]
+  user       User?
 }
 
 model User {
@@ -67,6 +59,7 @@ model Room {
 
   branch  Branch          @relation(fields: [branchId], references: [id], onDelete: Cascade)
   reports MonthlyReport[]
+  roomMappings RoomMapping[]
 }
 
 model BookingSource {
@@ -102,6 +95,7 @@ model MonthlyReport {
   admin  Admin         @relation(fields: [adminId], references: [id], onDelete: Restrict)
   room   Room          @relation(fields: [roomId], references: [id], onDelete: Restrict)
   source BookingSource @relation(fields: [sourceId], references: [id], onDelete: Restrict)
+  reservationMappings ReservationMapping[]
 
   @@index([branchId, date])
   @@index([roomId, date])
@@ -165,4 +159,155 @@ model AuditLog {
 
   @@index([createdAt])
   @@index([entity])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// OTA INTEGRATION LAYER (architecture only — no provider is connected yet).
+//
+// Design notes:
+//  * SQLite has no enums/native JSON, so status/kind/direction are String with
+//    documented allowed values (matches the existing MonthlyReport.status style),
+//    and JSON payloads are stored as String (matches AuditLog.changes).
+//  * A "hotel" in this PMS is a Branch, so IntegrationAccount links to Branch
+//    instead of introducing a separate integration_hotels table.
+//  * Secrets are NOT stored here in plaintext. `IntegrationAccount.settings`
+//    holds non-secret config; real credentials belong in a secret store when a
+//    provider is actually implemented (out of scope this phase).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Registry of supported OTA providers. Business logic never hardcodes provider
+/// names — it resolves them through this table + the in-code provider registry.
+model IntegrationProvider {
+  id          String   @id @default(cuid())
+  code        String   @unique // "booking" | "expedia" | "airbnb" | "agoda" | ...
+  name        String // display name, e.g. "Booking.com"
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  accounts IntegrationAccount[]
+}
+
+/// One connection between a branch (hotel) and a provider.
+model IntegrationAccount {
+  id            String   @id @default(cuid())
+  providerId    String
+  branchId      String
+  status        String   @default("DISCONNECTED") // DISCONNECTED | CONNECTING | CONNECTED | AUTH_FAILED | SYNC_ERROR | DISABLED
+  externalHotelId String? // the provider's identifier for this property
+  settings      String? // JSON: non-secret per-account configuration
+  lastSyncAt    DateTime?
+  lastErrorAt   DateTime?
+  lastError     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  provider            IntegrationProvider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  branch              Branch               @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  roomMappings        RoomMapping[]
+  reservationMappings ReservationMapping[]
+  syncJobs            SyncJob[]
+  syncLogs            SyncLog[]
+  webhookLogs         WebhookLog[]
+
+  @@unique([providerId, branchId]) // one account per provider per branch
+  @@index([branchId])
+  @@index([status])
+}
+
+/// Maps an external (OTA) room to exactly one internal Room, and vice versa,
+/// within a single account.
+model RoomMapping {
+  id             String   @id @default(cuid())
+  accountId      String
+  roomId         String
+  externalRoomId String
+  externalName   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  account IntegrationAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  room    Room               @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, externalRoomId]) // an external room maps to one internal room
+  @@unique([accountId, roomId]) // an internal room is mapped once per account
+  @@index([accountId])
+}
+
+/// Links an internal reservation (MonthlyReport) to its external OTA reservation.
+model ReservationMapping {
+  id                    String   @id @default(cuid())
+  accountId             String
+  reportId              String
+  externalReservationId String
+  externalStatus        String? // raw provider status, kept for audit — never shown in UI
+  lastSyncedHash        String? // hash of the last synced canonical payload
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  account IntegrationAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  report  MonthlyReport      @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, externalReservationId])
+  @@index([accountId])
+  @@index([reportId])
+}
+
+/// Durable, retryable work item — the DB-backed default queue. A Redis/BullMQ
+/// driver can replace the processing side later without changing this contract.
+model SyncJob {
+  id          String   @id @default(cuid())
+  accountId   String?
+  kind        String // IMPORT | EXPORT | WEBHOOK | RETRY | PERIODIC
+  status      String   @default("PENDING") // PENDING | PROCESSING | DONE | FAILED | DEAD
+  payload     String? // JSON
+  attempts    Int      @default(0)
+  maxAttempts Int      @default(5)
+  runAt       DateTime @default(now())
+  lastError   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  account IntegrationAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([status, runAt])
+  @@index([accountId])
+}
+
+/// One synchronization run (import or export of one entity), for observability.
+model SyncLog {
+  id          String    @id @default(cuid())
+  accountId   String?
+  direction   String // INBOUND | OUTBOUND
+  entity      String // RESERVATION | ROOM | AVAILABILITY | RATE
+  status      String // STARTED | SUCCESS | ERROR
+  durationMs  Int?
+  payloadHash String?
+  error       String?
+  retries     Int       @default(0)
+  startedAt   DateTime  @default(now())
+  finishedAt  DateTime?
+
+  account IntegrationAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([entity])
+  @@index([startedAt])
+}
+
+/// Raw inbound webhook receipts, before they become SyncJobs. Provider-agnostic.
+model WebhookLog {
+  id           String   @id @default(cuid())
+  accountId    String?
+  providerCode String
+  signatureOk  Boolean  @default(false)
+  status       String   @default("RECEIVED") // RECEIVED | PROCESSED | REJECTED | ERROR
+  payloadHash  String?
+  error        String?
+  createdAt    DateTime @default(now())
+
+  account IntegrationAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  @@index([providerCode])
+  @@index([createdAt])
 }

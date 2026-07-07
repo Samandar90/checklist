@@ -9,12 +9,13 @@ export interface Admin {
   id: string;
   fullName: string;
   phone: string;
-  branchId: string; // основной филиал
-  branchIds?: string[]; // все филиалы админа
-  branches?: Branch[];
+  branchId: string; // primary/home branch
+  /** Every branch this admin may work in (always includes branchId). */
+  branchIds?: string[];
   username?: string | null;
   createdAt: string;
   branch?: Branch;
+  branches?: Branch[];
 }
 
 export type Role = "SUPER_ADMIN" | "ADMIN";
@@ -47,8 +48,8 @@ export interface AuthUser {
   role: Role;
   adminId: string | null;
   branchId: string | null;
-  branchIds?: string[]; // все филиалы админа
-  branches?: { id: string; name: string }[];
+  /** Every branch this admin may work in. Empty for SUPER_ADMIN (unrestricted). */
+  branchIds: string[];
   fullName: string | null;
   branchName: string | null;
 }

@@ -2,7 +2,7 @@ import { Router } from "express";
 import { prisma } from "../prisma";
 import { comparePassword, hashPassword, signToken } from "../auth";
 import { changePasswordSchema, loginSchema } from "../validation";
-import { authenticate } from "../middleware/auth";
+import { authenticate, requireSuperAdmin } from "../middleware/auth";
 
 const router = Router();
 
@@ -12,7 +12,7 @@ router.post("/login", async (req, res, next) => {
 
     const user = await prisma.user.findUnique({
       where: { username },
-      include: { admin: { include: { branch: true, branches: { include: { branch: true } } } } },
+      include: { admin: { include: { branch: true, branches: true } } },
     });
 
     if (!user) {
@@ -25,12 +25,13 @@ router.post("/login", async (req, res, next) => {
     }
 
     const branchId = user.admin?.branchId ?? null;
-    const branches = (user.admin?.branches ?? []).map((ab) => ({ id: ab.branch.id, name: ab.branch.name }));
+    const branchIds = user.admin?.branches.map((b) => b.id) ?? [];
     const token = signToken({
       sub: user.id,
       role: user.role as "SUPER_ADMIN" | "ADMIN",
       adminId: user.adminId,
       branchId,
+      branchIds,
     });
 
     res.json({
@@ -41,8 +42,7 @@ router.post("/login", async (req, res, next) => {
         role: user.role,
         adminId: user.adminId,
         branchId,
-        branchIds: branches.map((b) => b.id),
-        branches,
+        branchIds,
         fullName: user.admin?.fullName ?? null,
         branchName: user.admin?.branch.name ?? null,
       },
@@ -56,22 +56,20 @@ router.get("/me", authenticate, async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user!.sub },
-      include: { admin: { include: { branch: true, branches: { include: { branch: true } } } } },
+      include: { admin: { include: { branch: true, branches: true } } },
     });
 
     if (!user) {
       return res.status(401).json({ message: "Пользователь не найден" });
     }
 
-    const branches = (user.admin?.branches ?? []).map((ab) => ({ id: ab.branch.id, name: ab.branch.name }));
     res.json({
       id: user.id,
       username: user.username,
       role: user.role,
       adminId: user.adminId,
       branchId: user.admin?.branchId ?? null,
-      branchIds: branches.map((b) => b.id),
-      branches,
+      branchIds: user.admin?.branches.map((b) => b.id) ?? [],
       fullName: user.admin?.fullName ?? null,
       branchName: user.admin?.branch.name ?? null,
     });
@@ -80,8 +78,7 @@ router.get("/me", authenticate, async (req, res, next) => {
   }
 });
 
-// Любой авторизованный пользователь может сменить свой пароль (не только SUPER_ADMIN).
-router.post("/change-password", authenticate, async (req, res, next) => {
+router.post("/change-password", authenticate, requireSuperAdmin, async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = changePasswordSchema.parse(req.body);
 
