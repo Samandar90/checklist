@@ -388,6 +388,15 @@ router.post("/", async (req, res, next) => {
 
     const data = reportSchema.parse(body);
 
+    // Guards against a stale client sending a branchId/roomId pair from two
+    // different branches (e.g. a cached room list from before a branch switch) —
+    // without this the booking would silently be created for the wrong branch's
+    // room and simply not show up on either branch's calendar.
+    const room = await prisma.room.findUnique({ where: { id: data.roomId } });
+    if (!room || room.branchId !== data.branchId) {
+      return res.status(400).json({ message: "Номер не принадлежит выбранному филиалу" });
+    }
+
     const { start, end } = nightRange(new Date(data.date), data.checkOut ? new Date(data.checkOut) : null);
     const conflict = await findRoomConflict(data.roomId, start, end, null);
     if (conflict) {
@@ -436,6 +445,11 @@ router.put("/:id", async (req, res, next) => {
     }
 
     const data = reportSchema.parse(body);
+
+    const room = await prisma.room.findUnique({ where: { id: data.roomId } });
+    if (!room || room.branchId !== data.branchId) {
+      return res.status(400).json({ message: "Номер не принадлежит выбранному филиалу" });
+    }
 
     const { start, end } = nightRange(new Date(data.date), data.checkOut ? new Date(data.checkOut) : null);
     const conflict = await findRoomConflict(data.roomId, start, end, req.params.id);
