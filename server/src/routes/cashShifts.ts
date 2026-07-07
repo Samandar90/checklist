@@ -2,6 +2,7 @@ import { Router } from "express";
 import { prisma } from "../prisma";
 import { cashShiftOpenSchema, cashShiftCloseSchema } from "../validation";
 import { recordAudit, summarize } from "../audit";
+import { resolveAdminBranch } from "../middleware/auth";
 
 const router = Router();
 const money = (n: number) => n.toLocaleString("ru-RU");
@@ -85,9 +86,14 @@ router.post("/", async (req, res, next) => {
     }
 
     const data = cashShiftOpenSchema.parse(req.body);
+    // Смена открывается в выбранном филиале (из назначенных), по умолчанию — основной.
+    const branchId = resolveAdminBranch(req.user!, data.branchId || null);
+    if (!branchId) {
+      return res.status(403).json({ message: "Этот филиал вам не назначен" });
+    }
     const shift = await prisma.cashShift.create({
       data: {
-        branchId: req.user!.branchId,
+        branchId,
         adminId: req.user!.adminId,
         openingAmount: data.openingAmount,
         currency: data.currency,

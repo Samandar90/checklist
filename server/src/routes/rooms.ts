@@ -1,14 +1,14 @@
 import { Router } from "express";
 import { prisma } from "../prisma";
 import { roomSchema } from "../validation";
-import { requireSuperAdmin } from "../middleware/auth";
+import { requireSuperAdmin, allowedBranchIds } from "../middleware/auth";
 import { recordAudit, buildChanges, summarize } from "../audit";
 
 const router = Router();
 
 router.get("/", async (req, res, next) => {
   try {
-    const where = req.user!.role === "ADMIN" ? { branchId: req.user!.branchId ?? "" } : {};
+    const where = req.user!.role === "ADMIN" ? { branchId: { in: allowedBranchIds(req.user!) } } : {};
     const rooms = await prisma.room.findMany({
       where,
       orderBy: { createdAt: "desc" },

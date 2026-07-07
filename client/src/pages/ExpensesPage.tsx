@@ -3,7 +3,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Wallet, X, Search } from "lucide-react";
+import { Plus, Wallet, X, Search } from "lucide-react";
 
 import PageHeader from "@/components/PageHeader";
 import EmptyState from "@/components/EmptyState";
@@ -23,16 +23,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Pagination } from "@/components/ui/pagination";
+import ExpenseDayList from "@/components/ExpenseDayList";
 
-import { useTableControls } from "@/hooks/useTableControls";
 import { useBranches } from "@/hooks/useBranches";
 import { useAdmins } from "@/hooks/useAdmins";
 import { useExpenses, useCreateExpense, useUpdateExpense, useDeleteExpense } from "@/hooks/useExpenses";
 import { Expense, ExpenseFilters, expenseCategories } from "@/types";
 import { getErrorMessage } from "@/lib/api";
-import { formatDate, formatMoney } from "@/lib/utils";
 
 const currencies = ["UZS", "USD", "EUR"];
 
@@ -59,10 +56,6 @@ function expenseMatches(e: Expense, q: string) {
   );
 }
 
-function spenderName(e: Expense) {
-  return e.admin?.fullName ?? "Главный аккаунт";
-}
-
 const emptyForm: ExpenseFormValues = {
   date: todayIso(),
   branchId: "",
@@ -77,7 +70,9 @@ export default function ExpensesPage() {
   const { data: admins } = useAdmins();
   const [filters, setFilters] = useState<ExpenseFilters>({});
   const { data: expenses, isLoading } = useExpenses(filters);
-  const controls = useTableControls(expenses ?? [], expenseMatches, 10);
+  const [search, setSearch] = useState("");
+  const q = search.trim().toLowerCase();
+  const visible = (expenses ?? []).filter((e) => !q || expenseMatches(e, q));
 
   const createExpense = useCreateExpense();
   const updateExpense = useUpdateExpense();
@@ -168,8 +163,8 @@ export default function ExpensesPage() {
             <div className="relative">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                value={controls.search}
-                onChange={(e) => controls.setSearch(e.target.value)}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
                 placeholder="Филиал, категория…"
                 className="pl-8"
               />
@@ -262,61 +257,20 @@ export default function ExpensesPage() {
           title="Расходы не найдены"
           description="Добавьте первый расход или измените фильтры."
         />
-      ) : controls.totalItems === 0 ? (
+      ) : visible.length === 0 ? (
         <EmptyState
           icon={Search}
           title="Ничего не найдено"
           description="По вашему запросу нет расходов. Измените поиск."
         />
       ) : (
-        <>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Дата</TableHead>
-              <TableHead>Филиал</TableHead>
-              <TableHead>Кто потратил</TableHead>
-              <TableHead>Категория</TableHead>
-              <TableHead>Сумма</TableHead>
-              <TableHead>Заметка</TableHead>
-              <TableHead className="text-right">Действия</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {controls.pageItems.map((expense) => (
-              <TableRow key={expense.id}>
-                <TableCell>{formatDate(expense.date)}</TableCell>
-                <TableCell>{expense.branch.name}</TableCell>
-                <TableCell className="text-muted-foreground">{spenderName(expense)}</TableCell>
-                <TableCell>{expense.category}</TableCell>
-                <TableCell className="font-medium text-foreground">
-                  {formatMoney(expense.amount, expense.currency)}
-                </TableCell>
-                <TableCell className="max-w-[200px] truncate text-muted-foreground">
-                  {expense.note || "-"}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(expense)} aria-label="Редактировать">
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(expense)} aria-label="Удалить">
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <Pagination
-          page={controls.page}
-          totalPages={controls.totalPages}
-          totalItems={controls.totalItems}
-          pageSize={controls.pageSize}
-          onPageChange={controls.setPage}
+        <ExpenseDayList
+          expenses={visible}
+          showBranch
+          showSpender
+          onEdit={openEdit}
+          onDelete={setDeleteTarget}
         />
-        </>
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -421,8 +375,12 @@ export default function ExpensesPage() {
             </div>
 
             <div className="col-span-2 space-y-1.5">
-              <Label htmlFor="note">Заметка</Label>
-              <Textarea id="note" placeholder="Необязательная заметка" {...form.register("note")} />
+              <Label htmlFor="note">Детали расхода</Label>
+              <Textarea
+                id="note"
+                placeholder="Опишите подробно: что куплено / оплачено, для чего…"
+                {...form.register("note")}
+              />
             </div>
 
             <DialogFooter className="col-span-2">

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { prisma } from "../prisma";
 import { expenseSchema } from "../validation";
 import { recordAudit, buildChanges, summarize } from "../audit";
+import { resolveAdminBranch } from "../middleware/auth";
 
 const router = Router();
 
@@ -60,7 +61,10 @@ router.post("/", async (req, res, next) => {
         errors: [{ path: "branchId", message: "Филиал обязателен" }],
       });
     }
-    const branchId = isAdmin ? req.user!.branchId! : data.branchId!;
+    const branchId = isAdmin ? resolveAdminBranch(req.user!, data.branchId || null) : data.branchId!;
+    if (!branchId) {
+      return res.status(403).json({ message: "Этот филиал вам не назначен" });
+    }
     const adminId = isAdmin ? req.user!.adminId! : null;
 
     const expense = await prisma.expense.create({
@@ -97,7 +101,7 @@ router.put("/:id", async (req, res, next) => {
         errors: [{ path: "branchId", message: "Филиал обязателен" }],
       });
     }
-    const branchId = isAdmin ? req.user!.branchId! : data.branchId!;
+    const branchId = isAdmin ? resolveAdminBranch(req.user!, data.branchId || null) ?? existing.branchId : data.branchId!;
 
     const expense = await prisma.expense.update({
       where: { id: req.params.id },

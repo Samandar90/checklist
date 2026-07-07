@@ -257,8 +257,12 @@ export default function Layout() {
                   <span className="max-w-[140px] truncate text-[13px] font-medium text-foreground">
                     {user?.fullName ?? user?.username}
                   </span>
-                  <span className="text-[11px] text-muted-foreground">
-                    {isSuperAdmin ? "Главный аккаунт" : user?.branchName}
+                  <span className="max-w-[160px] truncate text-[11px] text-muted-foreground">
+                    {isSuperAdmin
+                      ? "Главный аккаунт"
+                      : (user?.branches?.length ?? 0) > 1
+                        ? user?.branches?.map((b) => b.name).join(", ")
+                        : user?.branchName}
                   </span>
                 </span>
                 <ChevronDown className={cn("h-3.5 w-3.5 text-muted-foreground transition-transform", profileOpen && "rotate-180")} />
@@ -286,18 +290,16 @@ export default function Layout() {
                     <Command className="h-[15px] w-[15px] text-muted-foreground" />
                     Клавиатурные сочетания
                   </button>
-                  {isSuperAdmin && (
-                    <button
-                      onClick={() => {
-                        setPasswordDialogOpen(true);
-                        setProfileOpen(false);
-                      }}
-                      className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-foreground transition-colors hover:bg-secondary"
-                    >
-                      <KeyRound className="h-[15px] w-[15px] text-muted-foreground" />
-                      Сменить пароль
-                    </button>
-                  )}
+                  <button
+                    onClick={() => {
+                      setPasswordDialogOpen(true);
+                      setProfileOpen(false);
+                    }}
+                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-foreground transition-colors hover:bg-secondary"
+                  >
+                    <KeyRound className="h-[15px] w-[15px] text-muted-foreground" />
+                    Сменить пароль
+                  </button>
                   <button
                     onClick={logout}
                     className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-foreground transition-colors hover:bg-secondary"
@@ -383,18 +385,16 @@ export default function Layout() {
               ))}
             </nav>
             <div className="border-t border-border p-2.5">
-              {isSuperAdmin && (
-                <button
-                  onClick={() => {
-                    setPasswordDialogOpen(true);
-                    setMobileNavOpen(false);
-                  }}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] text-muted-foreground hover:bg-secondary"
-                >
-                  <KeyRound className="h-[15px] w-[15px]" />
-                  Сменить пароль
-                </button>
-              )}
+              <button
+                onClick={() => {
+                  setPasswordDialogOpen(true);
+                  setMobileNavOpen(false);
+                }}
+                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] text-muted-foreground hover:bg-secondary"
+              >
+                <KeyRound className="h-[15px] w-[15px]" />
+                Сменить пароль
+              </button>
               <button
                 onClick={logout}
                 className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] text-muted-foreground hover:bg-secondary"

@@ -9,7 +9,9 @@ export interface Admin {
   id: string;
   fullName: string;
   phone: string;
-  branchId: string;
+  branchId: string; // основной филиал
+  branchIds?: string[]; // все филиалы админа
+  branches?: Branch[];
   username?: string | null;
   createdAt: string;
   branch?: Branch;
@@ -45,6 +47,8 @@ export interface AuthUser {
   role: Role;
   adminId: string | null;
   branchId: string | null;
+  branchIds?: string[]; // все филиалы админа
+  branches?: { id: string; name: string }[];
   fullName: string | null;
   branchName: string | null;
 }

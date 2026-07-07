@@ -7,6 +7,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, User2, CalendarRange, BedDouble, Wallet, ClipboardCheck, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerBody, DrawerFooter, DrawerCloseButton } from "@/components/ui/drawer";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CurrencyInput } from "@/components/ui/currency-input";
@@ -100,7 +110,9 @@ export default function BookingWizard({
   const { data: admins } = useAdmins({ enabled: !isAdmin });
   const { data: sources } = useSources();
   const createReport = useCreateReport();
-  const branchAdmins = (admins ?? []).filter((a) => a.branchId === branchId);
+  const [confirmClose, setConfirmClose] = useState(false);
+  // Админ подходит, если работает в этом филиале (мульти-филиальные — по branchIds).
+  const branchAdmins = (admins ?? []).filter((a) => (a.branchIds?.length ? a.branchIds.includes(branchId) : a.branchId === branchId));
 
   const [stepIdx, setStepIdx] = useState(0);
 
@@ -163,6 +175,27 @@ export default function BookingWizard({
     return () => sub.unsubscribe();
   }, [open, form]);
 
+  // Деструктуризация при рендере подписывает Proxy formState на эти поля —
+  // иначе значения, прочитанные в обработчике, всегда будут false.
+  const { isDirty, isSubmitSuccessful } = form.formState;
+
+  // Форма считается «заполненной», если пользователь что-то ввёл сам (isDirty)
+  // или в ней есть восстановленный черновик (имя/цена) — его тоже жалко терять.
+  function hasMeaningfulInput() {
+    const v = form.getValues();
+    return isDirty || Boolean(v.guestName?.trim()) || (v.pricePerNight ?? 0) > 0 || Boolean(v.notes?.trim());
+  }
+
+  // Случайный клик мимо окна НЕ закрывает мастер (см. onInteractOutside ниже).
+  // Явное закрытие (крестик/Esc) при заполненной форме требует подтверждения.
+  function handleOpenChange(next: boolean) {
+    if (!next && !isSubmitSuccessful && hasMeaningfulInput()) {
+      setConfirmClose(true);
+      return;
+    }
+    onOpenChange(next);
+  }
+
   const selectedStatus = form.watch("paymentStatus");
   const nights = Math.max(1, nightsBetween(form.watch("date"), form.watch("checkOut")));
   const totalPrice = (form.watch("pricePerNight") || 0) * nights;
@@ -199,10 +232,19 @@ export default function BookingWizard({
   const noAdmins = !isAdmin && branchAdmins.length === 0;
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent>
+    <Drawer open={open} onOpenChange={handleOpenChange}>
+      <DrawerContent
+        // Клик мимо окна и фокус наружу не закрывают мастер — данные не теряются.
+        onInteractOutside={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => e.preventDefault()}
+      >
         <DrawerHeader>
-          <DrawerTitle>Новое бронирование</DrawerTitle>
+          <div>
+            <DrawerTitle>Новое бронирование</DrawerTitle>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Шаг {stepIdx + 1} из {STEPS.length} — {step.label}
+            </p>
+          </div>
           <DrawerCloseButton />
         </DrawerHeader>
 
@@ -451,25 +493,63 @@ export default function BookingWizard({
               </AnimatePresence>
             </DrawerBody>
 
-            <DrawerFooter>
-              {stepIdx > 0 && (
-                <Button type="button" variant="outline" onClick={goBack} className="mr-auto">
-                  <ChevronLeft className="h-4 w-4" /> Назад
-                </Button>
-              )}
-              {stepIdx < STEPS.length - 1 ? (
-                <Button type="button" onClick={goNext}>
-                  Далее <ChevronRight className="h-4 w-4" />
-                </Button>
-              ) : (
-                <Button type="submit" disabled={form.formState.isSubmitting}>
-                  Создать бронь
-                </Button>
-              )}
+            <DrawerFooter className="justify-between">
+              <div className="flex min-w-0 flex-col leading-tight">
+                {totalPrice > 0 && (
+                  <>
+                    <span className="text-[11px] text-muted-foreground">
+                      {nights} {nights === 1 ? "ночь" : nights < 5 ? "ночи" : "ночей"}
+                      {selectedRoom ? ` · № ${selectedRoom.roomNumber}` : ""}
+                    </span>
+                    <span className="text-sm font-semibold tabular-nums text-foreground">
+                      {formatMoney(totalPrice, form.watch("currency"))}
+                    </span>
+                  </>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {stepIdx > 0 && (
+                  <Button type="button" variant="outline" onClick={goBack}>
+                    <ChevronLeft className="h-4 w-4" /> Назад
+                  </Button>
+                )}
+                {stepIdx < STEPS.length - 1 ? (
+                  <Button type="button" onClick={goNext}>
+                    Далее <ChevronRight className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button type="submit" disabled={form.formState.isSubmitting}>
+                    <Check className="h-4 w-4" /> Создать бронь
+                  </Button>
+                )}
+              </div>
             </DrawerFooter>
           </form>
         )}
       </DrawerContent>
+
+      {/* Подтверждение закрытия, чтобы случайно не потерять заполненную форму */}
+      <AlertDialog open={confirmClose} onOpenChange={setConfirmClose}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Закрыть оформление брони?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Введённые данные сохранятся как черновик и подставятся при следующем открытии мастера.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Продолжить оформление</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setConfirmClose(false);
+                onOpenChange(false);
+              }}
+            >
+              Закрыть
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Drawer>
   );
 }

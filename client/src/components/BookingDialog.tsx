@@ -231,7 +231,11 @@ export default function BookingDialog({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent>
+      <DrawerContent
+        // Случайный клик мимо окна не закрывает форму редактирования брони.
+        onInteractOutside={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => e.preventDefault()}
+      >
         <DrawerHeader>
           <div className="min-w-0">
             <DrawerTitle>{editing?.guestName || form.watch("guestName") || (editing ? "Бронь" : "Новое бронирование")}</DrawerTitle>

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../prisma";
 import { reportSchema } from "../validation";
-import { requireSuperAdmin } from "../middleware/auth";
+import { requireSuperAdmin, resolveAdminBranch } from "../middleware/auth";
 import { recordAudit, buildChanges, summarize } from "../audit";
 
 const REPORT_AUDIT_FIELDS = ["date", "checkOut", "guestName", "price", "currency", "paymentMethod", "paymentStatus", "status", "paidAmount", "notes", "roomId"];
@@ -273,6 +273,30 @@ router.post("/bulk", async (req, res, next) => {
       if (!roomId) return res.status(400).json({ message: "Укажите номер" });
       const room = await prisma.room.findUnique({ where: { id: roomId } });
       if (!room) return res.status(404).json({ message: "Номер не найден" });
+
+      // Тот же инвариант, что и при создании: целевой номер не должен быть занят
+      // на ночи переносимых бронирований (включая конфликты между самими переносимыми).
+      const moving = allowed
+        .filter((r) => ROOM_HOLDING_STATUSES.includes(r.status))
+        .map((r) => ({ id: r.id, ...nightRange(new Date(r.date), r.checkOut ? new Date(r.checkOut) : null) }));
+      for (const m of moving) {
+        const conflict = await findRoomConflict(roomId, m.start, m.end, m.id);
+        if (conflict) {
+          return res.status(409).json({
+            message: `Номер ${room.roomNumber} уже занят на эти даты (${dmy(new Date(conflict.date))}${
+              conflict.checkOut ? `–${dmy(new Date(conflict.checkOut))}` : ""
+            }${conflict.guestName ? `, ${conflict.guestName}` : ""}). Перенос отменён.`,
+          });
+        }
+      }
+      for (let i = 0; i < moving.length; i++) {
+        for (let j = i + 1; j < moving.length; j++) {
+          if (moving[i].start < moving[j].end && moving[j].start < moving[i].end) {
+            return res.status(409).json({ message: "Переносимые бронирования пересекаются между собой по датам — их нельзя поселить в один номер." });
+          }
+        }
+      }
+
       await prisma.monthlyReport.updateMany({ where: { id: { in: allowedIds } }, data: { roomId } });
       await recordAudit(req, {
         action: "UPDATE",
@@ -308,13 +332,13 @@ router.post("/bulk", async (req, res, next) => {
 router.get("/calendar", async (req, res, next) => {
   try {
     const isAdmin = req.user!.role === "ADMIN";
-    const branchId = isAdmin
-      ? req.user!.branchId ?? ""
-      : typeof req.query.branchId === "string"
-        ? req.query.branchId
-        : "";
+    const requested = typeof req.query.branchId === "string" ? req.query.branchId : "";
+    // Админ может смотреть шахматку любого из СВОИХ филиалов; чужой филиал — отказ.
+    const branchId = isAdmin ? resolveAdminBranch(req.user!, requested || null) ?? "" : requested;
     if (!branchId) {
-      return res.status(400).json({ message: "Укажите филиал" });
+      return res.status(isAdmin && requested ? 403 : 400).json({
+        message: isAdmin && requested ? "Этот филиал вам не назначен" : "Укажите филиал",
+      });
     }
 
     const from = new Date(String(req.query.from));
@@ -357,7 +381,12 @@ router.post("/", async (req, res, next) => {
         return res.status(403).json({ message: "Ваш аккаунт не привязан к администратору филиала" });
       }
       body.adminId = req.user!.adminId;
-      body.branchId = req.user!.branchId;
+      // Бронь можно создать в любом из назначенных филиалов (по умолчанию — основной).
+      const branch = resolveAdminBranch(req.user!, typeof body.branchId === "string" ? body.branchId : null);
+      if (!branch) {
+        return res.status(403).json({ message: "Этот филиал вам не назначен" });
+      }
+      body.branchId = branch;
     }
 
     const data = reportSchema.parse(body);
@@ -406,7 +435,11 @@ router.put("/:id", async (req, res, next) => {
     const body = { ...req.body };
     if (req.user!.role === "ADMIN") {
       body.adminId = req.user!.adminId;
-      body.branchId = req.user!.branchId;
+      const branch = resolveAdminBranch(req.user!, typeof body.branchId === "string" ? body.branchId : null);
+      if (!branch) {
+        return res.status(403).json({ message: "Этот филиал вам не назначен" });
+      }
+      body.branchId = branch;
     }
 
     const data = reportSchema.parse(body);

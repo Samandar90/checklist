@@ -12,25 +12,39 @@ model Branch {
   name      String
   createdAt DateTime @default(now())
 
-  admins     Admin[]
-  rooms      Room[]
-  reports    MonthlyReport[]
-  expenses   Expense[]
-  cashShifts CashShift[]
+  admins       Admin[]
+  adminBranches AdminBranch[]
+  rooms        Room[]
+  reports      MonthlyReport[]
+  expenses     Expense[]
+  cashShifts   CashShift[]
 }
 
 model Admin {
   id        String   @id @default(cuid())
   fullName  String
   phone     String
-  branchId  String
+  branchId  String // основной (домашний) филиал
   createdAt DateTime @default(now())
 
-  branch     Branch          @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  reports    MonthlyReport[]
-  expenses   Expense[]
-  cashShifts CashShift[]
-  user       User?
+  branch       Branch          @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  branches     AdminBranch[] // все филиалы, где работает админ (включая основной)
+  reports      MonthlyReport[]
+  expenses     Expense[]
+  cashShifts   CashShift[]
+  user         User?
+}
+
+// Многие-ко-многим: админ может работать в нескольких филиалах.
+model AdminBranch {
+  adminId  String
+  branchId String
+
+  admin  Admin  @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@id([adminId, branchId])
+  @@index([branchId])
 }
 
 model User {
@@ -82,10 +96,18 @@ model MonthlyReport {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime? @updatedAt
 
+  // Restrict: нельзя удалить админа/номер/источник, пока за ними числятся брони —
+  // финансовая история не должна пропадать каскадом.
   branch Branch        @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  admin  Admin         @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  room   Room          @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  source BookingSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  admin  Admin         @relation(fields: [adminId], references: [id], onDelete: Restrict)
+  room   Room          @relation(fields: [roomId], references: [id], onDelete: Restrict)
+  source BookingSource @relation(fields: [sourceId], references: [id], onDelete: Restrict)
+
+  @@index([branchId, date])
+  @@index([roomId, date])
+  @@index([adminId])
+  @@index([status])
+  @@index([paymentStatus])
 }
 
 model Expense {
@@ -102,6 +124,9 @@ model Expense {
 
   branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
   admin  Admin? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([branchId, date])
+  @@index([adminId])
 }
 
 model CashShift {

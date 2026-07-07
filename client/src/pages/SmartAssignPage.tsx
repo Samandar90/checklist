@@ -30,10 +30,12 @@ function todayIso() {
 export default function SmartAssignPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === "ADMIN";
-  const { data: branches } = useBranches({ enabled: !isAdmin });
+  // Сервер сам ограничивает список: админ видит только свои филиалы.
+  const { data: branches } = useBranches();
   const { data: rooms } = useRooms();
 
   const [branchId, setBranchId] = useState<string>(isAdmin ? user?.branchId ?? "" : "");
+  const canPickBranch = !isAdmin || (user?.branchIds?.length ?? 0) > 1;
   const [checkIn, setCheckIn] = useState(todayIso());
   const [checkOut, setCheckOut] = useState(addDaysIso(todayIso(), 2));
   const [guests, setGuests] = useState(2);
@@ -78,7 +80,7 @@ export default function SmartAssignPage() {
 
       <Card className="mb-6">
         <CardContent className="flex flex-wrap items-end gap-3 p-4">
-          {!isAdmin && (
+          {canPickBranch && (
             <div className="w-52 space-y-1.5">
               <Label>Филиал</Label>
               <Select value={branchId} onValueChange={setBranchId}>

@@ -4,10 +4,13 @@ export const branchSchema = z.object({
   name: z.string().trim().min(1, "Название обязательно"),
 });
 
+// branchIds: все филиалы админа; первый в списке — основной.
+const adminBranchIds = z.array(z.string().trim().min(1)).min(1, "Выберите хотя бы один филиал");
+
 export const adminCreateSchema = z.object({
   fullName: z.string().trim().min(1, "ФИО обязательно"),
   phone: z.string().trim().min(1, "Телефон обязателен"),
-  branchId: z.string().trim().min(1, "Филиал обязателен"),
+  branchIds: adminBranchIds,
   username: z.string().trim().min(3, "Логин должен быть не короче 3 символов"),
   password: z.string().min(6, "Пароль должен быть не короче 6 символов"),
 });
@@ -15,7 +18,7 @@ export const adminCreateSchema = z.object({
 export const adminUpdateSchema = z.object({
   fullName: z.string().trim().min(1, "ФИО обязательно"),
   phone: z.string().trim().min(1, "Телефон обязателен"),
-  branchId: z.string().trim().min(1, "Филиал обязателен"),
+  branchIds: adminBranchIds,
   username: z.string().trim().min(3, "Логин должен быть не короче 3 символов"),
   password: z.string().min(6, "Пароль должен быть не короче 6 символов").optional().or(z.literal("")),
 });
@@ -46,8 +49,17 @@ export const bookingStatuses = ["RESERVED", "CHECKED_IN", "CHECKED_OUT", "CANCEL
 
 export const reportSchema = z
   .object({
-    date: z.string().trim().min(1, "Дата заезда обязательна"),
-    checkOut: z.string().trim().optional().nullable(),
+    date: z
+      .string()
+      .trim()
+      .min(1, "Дата заезда обязательна")
+      .refine((v) => !Number.isNaN(new Date(v).getTime()), "Некорректная дата заезда"),
+    checkOut: z
+      .string()
+      .trim()
+      .refine((v) => !v || !Number.isNaN(new Date(v).getTime()), "Некорректная дата выезда")
+      .optional()
+      .nullable(),
     guestName: z.string().trim().optional().nullable(),
     branchId: z.string().trim().min(1, "Филиал обязателен"),
     adminId: z.string().trim().min(1, "Администратор обязателен"),
@@ -114,6 +126,7 @@ export const expenseSchema = z.object({
 export const cashShiftOpenSchema = z.object({
   openingAmount: z.number({ invalid_type_error: "Укажите сумму" }).min(0, "Сумма не может быть отрицательной"),
   currency: z.string().trim().min(1, "Валюта обязательна"),
+  branchId: z.string().trim().optional().nullable(), // филиал смены (для мульти-филиальных админов)
   notes: z.string().trim().optional().nullable(),
 });
 

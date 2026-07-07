@@ -39,6 +39,7 @@ const currencies = ["UZS", "USD", "EUR"];
 const openSchema = z.object({
   openingAmount: z.number({ invalid_type_error: "Укажите сумму" }).min(0, "Не может быть отрицательной"),
   currency: z.string().trim().min(1, "Выберите валюту"),
+  branchId: z.string().trim().optional(),
   notes: z.string().trim().optional(),
 });
 type OpenValues = z.infer<typeof openSchema>;
@@ -65,9 +66,12 @@ export default function CashRegisterPage() {
   const [openDialogOpen, setOpenDialogOpen] = useState(false);
   const [closeDialogOpen, setCloseDialogOpen] = useState(false);
 
+  const myBranches = user?.branches ?? [];
+  const multiBranch = isAdmin && myBranches.length > 1;
+
   const openForm = useForm<OpenValues>({
     resolver: zodResolver(openSchema),
-    defaultValues: { openingAmount: 0, currency: "UZS", notes: "" },
+    defaultValues: { openingAmount: 0, currency: "UZS", branchId: user?.branchId ?? undefined, notes: "" },
   });
   const closeForm = useForm<CloseValues>({
     resolver: zodResolver(closeSchema),
@@ -224,6 +228,29 @@ export default function CashRegisterPage() {
             <DialogTitle>Открыть смену</DialogTitle>
           </DialogHeader>
           <form onSubmit={openForm.handleSubmit(onOpen)} className="grid grid-cols-2 gap-4">
+            {multiBranch && (
+              <div className="col-span-2 space-y-1.5">
+                <Label>Филиал смены</Label>
+                <Controller
+                  control={openForm.control}
+                  name="branchId"
+                  render={({ field }) => (
+                    <Select value={field.value ?? ""} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Выберите филиал" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {myBranches.map((b) => (
+                          <SelectItem key={b.id} value={b.id}>
+                            {b.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+            )}
             <div className="space-y-1.5">
               <Label htmlFor="open-amount">Остаток на начало</Label>
               <Controller

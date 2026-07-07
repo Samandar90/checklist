@@ -114,7 +114,8 @@ interface Group {
 export default function CalendarPage() {
   const { user } = useAuth();
   const isAdmin = user?.role === "ADMIN";
-  const { data: branches } = useBranches({ enabled: !isAdmin });
+  // Сервер сам ограничивает список: админ видит только свои филиалы.
+  const { data: branches } = useBranches();
   const [branchId, setBranchId] = useState<string | undefined>(undefined);
   const rootRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -165,7 +166,11 @@ export default function CalendarPage() {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const updateReport = useUpdateReport();
 
-  const effectiveBranchId = isAdmin ? user?.branchId ?? undefined : branchId ?? branches?.[0]?.id;
+  const myBranchIds = user?.branchIds ?? (user?.branchId ? [user.branchId] : []);
+  const canPickBranch = !isAdmin || myBranchIds.length > 1;
+  const effectiveBranchId = isAdmin
+    ? (branchId && myBranchIds.includes(branchId) ? branchId : user?.branchId ?? undefined)
+    : branchId ?? branches?.[0]?.id;
 
   const monthStart = new Date(cursor.year, cursor.month, 1);
   const monthEnd = new Date(cursor.year, cursor.month + 1, 0);
@@ -465,7 +470,7 @@ export default function CalendarPage() {
       <div className="sticky top-0 z-30 -mx-4 mb-4 border-b border-border bg-background/85 px-4 py-3 backdrop-blur-xl md:-mx-8 md:px-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="flex flex-wrap items-end gap-3">
-            {!isAdmin && (
+            {canPickBranch && (
               <div className="w-48 space-y-1.5">
                 <Label>Филиал</Label>
                 <Select value={effectiveBranchId ?? ""} onValueChange={(v) => setBranchId(v)}>

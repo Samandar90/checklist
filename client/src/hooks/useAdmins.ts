@@ -5,7 +5,7 @@ import { Admin } from "@/types";
 export interface AdminInput {
   fullName: string;
   phone: string;
-  branchId: string;
+  branchIds: string[]; // первый — основной филиал
   username: string;
   password?: string;
 }

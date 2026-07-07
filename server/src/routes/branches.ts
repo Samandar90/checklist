@@ -1,15 +1,18 @@
 import { Router } from "express";
 import { prisma } from "../prisma";
 import { branchSchema } from "../validation";
-import { requireSuperAdmin } from "../middleware/auth";
+import { requireSuperAdmin, allowedBranchIds } from "../middleware/auth";
 import { recordAudit, buildChanges, summarize } from "../audit";
 
 const router = Router();
-router.use(requireSuperAdmin);
 
-router.get("/", async (_req, res, next) => {
+// Чтение доступно и ADMIN'у: он видит только свои филиалы (нужно для переключателя).
+router.get("/", async (req, res, next) => {
   try {
+    const isAdmin = req.user!.role === "ADMIN";
+    const where = isAdmin ? { id: { in: allowedBranchIds(req.user!) } } : {};
     const branches = await prisma.branch.findMany({
+      where,
       orderBy: { createdAt: "desc" },
       include: {
         _count: { select: { admins: true, rooms: true, reports: true } },
@@ -21,7 +24,7 @@ router.get("/", async (_req, res, next) => {
   }
 });
 
-router.post("/", async (req, res, next) => {
+router.post("/", requireSuperAdmin, async (req, res, next) => {
   try {
     const data = branchSchema.parse(req.body);
     const branch = await prisma.branch.create({ data });
@@ -37,7 +40,7 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-router.put("/:id", async (req, res, next) => {
+router.put("/:id", requireSuperAdmin, async (req, res, next) => {
   try {
     const existing = await prisma.branch.findUnique({ where: { id: req.params.id } });
     if (!existing) {
@@ -64,7 +67,7 @@ router.put("/:id", async (req, res, next) => {
   }
 });
 
-router.delete("/:id", async (req, res, next) => {
+router.delete("/:id", requireSuperAdmin, async (req, res, next) => {
   try {
     const existing = await prisma.branch.findUnique({ where: { id: req.params.id } });
     await prisma.branch.delete({ where: { id: req.params.id } });

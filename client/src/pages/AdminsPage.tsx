@@ -30,7 +30,7 @@ import { formatDate } from "@/lib/utils";
 const baseFields = {
   fullName: z.string().trim().min(1, "Укажите ФИО"),
   phone: z.string().trim().min(1, "Укажите телефон"),
-  branchId: z.string().trim().min(1, "Выберите филиал"),
+  branchIds: z.array(z.string()).min(1, "Выберите хотя бы один филиал"),
   username: z.string().trim().min(3, "Логин должен быть не короче 3 символов"),
 };
 
@@ -60,12 +60,12 @@ export default function AdminsPage() {
 
   const form = useForm<AdminFormValues>({
     resolver: zodResolver(editing ? editFormSchema : createFormSchema),
-    defaultValues: { fullName: "", phone: "", branchId: "", username: "", password: "" },
+    defaultValues: { fullName: "", phone: "", branchIds: [], username: "", password: "" },
   });
 
   function openCreate() {
     setEditing(null);
-    form.reset({ fullName: "", phone: "", branchId: "", username: "", password: "" });
+    form.reset({ fullName: "", phone: "", branchIds: [], username: "", password: "" });
     setDialogOpen(true);
   }
 
@@ -74,7 +74,7 @@ export default function AdminsPage() {
     form.reset({
       fullName: admin.fullName,
       phone: admin.phone,
-      branchId: admin.branchId,
+      branchIds: admin.branchIds?.length ? admin.branchIds : [admin.branchId],
       username: admin.username ?? "",
       password: "",
     });
@@ -170,7 +170,7 @@ export default function AdminsPage() {
               <TableHead>ФИО</TableHead>
               <TableHead>Логин</TableHead>
               <TableHead>Телефон</TableHead>
-              <TableHead>Филиал</TableHead>
+              <TableHead>Филиалы</TableHead>
               <TableHead>Создан</TableHead>
               <TableHead className="text-right">Действия</TableHead>
             </TableRow>
@@ -181,7 +181,11 @@ export default function AdminsPage() {
                 <TableCell className="font-medium text-foreground">{admin.fullName}</TableCell>
                 <TableCell className="text-muted-foreground">{admin.username ?? "-"}</TableCell>
                 <TableCell>{admin.phone}</TableCell>
-                <TableCell>{admin.branch?.name ?? "-"}</TableCell>
+                <TableCell>
+                  {admin.branches?.length
+                    ? admin.branches.map((b) => b.name).join(", ")
+                    : admin.branch?.name ?? "-"}
+                </TableCell>
                 <TableCell className="text-muted-foreground">{formatDate(admin.createdAt)}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
@@ -220,27 +224,49 @@ export default function AdminsPage() {
               )}
             </div>
             <div className="space-y-1.5">
-              <Label>Филиал</Label>
+              <Label>Филиалы</Label>
               <Controller
                 control={form.control}
-                name="branchId"
+                name="branchIds"
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Выбрать" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(branches ?? []).map((b) => (
-                        <SelectItem key={b.id} value={b.id}>
-                          {b.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-1 rounded-xl border border-border p-2">
+                    {(branches ?? []).map((b) => {
+                      const checked = field.value.includes(b.id);
+                      const isPrimary = field.value[0] === b.id;
+                      return (
+                        <label
+                          key={b.id}
+                          className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-secondary"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={(e) => {
+                              field.onChange(
+                                e.target.checked
+                                  ? [...field.value, b.id]
+                                  : field.value.filter((id: string) => id !== b.id)
+                              );
+                            }}
+                            className="h-4 w-4 rounded border-border accent-primary"
+                          />
+                          <span className="flex-1 text-foreground">{b.name}</span>
+                          {isPrimary && (
+                            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                              основной
+                            </span>
+                          )}
+                        </label>
+                      );
+                    })}
+                  </div>
                 )}
               />
-              {form.formState.errors.branchId && (
-                <p className="text-xs text-destructive">{form.formState.errors.branchId.message}</p>
+              <p className="text-xs text-muted-foreground">
+                Можно выбрать несколько филиалов — админ сможет работать в каждом из них. Первый отмеченный станет основным.
+              </p>
+              {form.formState.errors.branchIds && (
+                <p className="text-xs text-destructive">{form.formState.errors.branchIds.message as string}</p>
               )}
             </div>
 
