@@ -9,6 +9,13 @@ export const STATUS_META: Record<BookingStatus, { label: string; icon: typeof Lo
   NO_SHOW: { label: "Не заехал", icon: UserX, tint: "tint-amber" },
 };
 
+/**
+ * Statuses that actually hold the room's nights — mirrors the server's
+ * ROOM_HOLDING_STATUSES: a cancellation or a no-show frees the room.
+ */
+export const ROOM_HOLDING_STATUSES: BookingStatus[] = ["RESERVED", "CHECKED_IN", "CHECKED_OUT"];
+export const holdsRoom = (s: BookingStatus) => ROOM_HOLDING_STATUSES.includes(s);
+
 export const STATUS_OPTIONS: { value: BookingStatus; label: string }[] = (
   Object.keys(STATUS_META) as BookingStatus[]
 ).map((value) => ({ value, label: STATUS_META[value].label }));

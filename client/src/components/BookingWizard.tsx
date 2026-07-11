@@ -31,7 +31,7 @@ import { useCreateReport } from "@/hooks/useReports";
 import { useAuth } from "@/contexts/AuthContext";
 import { Room, paymentMethods, paymentStatuses } from "@/types";
 import { getErrorMessage } from "@/lib/api";
-import { cn, addDaysIso, nightsBetween, formatMoney, formatDate, PAYMENT_STATUS_OPTIONS } from "@/lib/utils";
+import { cn, addDaysIso, nightsBetween, pluralRu, formatMoney, formatDate, PAYMENT_STATUS_OPTIONS } from "@/lib/utils";
 
 const DRAFT_KEY = "booking-wizard-draft";
 
@@ -320,9 +320,15 @@ export default function BookingWizard({
                         <Input id="bw-checkout" type="date" min={form.watch("date")} {...form.register("checkOut")} />
                         {form.formState.errors.checkOut && <p className="text-xs text-destructive">{form.formState.errors.checkOut.message}</p>}
                       </div>
-                      <p className="col-span-2 text-xs text-muted-foreground">
-                        Ночей: <span className="font-medium text-foreground">{nights}</span>
-                      </p>
+                      <div className="col-span-2 rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                        <span className="font-semibold text-foreground">
+                          {nights} {pluralRu(nights, "ночь", "ночи", "ночей")}
+                        </span>
+                        {form.watch("date") && form.watch("checkOut") && (
+                          <> · {formatDate(form.watch("date"))} → {formatDate(form.watch("checkOut"))}</>
+                        )}
+                        <p className="mt-0.5">Дата выезда — день освобождения номера, эта ночь не оплачивается.</p>
+                      </div>
                       <div className="col-span-2 space-y-1.5">
                         <Label htmlFor="bw-notes-stay">Особые пожелания</Label>
                         <Textarea id="bw-notes-stay" placeholder="Например: вид на море, тихий этаж…" {...form.register("notes")} />
@@ -441,7 +447,7 @@ export default function BookingWizard({
                     <div className="space-y-4">
                       <div className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">
                         <span className="text-xs text-muted-foreground">
-                          Итого за {nights} {nights === 1 ? "ночь" : "ночи"}
+                          Итого за {nights} {pluralRu(nights, "ночь", "ночи", "ночей")}
                         </span>
                         <span className="text-sm font-semibold tabular-nums text-foreground">
                           {totalPrice.toLocaleString("ru-RU")} {form.watch("currency")}
@@ -481,7 +487,10 @@ export default function BookingWizard({
                   {step.key === "confirm" && (
                     <div className="space-y-3 text-sm">
                       <SummaryRow label="Гость" value={form.watch("guestName") || "Без имени"} />
-                      <SummaryRow label="Период" value={`${formatDate(form.watch("date"))} → ${formatDate(form.watch("checkOut"))} · ${nights} ноч.`} />
+                      <SummaryRow
+                        label="Период"
+                        value={`${formatDate(form.watch("date"))} → ${formatDate(form.watch("checkOut"))} · ${nights} ${pluralRu(nights, "ночь", "ночи", "ночей")}`}
+                      />
                       <SummaryRow label="Номер" value={selectedRoom ? `${selectedRoom.roomNumber}${selectedRoom.type ? ` · ${selectedRoom.type}` : ""}` : "—"} />
                       <SummaryRow label="Источник" value={selectedSource?.name ?? "—"} />
                       <SummaryRow label="Сумма" value={formatMoney(totalPrice, form.watch("currency"))} />

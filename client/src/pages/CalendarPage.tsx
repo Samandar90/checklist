@@ -38,10 +38,10 @@ import { useBranches, useMyBranches } from "@/hooks/useBranches";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCalendar } from "@/hooks/useCalendar";
 import { useUpdateReport, useDeleteReport } from "@/hooks/useReports";
-import { STATUS_META, STATUS_DOT_CLASS } from "@/lib/bookingStatus";
+import { STATUS_META, STATUS_DOT_CLASS, holdsRoom } from "@/lib/bookingStatus";
 import { MonthlyReport, Room, BookingStatus, bookingStatuses } from "@/types";
 import { getErrorMessage } from "@/lib/api";
-import { cn, formatDate, formatMoney, nightsBetween, reportDebt, paymentStatusClass } from "@/lib/utils";
+import { cn, formatDate, formatMoney, nightsBetween, pluralRu, reportDebt, paymentStatusClass } from "@/lib/utils";
 
 const MONTHS = [
   "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
@@ -200,6 +200,23 @@ export default function CalendarPage() {
     return () => window.removeEventListener("mouseup", finish);
   }, [days]);
 
+  // Esc cancels an in-progress selection or drag-move without side effects.
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      if (dragRef.current) {
+        dragRef.current = null;
+        setDrag(null);
+      }
+      if (moveRef.current) {
+        moveRef.current = null;
+        setMove(null);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   const groups: Group[] = useMemo(() => {
     if (!data) return [];
     const map = new Map<string, Room[]>();
@@ -215,6 +232,7 @@ export default function CalendarPage() {
     const arr: Set<string>[] = Array.from({ length: daysInMonth }, () => new Set<string>());
     if (!data) return arr;
     for (const b of data.bookings) {
+      if (!holdsRoom(b.status)) continue; // cancellations / no-shows don't occupy nights
       const start = dayIndex(b.date);
       const end = b.checkOut ? dayIndex(b.checkOut) : start + 1;
       for (let d = Math.max(0, start); d < Math.min(daysInMonth, end); d++) arr[d].add(b.roomId);
@@ -251,6 +269,7 @@ export default function CalendarPage() {
     const list = bookingsRef.current.get(roomId) ?? [];
     return !list.some((b) => {
       if (ignoreId && b.id === ignoreId) return false;
+      if (!holdsRoom(b.status)) return false; // mirrors the server: cancelled/no-show don't block
       const [s, e] = spanOf(b);
       return start < e && s < end;
     });
@@ -369,6 +388,7 @@ export default function CalendarPage() {
     let departures = 0;
     let revenueToday = 0;
     for (const b of data?.bookings ?? []) {
+      if (!holdsRoom(b.status)) continue;
       const [s, e] = [dayIndex(b.date), b.checkOut ? dayIndex(b.checkOut) : dayIndex(b.date) + 1];
       if (s === todayIndex) arrivals++;
       if (e === todayIndex) departures++;
@@ -549,7 +569,7 @@ export default function CalendarPage() {
           </button>
         )}
         <span className="ml-auto hidden items-center gap-1.5 text-xs text-muted-foreground md:flex">
-          <MousePointerClick className="h-3.5 w-3.5" /> Кликните или протяните по дням — создать бронь
+          <MousePointerClick className="h-3.5 w-3.5" /> 1 клетка = 1 ночь · клик или протяжка по свободным дням — новая бронь
         </span>
       </div>
 
@@ -719,20 +739,26 @@ export default function CalendarPage() {
                             );
                           })}
                         </div>
-                        {/* подсветка выделения при протяжке */}
+                        {/* подсветка выделения при протяжке + живой счётчик ночей */}
                         {drag && drag.roomId === room.id && (
                           <div
-                            className="pointer-events-none absolute rounded-md border-2 border-dashed border-primary bg-primary/15"
+                            className="pointer-events-none absolute z-30 flex items-center justify-center rounded-md border-2 border-dashed border-primary bg-primary/15"
                             style={{
                               left: Math.min(drag.a, drag.b) * CELL_W + 1,
                               width: (Math.abs(drag.b - drag.a) + 1) * CELL_W - 2,
                               top: 4,
                               height: ROW_H - 8,
                             }}
-                          />
+                          >
+                            <span className="whitespace-nowrap rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground shadow-sm">
+                              {Math.abs(drag.b - drag.a) + 1}{" "}
+                              {pluralRu(Math.abs(drag.b - drag.a) + 1, "ночь", "ночи", "ночей")}
+                            </span>
+                          </div>
                         )}
-                        {/* брони */}
+                        {/* брони; отменённые и незаезды скрыты (номер свободен) — видны только через фильтр статуса */}
                         {(bookingsByRoom.get(room.id) ?? [])
+                          .filter((b) => holdsRoom(b.status) || statusFilter === b.status)
                           .filter((b) => !(move?.booking.id === b.id && move.targetRoomId !== room.id))
                           .map((b) => {
                             const beingMoved = move?.booking.id === b.id;
@@ -858,6 +884,7 @@ function HoverCard({ booking, x, y }: { booking: MonthlyReport; x: number; y: nu
   const left = Math.min(x + 16, window.innerWidth - W - 12);
   const top = Math.min(y + 16, window.innerHeight - 190);
   const debt = reportDebt(booking);
+  const nights = nightsBetween(booking.date, booking.checkOut);
   return (
     <div
       className="pointer-events-none fixed z-50 rounded-xl border border-border bg-card p-3 text-xs shadow-xl animate-fade-in"
@@ -879,7 +906,7 @@ function HoverCard({ booking, x, y }: { booking: MonthlyReport; x: number; y: nu
           <span>Период</span>
           <span className="text-right text-foreground">
             {formatDate(booking.date)} → {booking.checkOut ? formatDate(booking.checkOut) : "+1"} ·{" "}
-            {nightsBetween(booking.date, booking.checkOut)} ноч.
+            {nights} {pluralRu(nights, "ночь", "ночи", "ночей")}
           </span>
         </div>
         <div className="flex justify-between gap-3">

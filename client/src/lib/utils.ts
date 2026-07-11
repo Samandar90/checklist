@@ -37,6 +37,16 @@ export function nightsBetween(date: string, checkOut?: string | null) {
   return diff > 0 ? diff : 1;
 }
 
+/** Russian plural form: pluralRu(3, "ночь", "ночи", "ночей") → "ночи". */
+export function pluralRu(n: number, one: string, few: string, many: string) {
+  const abs = Math.abs(n) % 100;
+  if (abs >= 11 && abs <= 14) return many;
+  const d = abs % 10;
+  if (d === 1) return one;
+  if (d >= 2 && d <= 4) return few;
+  return many;
+}
+
 /** Add `days` to a YYYY-MM-DD string, returning YYYY-MM-DD. */
 export function addDaysIso(iso: string, days: number) {
   const d = new Date(iso);

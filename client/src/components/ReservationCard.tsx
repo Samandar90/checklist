@@ -49,10 +49,11 @@ export default function ReservationCard({
   onLeave: () => void;
   onContextMenu: (e: React.MouseEvent) => void;
 }) {
-  // Bar spans from mid check-in cell to mid check-out cell (half-day convention),
-  // clipped to the visible month so multi-month stays don't overflow.
-  const rawStart = checkInIdx + 0.5;
-  const rawEnd = checkOutIdx + 0.5;
+  // Bar covers exactly the booked nights: one selected day = one full cell, and
+  // the checkout day stays visually free so the next check-in can start there.
+  // Clipped to the visible month so multi-month stays don't overflow.
+  const rawStart = checkInIdx;
+  const rawEnd = checkOutIdx;
   const startUnit = Math.max(0, rawStart);
   const endUnit = Math.min(daysInMonth, rawEnd);
   if (endUnit <= startUnit) return null;
