@@ -119,59 +119,6 @@ function CountUp({ value, className }: { value: number; className?: string }) {
   return <span className={className}>{fmt(animated)}</span>;
 }
 
-function Sparkline({ data }: { data: { total: number }[] }) {
-  if (data.length < 2) return null;
-  return (
-    <ResponsiveContainer width="100%" height={36}>
-      <AreaChart data={data} margin={{ top: 2, right: 0, bottom: 0, left: 0 }}>
-        <defs>
-          <linearGradient id="spark" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.3} />
-            <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
-          </linearGradient>
-        </defs>
-        <Area type="monotone" dataKey="total" stroke="var(--color-primary)" strokeWidth={1.75} fill="url(#spark)" isAnimationActive={false} />
-      </AreaChart>
-    </ResponsiveContainer>
-  );
-}
-
-/** Compact glance tile used in the hero strip. */
-function HeroStat({
-  icon: Icon,
-  label,
-  value,
-  suffix,
-  tint,
-  isLoading,
-}: {
-  icon: typeof Wallet;
-  label: string;
-  value: number;
-  suffix?: string;
-  tint: string;
-  isLoading: boolean;
-}) {
-  return (
-    <motion.div variants={staggerItem} className="flex items-center gap-3 p-4">
-      <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl", tint)}>
-        <Icon className="h-4.5 w-4.5" />
-      </div>
-      <div className="min-w-0">
-        {isLoading ? (
-          <Skeleton className="h-5 w-16" />
-        ) : (
-          <div className="text-[17px] font-semibold tabular-nums tracking-tight text-foreground">
-            <CountUp value={value} />
-            {suffix}
-          </div>
-        )}
-        <p className="truncate text-[11.5px] text-muted-foreground">{label}</p>
-      </div>
-    </motion.div>
-  );
-}
-
 const quickActions = [
   { to: "/calendar", label: "Новая бронь", icon: CalendarPlus },
   { to: "/calendar", label: "Шахматка", icon: CalendarRange },
@@ -328,70 +275,124 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Hero: срез по сегодня */}
-      <motion.div variants={staggerContainer} initial="hidden" animate="show">
-        <Card className="mb-6">
-          <div className="grid grid-cols-2 divide-x divide-y divide-border sm:grid-cols-4 sm:divide-y-0 lg:grid-cols-7">
-            <HeroStat icon={Wallet} label="Выручка сегодня" value={data?.today.revenue ?? 0} tint="tint-indigo" isLoading={isLoading} />
-            <HeroStat icon={Percent} label="Загрузка сейчас" value={data?.occupancy ?? 0} suffix="%" tint="tint-violet" isLoading={isLoading} />
-            <HeroStat icon={DoorOpen} label="Свободно номеров" value={freeRooms} tint="tint-emerald" isLoading={isLoading} />
-            <HeroStat icon={LogIn} label="Заездов сегодня" value={arrivalsToday.length} tint="tint-sky" isLoading={reportsLoading} />
-            <HeroStat icon={LogOut} label="Выездов сегодня" value={departuresToday.length} tint="tint-slate" isLoading={reportsLoading} />
-            <HeroStat icon={AlertTriangle} label="Открытых долгов" value={overdue.length} tint="tint-rose" isLoading={reportsLoading} />
-            <HeroStat icon={TrendingUp} label="Выручка за период" value={data?.revenue ?? 0} tint="tint-amber" isLoading={isLoading} />
+      {/* Hero: градиентная панель «океан» — главная цифра периода + срез по сегодня */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        className="relative mb-6 overflow-hidden rounded-3xl p-6 text-white shadow-[0_16px_44px_rgba(14,32,64,0.35)] md:p-7"
+        style={{
+          background:
+            "radial-gradient(120% 160% at 100% 0%, rgba(94,161,230,0.35), transparent 55%), radial-gradient(90% 140% at 0% 100%, rgba(45,108,179,0.5), transparent 60%), linear-gradient(135deg, #0e1626 0%, #16305a 60%, #24578f 100%)",
+        }}
+      >
+        {/* тонкая сетка-текстура */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)",
+            backgroundSize: "36px 36px",
+          }}
+        />
+        <div className="relative flex flex-wrap items-start justify-between gap-6">
+          <div className="min-w-[240px]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/55">Выручка за период</p>
+            {isLoading ? (
+              <Skeleton className="mt-3 h-10 w-48 bg-white/10" />
+            ) : (
+              <div className="mt-1 flex flex-wrap items-baseline gap-3">
+                <CountUp value={data?.revenue ?? 0} className="font-display text-[42px] font-extrabold leading-none tracking-tight" />
+                <span className="text-sm font-medium text-white/50">UZS</span>
+                {delta !== null && (
+                  <span
+                    className={cn(
+                      "flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold",
+                      delta >= 0 ? "bg-emerald-400/20 text-emerald-300" : "bg-rose-400/20 text-rose-300"
+                    )}
+                  >
+                    {delta >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+                    {Math.abs(delta).toFixed(1)}% к прошлому периоду
+                  </span>
+                )}
+              </div>
+            )}
+            <p className="mt-2 text-[13px] text-white/55">
+              {shortDay(range.from)} – {shortDay(range.to)} · {data?.reports ?? 0} отчётов
+            </p>
           </div>
-        </Card>
+          <div className="h-[86px] min-w-[220px] flex-1 opacity-90">
+            {!isLoading && timeSeries.length >= 2 && (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={timeSeries} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
+                  <defs>
+                    <linearGradient id="heroSpark" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#ffffff" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="#ffffff" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <Area type="monotone" dataKey="total" stroke="#ffffff" strokeWidth={2} fill="url(#heroSpark)" isAnimationActive={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+        {/* срез по сегодня — полупрозрачные чипы */}
+        <div className="relative mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
+          {[
+            { icon: Wallet, label: "Выручка сегодня", value: data?.today.revenue ?? 0 },
+            { icon: Percent, label: "Загрузка сейчас", value: data?.occupancy ?? 0, suffix: "%" },
+            { icon: DoorOpen, label: "Свободно номеров", value: freeRooms },
+            { icon: LogIn, label: "Заездов сегодня", value: arrivalsToday.length },
+            { icon: LogOut, label: "Выездов сегодня", value: departuresToday.length },
+            { icon: AlertTriangle, label: "Открытых долгов", value: overdue.length },
+          ].map((c) => (
+            <div
+              key={c.label}
+              className="rounded-2xl border border-white/[0.08] bg-white/[0.07] px-3.5 py-3 backdrop-blur-sm transition-colors hover:bg-white/[0.12]"
+            >
+              <div className="flex items-center gap-1.5 text-white/55">
+                <c.icon className="h-3.5 w-3.5" />
+                <span className="truncate text-[11px] font-medium">{c.label}</span>
+              </div>
+              <div className="mt-1 text-lg font-bold tabular-nums leading-tight">
+                {isLoading || reportsLoading ? "—" : `${fmt(c.value)}${c.suffix ?? ""}`}
+              </div>
+            </div>
+          ))}
+        </div>
       </motion.div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          {/* KPI с трендом и спарклайном */}
+          {/* KPI-карточки: акцентная плитка иконки + крупная цифра Manrope */}
           <motion.div variants={staggerContainer} initial="hidden" animate="show" className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <motion.div variants={staggerItem}>
-              <Card className="relative overflow-hidden">
-                <CardContent className="p-5">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-6 w-6 items-center justify-center rounded-lg tint-indigo">
-                      <Wallet className="h-3.5 w-3.5" />
-                    </div>
-                    <span className="text-[12.5px] font-medium text-muted-foreground">Выручка за период</span>
-                  </div>
-                  {isLoading ? (
-                    <Skeleton className="mt-3 h-9 w-36" />
-                  ) : (
-                    <div className="mt-1.5 flex items-baseline gap-2">
-                      <CountUp value={data?.revenue ?? 0} className="text-[30px] font-semibold tabular-nums tracking-tight text-foreground" />
-                      {delta !== null && (
-                        <span className={cn("flex items-center gap-0.5 text-[12.5px] font-semibold", delta >= 0 ? "text-emerald-600" : "text-destructive")}>
-                          {delta >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
-                          {Math.abs(delta).toFixed(1)}%
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  <div className="mt-3 -mx-1">{!isLoading && timeSeries.length >= 2 && <Sparkline data={timeSeries} />}</div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
             {kpis.map((c) => (
               <motion.div key={c.label} variants={staggerItem}>
-                <Card>
-                  <CardContent className="p-5">
-                    <div className="mb-2.5 flex items-center gap-2">
-                      <div className={cn("flex h-6 w-6 items-center justify-center rounded-lg", c.tint)}>
-                        <c.icon className="h-3.5 w-3.5" />
-                      </div>
+                <Card className="group">
+                  <CardContent className="flex items-center gap-4 p-5">
+                    <div
+                      className={cn(
+                        "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-105",
+                        c.tint
+                      )}
+                    >
+                      <c.icon className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      {isLoading ? (
+                        <Skeleton className="h-8 w-20" />
+                      ) : (
+                        <CountUp
+                          value={c.value}
+                          className={cn(
+                            "font-display block text-[26px] font-extrabold leading-tight tabular-nums tracking-tight",
+                            c.negative ? "text-destructive" : "text-foreground"
+                          )}
+                        />
+                      )}
                       <span className="text-[12.5px] font-medium text-muted-foreground">{c.label}</span>
                     </div>
-                    {isLoading ? (
-                      <Skeleton className="h-8 w-20" />
-                    ) : (
-                      <CountUp
-                        value={c.value}
-                        className={cn("text-[26px] font-semibold tabular-nums tracking-tight", c.negative ? "text-destructive" : "text-foreground")}
-                      />
-                    )}
                   </CardContent>
                 </Card>
               </motion.div>

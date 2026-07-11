@@ -201,6 +201,20 @@ export default function Layout() {
         </nav>
 
         <div className="border-t border-white/[0.06] p-2.5">
+          {/* мини-профиль — кто сейчас за стойкой */}
+          {!collapsed && (
+            <div className="mb-1.5 flex items-center gap-2.5 rounded-[10px] bg-white/[0.04] px-2.5 py-2">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-b from-[#4e94d8] to-[#2d6cb3] text-[11px] font-bold text-white">
+                {(user?.fullName ?? user?.username ?? "?").slice(0, 1).toUpperCase()}
+              </span>
+              <span className="flex min-w-0 flex-col leading-tight">
+                <span className="truncate text-[12.5px] font-semibold text-white">{user?.fullName ?? user?.username}</span>
+                <span className="truncate text-[10.5px] text-sidebar-foreground">
+                  {isSuperAdmin ? "Главный аккаунт" : user?.branchName}
+                </span>
+              </span>
+            </div>
+          )}
           <button
             onClick={() => setCollapsed((c) => !c)}
             className={cn(

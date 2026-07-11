@@ -17,7 +17,6 @@ import {
   LockOpen,
 } from "lucide-react";
 
-import PageHeader from "@/components/PageHeader";
 import EmptyState from "@/components/EmptyState";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +27,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useReports, useUpdateReportStatus } from "@/hooks/useReports";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useActiveCashShift } from "@/hooks/useCashShifts";
-import { useCountUp } from "@/hooks/useCountUp";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/api";
 import { cn, formatDate, formatDateTime, formatMoney, reportDebt } from "@/lib/utils";
@@ -36,26 +34,6 @@ import { holdsRoom } from "@/lib/bookingStatus";
 
 function isoDay(d: Date) {
   return d.toISOString().slice(0, 10);
-}
-
-function Stat({ label, value, icon: Icon, tint, money }: { label: string; value: number; icon: typeof Wallet; tint: string; money?: boolean }) {
-  const animated = useCountUp(value);
-  return (
-    <Card>
-      <CardContent className="flex items-center gap-3 p-5">
-        <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", tint)}>
-          <Icon className="h-4.5 w-4.5" />
-        </div>
-        <div className="min-w-0">
-          <p className="text-xs text-muted-foreground">{label}</p>
-          <p className="text-xl font-semibold tabular-nums tracking-tight text-foreground">
-            {Math.round(animated).toLocaleString("ru-RU")}
-            {money && <span className="ml-1 text-xs font-normal text-muted-foreground">UZS</span>}
-          </p>
-        </div>
-      </CardContent>
-    </Card>
-  );
 }
 
 export default function StaffWorkspacePage() {
@@ -130,50 +108,81 @@ export default function StaffWorkspacePage() {
 
   const tasksCount = toCheckIn.length + toCheckOut.length + overdue.length;
 
+  const hour = new Date().getHours();
+  const greeting = hour < 5 ? "Доброй ночи" : hour < 12 ? "Доброе утро" : hour < 18 ? "Добрый день" : "Добрый вечер";
+
   return (
     <div>
-      <PageHeader title="Рабочее место" description="Смена, показатели и задачи на сегодня." />
-
-      <Card className="mb-6">
-        <CardContent className="flex flex-wrap items-center gap-4 p-5">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-secondary text-base font-semibold text-foreground">
-            {(user?.fullName ?? user?.username ?? "?").slice(0, 1).toUpperCase()}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="font-semibold tracking-tight text-foreground">{user?.fullName ?? user?.username}</p>
-            <p className="text-xs text-muted-foreground">{user?.branchName} · администратор</p>
+      {/* Hero: градиентная панель — приветствие, смена и показатели дня */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        className="relative mb-6 overflow-hidden rounded-3xl p-6 text-white shadow-[0_16px_44px_rgba(14,32,64,0.35)] md:p-7"
+        style={{
+          background:
+            "radial-gradient(120% 160% at 100% 0%, rgba(94,161,230,0.35), transparent 55%), radial-gradient(90% 140% at 0% 100%, rgba(45,108,179,0.5), transparent 60%), linear-gradient(135deg, #0e1626 0%, #16305a 60%, #24578f 100%)",
+        }}
+      >
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)",
+            backgroundSize: "36px 36px",
+          }}
+        />
+        <div className="relative flex flex-wrap items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 font-display text-lg font-extrabold ring-1 ring-white/15">
+              {(user?.fullName ?? user?.username ?? "?").slice(0, 1).toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <h1 className="truncate font-display text-[24px] font-extrabold leading-tight tracking-tight">
+                {greeting}, {user?.fullName ?? user?.username}
+              </h1>
+              <p className="text-[13px] text-white/55">{user?.branchName} · администратор · смена, показатели и задачи на сегодня</p>
+            </div>
           </div>
 
           {shiftLoading ? (
-            <Skeleton className="h-9 w-40" />
+            <Skeleton className="h-9 w-40 bg-white/10" />
           ) : shift ? (
-            <Badge className="tint-emerald gap-1.5 px-3 py-1.5 text-[12px] font-semibold">
+            <span className="flex items-center gap-1.5 rounded-full bg-emerald-400/20 px-3.5 py-1.5 text-[12.5px] font-bold text-emerald-300">
               <LockOpen className="h-3.5 w-3.5" /> Смена открыта · {formatDateTime(shift.openedAt)}
-            </Badge>
+            </span>
           ) : (
-            <Button asChild variant="outline" size="sm">
+            <Button asChild size="sm" className="bg-white text-[#16305a] shadow-none hover:bg-white/90 hover:brightness-100">
               <Link to="/cash-register">
                 <Lock className="h-3.5 w-3.5" /> Открыть смену
               </Link>
             </Button>
           )}
-        </CardContent>
-      </Card>
+        </div>
 
-      {isLoading ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 w-full rounded-2xl" />
+        <div className="relative mt-6 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+          {[
+            { icon: ClipboardList, label: "Бронирований сегодня", value: todayReports.length, money: false },
+            { icon: Wallet, label: "Выручка сегодня", value: todayRevenue, money: true },
+            { icon: TrendingUp, label: "Бронирований за месяц", value: monthReports.length, money: false },
+            { icon: Wallet, label: "Выручка за месяц", value: monthRevenue, money: true },
+          ].map((c) => (
+            <div
+              key={c.label}
+              className="rounded-2xl border border-white/[0.08] bg-white/[0.07] px-3.5 py-3 backdrop-blur-sm transition-colors hover:bg-white/[0.12]"
+            >
+              <div className="flex items-center gap-1.5 text-white/55">
+                <c.icon className="h-3.5 w-3.5" />
+                <span className="truncate text-[11px] font-medium">{c.label}</span>
+              </div>
+              <div className="mt-1 text-lg font-bold tabular-nums leading-tight">
+                {isLoading ? "—" : c.value.toLocaleString("ru-RU")}
+                {c.money && <span className="ml-1 text-[11px] font-medium text-white/50">UZS</span>}
+              </div>
+            </div>
           ))}
         </div>
-      ) : (
-        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label="Бронирований сегодня" value={todayReports.length} icon={ClipboardList} tint="tint-violet" />
-          <Stat label="Выручка сегодня" value={todayRevenue} icon={Wallet} tint="tint-emerald" money />
-          <Stat label="Бронирований за месяц" value={monthReports.length} icon={TrendingUp} tint="tint-sky" />
-          <Stat label="Выручка за месяц" value={monthRevenue} icon={Wallet} tint="tint-amber" money />
-        </div>
-      )}
+      </motion.div>
 
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
