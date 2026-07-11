@@ -50,7 +50,7 @@ const MONTHS = [
 const WEEKDAYS = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 
 const CELL_W = 46;
-const ROW_H = 42;
+const ROW_H = 36;
 const LABEL_W = 148;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -592,35 +592,50 @@ export default function CalendarPage() {
                   <span className="absolute -left-[3px] -top-1 h-1.5 w-1.5 rounded-full bg-primary" />
                 </div>
               )}
-              {/* Заголовок: дни + загрузка % (sticky) */}
-              <div className="sticky top-0 z-30 flex border-b border-border bg-card/95 backdrop-blur">
+              {/* Заголовок: синяя полоса дней + свободно + загрузка % (sticky) */}
+              <div className="sticky top-0 z-30 flex border-b border-border bg-card">
                 <div
-                  className="sticky left-0 z-40 flex items-center bg-card px-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+                  className="sticky left-0 z-40 flex flex-col justify-center gap-0.5 border-r border-border bg-card px-3"
                   style={{ width: LABEL_W, minWidth: LABEL_W }}
                 >
-                  Загрузка
+                  <span className="text-xs font-bold text-primary">
+                    {MONTHS[cursor.month].slice(0, 3)}. {cursor.year}
+                  </span>
+                  <span className="text-[9px] uppercase tracking-wide text-muted-foreground">
+                    свободно · загрузка
+                  </span>
                 </div>
                 {days.map((d, i) => {
                   const weekend = d.getDay() === 0 || d.getDay() === 6;
                   const occ = totalRooms ? Math.round((occupiedByDay[i].size / totalRooms) * 100) : 0;
+                  const free = totalRooms - occupiedByDay[i].size;
                   return (
-                    <div
-                      key={i}
-                      style={{ width: CELL_W, minWidth: CELL_W }}
-                      className={cn(
-                        "relative border-l border-border/70 pb-1 pt-1.5 text-center",
-                        i === todayIndex && "bg-primary/10",
-                        weekend && i !== todayIndex && "bg-muted/40"
-                      )}
-                    >
-                      {i === todayIndex && <span className="absolute inset-x-0 top-0 h-0.5 bg-primary" />}
-                      <div className={cn("text-[10px]", weekend ? "text-rose-400" : "text-muted-foreground")}>
-                        {WEEKDAYS[d.getDay()]}
+                    <div key={i} style={{ width: CELL_W, minWidth: CELL_W }} className="border-l border-border/50">
+                      <div
+                        className={cn(
+                          "py-1.5 text-center text-[11px] font-semibold leading-none text-primary-foreground",
+                          i === todayIndex ? "bg-[#2f9fe0]" : weekend ? "bg-[#3670ad]" : "bg-[#3f7fc4]"
+                        )}
+                      >
+                        {WEEKDAYS[d.getDay()]} {d.getDate()}
                       </div>
-                      <div className={cn("text-sm font-semibold", i === todayIndex ? "text-primary" : "text-foreground")}>
-                        {d.getDate()}
+                      <div
+                        className={cn(
+                          "flex flex-col items-center gap-1 py-1.5",
+                          i === todayIndex && "bg-primary/10",
+                          weekend && i !== todayIndex && "bg-muted/40"
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "min-w-[24px] rounded border border-border/70 bg-card px-1 text-center text-[10px] font-semibold leading-4",
+                            free === 0 ? "text-rose-500" : "text-foreground"
+                          )}
+                        >
+                          {free}
+                        </span>
+                        <span className={cn("rounded px-1 text-[9px] font-semibold leading-4", heat(occ))}>{occ}%</span>
                       </div>
-                      <div className={cn("mx-1 mt-1 rounded py-0.5 text-[9px] font-semibold", heat(occ))}>{occ}%</div>
                     </div>
                   );
                 })}
@@ -639,7 +654,7 @@ export default function CalendarPage() {
                           return next;
                         })
                       }
-                      className="sticky left-0 z-20 flex items-center gap-1.5 bg-secondary/50 px-3 py-1.5 font-semibold text-foreground transition-colors hover:bg-secondary"
+                      className="sticky left-0 z-20 flex items-center gap-1.5 bg-secondary/50 px-3 py-1 font-semibold text-foreground transition-colors hover:bg-secondary"
                       style={{ width: LABEL_W, minWidth: LABEL_W }}
                     >
                       <ChevronRight
@@ -658,7 +673,7 @@ export default function CalendarPage() {
                           key={i}
                           style={{ width: CELL_W, minWidth: CELL_W }}
                           className={cn(
-                            "border-l border-border/70 py-1.5 text-center text-[11px] font-medium",
+                            "border-l border-border/70 py-1 text-center text-[11px] font-medium",
                             i === todayIndex && "bg-primary/10",
                             free === 0 ? "text-rose-500" : "text-muted-foreground"
                           )}
@@ -806,6 +821,29 @@ export default function CalendarPage() {
                   ))}
                 </div>
               ))}
+
+              {/* Нижняя полоса дней — чтобы на длинных списках не скроллить к шапке */}
+              <div className="flex border-t border-border">
+                <div
+                  className="sticky left-0 z-20 border-r border-border bg-card"
+                  style={{ width: LABEL_W, minWidth: LABEL_W }}
+                />
+                {days.map((d, i) => {
+                  const weekend = d.getDay() === 0 || d.getDay() === 6;
+                  return (
+                    <div
+                      key={i}
+                      style={{ width: CELL_W, minWidth: CELL_W }}
+                      className={cn(
+                        "border-l border-border/40 py-1.5 text-center text-[11px] font-semibold leading-none text-primary-foreground",
+                        i === todayIndex ? "bg-[#2f9fe0]" : weekend ? "bg-[#3670ad]" : "bg-[#3f7fc4]"
+                      )}
+                    >
+                      {WEEKDAYS[d.getDay()]} {d.getDate()}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </CardContent>
         </Card>

@@ -1,21 +1,16 @@
-import { motion } from "framer-motion";
-import { AlertCircle } from "lucide-react";
-
 import { STATUS_META, STATUS_BAR_CLASS } from "@/lib/bookingStatus";
 import { MonthlyReport } from "@/types";
 import { cn, formatMoney, reportDebt } from "@/lib/utils";
 
-const ROW_H = 42;
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
-}
+const ROW_H = 36;
+/** Horizontal size of the slanted check-in / check-out edge, px. */
+const SLANT = 10;
 
 /**
- * A single reservation block on the chessboard.
+ * A single reservation block on the chessboard, drawn as a parallelogram:
+ * the check-in edge rises "/" out of the middle of the arrival cell and the
+ * check-out edge falls "/" through the middle of the departure cell, so two
+ * adjacent stays (checkout + same-day check-in) tessellate along one diagonal.
  *
  * Deliberately dumb: no action buttons, no dropdown, no inline edit affordance.
  * The only interactions are drag-to-move / drag-to-resize (mouse) and "open the
@@ -49,26 +44,42 @@ export default function ReservationCard({
   onLeave: () => void;
   onContextMenu: (e: React.MouseEvent) => void;
 }) {
-  // Bar covers exactly the booked nights: one selected day = one full cell, and
-  // the checkout day stays visually free so the next check-in can start there.
-  // Clipped to the visible month so multi-month stays don't overflow.
-  const rawStart = checkInIdx;
-  const rawEnd = checkOutIdx;
+  // Half-day convention: the bar runs from the middle of the check-in cell to
+  // the middle of the check-out cell, clipped to the visible month.
+  const rawStart = checkInIdx + 0.5;
+  const rawEnd = checkOutIdx + 0.5;
   const startUnit = Math.max(0, rawStart);
   const endUnit = Math.min(daysInMonth, rawEnd);
   if (endUnit <= startUnit) return null;
 
-  // Rounded only where the real check-in / check-out is visible in this month.
-  const roundLeft = rawStart >= 0;
-  const roundRight = rawEnd <= daysInMonth;
+  // Slanted only where the real check-in / check-out is visible in this month;
+  // a stay clipped by the month boundary gets a straight cut edge.
+  const slantLeft = rawStart >= 0;
+  const slantRight = rawEnd <= daysInMonth;
 
-  const left = startUnit * cellWidth + 2;
-  const width = (endUnit - startUnit) * cellWidth - 4;
+  // The slant is centered on the half-cell line so neighbouring bars share one
+  // diagonal; ±1px keeps a hairline gap between them.
+  const leftBase = startUnit * cellWidth - (slantLeft ? SLANT / 2 : 0);
+  const rightBase = endUnit * cellWidth + (slantRight ? SLANT / 2 : 0);
+  const left = leftBase + 1;
+  const width = rightBase - leftBase - 2;
+
+  const lt = slantLeft ? SLANT : 0;
+  const rb = slantRight ? SLANT : 0;
+  const clip = `polygon(${lt}px 0%, 100% 0%, calc(100% - ${rb}px) 100%, 0% 100%)`;
 
   const debt = reportDebt(booking);
+  // Border encodes payment state, like the reference board: red = debt,
+  // amber = deposit/partial, otherwise a neutral hairline.
+  const borderColor =
+    booking.paymentStatus === "Долг"
+      ? "#e11d48"
+      : booking.paymentStatus === "Частично"
+        ? "#f59e0b"
+        : "rgba(15, 23, 42, 0.25)";
+
   const label = booking.guestName || booking.source.name;
-  const showAvatar = width > 70;
-  const showPrice = width > 96;
+  const showPrice = width > 110;
   const statusInfo = STATUS_META[booking.status];
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -79,13 +90,10 @@ export default function ReservationCard({
   }
 
   return (
-    <motion.div
+    <div
       role="button"
       tabIndex={0}
       aria-label={`${label}, ${statusInfo.label}, ${formatMoney(booking.price, booking.currency)}`}
-      whileHover={{ scale: 1.02, y: -1.5 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ duration: 0.2 }}
       onMouseDown={(e) => onMoveStart(e, "move")}
       onKeyDown={handleKeyDown}
       onMouseEnter={(e) => onHover(e.clientX, e.clientY)}
@@ -94,56 +102,51 @@ export default function ReservationCard({
       onContextMenu={onContextMenu}
       title={`${label} · ${formatMoney(booking.price, booking.currency)} · ${statusInfo.label}`}
       className={cn(
-        "group/bar absolute flex cursor-pointer items-center gap-1.5 overflow-hidden whitespace-nowrap px-1.5 text-[11px] font-semibold shadow-[0_1px_2px_rgba(16,24,40,0.12)] ring-1 ring-black/10 transition-shadow duration-200 hover:z-30 hover:shadow-[0_6px_16px_rgba(16,24,40,0.18)] focus-visible:z-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary active:cursor-grabbing",
-        STATUS_BAR_CLASS[booking.status],
+        "group/bar absolute cursor-pointer drop-shadow-sm transition-[filter] duration-150 hover:z-30 hover:drop-shadow-md focus-visible:z-30 focus-visible:outline-none active:cursor-grabbing",
         dimmed && "opacity-20 grayscale",
-        dragging && "z-40 opacity-90 shadow-lg ring-2 ring-primary"
+        dragging && "z-40 opacity-85 drop-shadow-lg"
       )}
-      style={{
-        left,
-        width,
-        top: 5,
-        height: ROW_H - 10,
-        borderTopLeftRadius: roundLeft ? 9 : 2,
-        borderBottomLeftRadius: roundLeft ? 9 : 2,
-        borderTopRightRadius: roundRight ? 9 : 2,
-        borderBottomRightRadius: roundRight ? 9 : 2,
-      }}
+      style={{ left, width, top: 4, height: ROW_H - 8 }}
     >
-      {/* долг — диагональная штриховка поверх */}
+      {/* контур (окантовка по статусу оплаты) */}
+      <span className="absolute inset-0" style={{ clipPath: clip, background: borderColor }} />
+      {/* заливка + содержимое */}
+      <span
+        className={cn(
+          "absolute flex items-center gap-1 overflow-hidden whitespace-nowrap text-[11px] font-medium transition-[filter] group-hover/bar:brightness-110",
+          STATUS_BAR_CLASS[booking.status]
+        )}
+        style={{
+          inset: 1.5,
+          clipPath: clip,
+          paddingLeft: lt ? lt * 0.8 + 3 : 6,
+          paddingRight: rb ? rb * 0.8 + 3 : 6,
+        }}
+      >
+        <span className="truncate">{label}</span>
+        {showPrice && (
+          <span className="ml-auto shrink-0 text-[10px] font-normal opacity-85">
+            {Math.round(booking.price / 1000)}к
+          </span>
+        )}
+      </span>
+      {/* индикатор долга — красная точка на правом верхнем углу, как в референсе */}
       {debt > 0 && (
         <span
-          className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage:
-              "repeating-linear-gradient(45deg, rgba(0,0,0,0.14) 0 5px, transparent 5px 10px)",
-          }}
+          className="absolute z-10 h-2 w-2 rounded-full bg-red-500 ring-1 ring-white"
+          style={{ top: -2, right: rb ? rb / 2 - 2 : 0 }}
         />
       )}
-      {showAvatar ? (
-        <span className="relative flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-black/15 text-[9px] font-bold">
-          {initials(label)}
-        </span>
-      ) : (
-        <statusInfo.icon className="relative h-3 w-3 shrink-0 opacity-90" />
-      )}
-      <span className="relative truncate">{label}</span>
-      {showPrice && (
-        <span className="relative ml-auto shrink-0 font-medium opacity-90">
-          {Math.round(booking.price / 1000)}к
-        </span>
-      )}
-      {debt > 0 && <AlertCircle className="relative h-3 w-3 shrink-0" />}
       {/* ручка изменения срока (правый край) */}
-      {roundRight && (
+      {slantRight && (
         <span
           onMouseDown={(e) => onMoveStart(e, "resize")}
-          className="absolute inset-y-0 right-0 z-10 w-2 cursor-ew-resize opacity-0 transition-opacity group-hover/bar:opacity-100"
+          className="absolute inset-y-0 right-0 z-10 w-2.5 cursor-ew-resize opacity-0 transition-opacity group-hover/bar:opacity-100"
           title="Потяните, чтобы изменить срок"
         >
-          <span className="absolute inset-y-1.5 right-0.5 w-0.5 rounded-full bg-white/50" />
+          <span className="absolute inset-y-1.5 right-1 w-0.5 rounded-full bg-white/60" />
         </span>
       )}
-    </motion.div>
+    </div>
   );
 }
