@@ -41,6 +41,7 @@ import { useCashShifts } from "@/hooks/useCashShifts";
 import { useCountUp } from "@/hooks/useCountUp";
 import { useTheme } from "@/contexts/ThemeContext";
 import { cn, formatDate, formatMoney, paymentStatusClass } from "@/lib/utils";
+import { holdsRoom } from "@/lib/bookingStatus";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/api";
 
@@ -100,7 +101,8 @@ export default function FinanceCenterPage() {
   const cashBalance = openShifts.reduce((s, sh) => s + (sh.expectedAmount ?? sh.openingAmount), 0);
 
   const txns: Txn[] = useMemo(() => {
-    const a: Txn[] = (reports ?? []).map((r) => ({
+    // Отменённые/незаезды — не денежные операции, в ленту транзакций не попадают.
+    const a: Txn[] = (reports ?? []).filter((r) => holdsRoom(r.status)).map((r) => ({
       id: `r-${r.id}`,
       date: r.date,
       type: "Бронь",

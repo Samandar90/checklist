@@ -30,6 +30,7 @@ import { useHousekeeping, HKStatus } from "@/hooks/useHousekeeping";
 import { Room } from "@/types";
 import { getErrorMessage } from "@/lib/api";
 import { cn, formatMoney } from "@/lib/utils";
+import { holdsRoom } from "@/lib/bookingStatus";
 
 const roomFormSchema = z.object({
   roomNumber: z.string().trim().min(1, "Укажите номер комнаты"),
@@ -83,6 +84,7 @@ export default function RoomsPage() {
     const lastPrice = new Map<string, { price: number; currency: string; date: string }>();
     const occupied = new Set<string>();
     for (const r of reports ?? []) {
+      if (!holdsRoom(r.status)) continue; // отменённые/незаезды: ни выручки, ни занятости
       revenue.set(r.roomId, (revenue.get(r.roomId) ?? 0) + r.price);
       const start = r.date.slice(0, 10);
       const end = r.checkOut ? r.checkOut.slice(0, 10) : start;

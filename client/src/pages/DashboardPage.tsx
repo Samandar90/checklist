@@ -338,7 +338,7 @@ export default function DashboardPage() {
             <HeroStat icon={LogIn} label="Заездов сегодня" value={arrivalsToday.length} tint="tint-sky" isLoading={reportsLoading} />
             <HeroStat icon={LogOut} label="Выездов сегодня" value={departuresToday.length} tint="tint-slate" isLoading={reportsLoading} />
             <HeroStat icon={AlertTriangle} label="Открытых долгов" value={overdue.length} tint="tint-rose" isLoading={reportsLoading} />
-            <HeroStat icon={TrendingUp} label="Выручка за месяц" value={data?.revenue ?? 0} tint="tint-amber" isLoading={isLoading} />
+            <HeroStat icon={TrendingUp} label="Выручка за период" value={data?.revenue ?? 0} tint="tint-amber" isLoading={isLoading} />
           </div>
         </Card>
       </motion.div>

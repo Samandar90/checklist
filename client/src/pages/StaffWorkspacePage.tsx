@@ -32,6 +32,7 @@ import { useCountUp } from "@/hooks/useCountUp";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/api";
 import { cn, formatDate, formatDateTime, formatMoney, reportDebt } from "@/lib/utils";
+import { holdsRoom } from "@/lib/bookingStatus";
 
 function isoDay(d: Date) {
   return d.toISOString().slice(0, 10);
@@ -67,12 +68,16 @@ export default function StaffWorkspacePage() {
   const today = isoDay(new Date());
   const monthStart = today.slice(0, 7);
 
-  const todayReports = useMemo(() => (reports ?? []).filter((r) => r.date.slice(0, 10) === today), [reports, today]);
+  // Единое правило по всей системе: отменённые брони и незаезды не считаются
+  // ни выручкой, ни заездами — денег и ночей за ними нет.
+  const activeReports = useMemo(() => (reports ?? []).filter((r) => holdsRoom(r.status)), [reports]);
+
+  const todayReports = useMemo(() => activeReports.filter((r) => r.date.slice(0, 10) === today), [activeReports, today]);
   const todayDepartures = useMemo(
-    () => (reports ?? []).filter((r) => r.checkOut && r.checkOut.slice(0, 10) === today),
-    [reports, today]
+    () => activeReports.filter((r) => r.checkOut && r.checkOut.slice(0, 10) === today),
+    [activeReports, today]
   );
-  const monthReports = useMemo(() => (reports ?? []).filter((r) => r.date.slice(0, 7) === monthStart), [reports, monthStart]);
+  const monthReports = useMemo(() => activeReports.filter((r) => r.date.slice(0, 7) === monthStart), [activeReports, monthStart]);
   const todayRevenue = todayReports.reduce((s, r) => s + r.price, 0);
   const monthRevenue = monthReports.reduce((s, r) => s + r.price, 0);
 
@@ -84,7 +89,7 @@ export default function StaffWorkspacePage() {
     () => (reports ?? []).filter((r) => r.status === "CHECKED_IN" && r.checkOut && r.checkOut.slice(0, 10) <= today),
     [reports, today]
   );
-  const overdue = useMemo(() => (reports ?? []).filter((r) => reportDebt(r) > 0), [reports]);
+  const overdue = useMemo(() => activeReports.filter((r) => reportDebt(r) > 0), [activeReports]);
 
   const last14Days = useMemo(() => {
     const days: { date: string; total: number }[] = [];
@@ -92,11 +97,11 @@ export default function StaffWorkspacePage() {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const iso = isoDay(d);
-      const total = (reports ?? []).filter((r) => r.date.slice(0, 10) === iso).reduce((s, r) => s + r.price, 0);
+      const total = activeReports.filter((r) => r.date.slice(0, 10) === iso).reduce((s, r) => s + r.price, 0);
       days.push({ date: iso, total });
     }
     return days;
-  }, [reports]);
+  }, [activeReports]);
 
   const recentActions = useMemo(() => {
     const fromReports = (reports ?? []).map((r) => ({

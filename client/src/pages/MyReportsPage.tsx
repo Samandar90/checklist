@@ -42,6 +42,7 @@ import { MonthlyReport, paymentMethods, paymentStatuses } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { getErrorMessage } from "@/lib/api";
 import {
+  cn,
   formatDate,
   formatDateTime,
   formatMoney,
@@ -51,6 +52,7 @@ import {
   addDaysIso,
   PAYMENT_STATUS_OPTIONS,
 } from "@/lib/utils";
+import { holdsRoom } from "@/lib/bookingStatus";
 import { exportReportsToCsv } from "@/lib/csv";
 
 const currencies = ["UZS", "USD", "EUR"];
@@ -214,7 +216,13 @@ export default function MyReportsPage() {
     toast.success("CSV-файл экспортирован");
   }
 
-  const totalRevenue = (reports ?? []).reduce((sum, r) => sum + r.price, 0);
+  // Единое правило по всей системе: отменённые брони и незаезды не считаются выручкой.
+  const revenueReports = (reports ?? []).filter((r) => holdsRoom(r.status));
+  const monthKey = new Date().toISOString().slice(0, 7);
+  const monthReports = revenueReports.filter((r) => r.date.slice(0, 7) === monthKey);
+  const monthRevenue = monthReports.reduce((sum, r) => sum + r.price, 0);
+  const totalRevenue = revenueReports.reduce((sum, r) => sum + r.price, 0);
+  const totalDebt = revenueReports.reduce((sum, r) => sum + reportDebt(r), 0);
 
   return (
     <div>
@@ -239,15 +247,37 @@ export default function MyReportsPage() {
         </div>
       )}
 
-      <Card className="mb-6 max-w-xs">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-[12.5px]">Моя выручка</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-[26px] font-semibold tabular-nums tracking-tight text-foreground">{totalRevenue.toLocaleString("ru-RU")}</div>
-          <p className="mt-1 text-xs text-muted-foreground">{(reports ?? []).length} отчётов</p>
-        </CardContent>
-      </Card>
+      <div className="mb-6 grid max-w-3xl gap-4 sm:grid-cols-3">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-[12.5px]">Моя выручка за месяц</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-[26px] font-semibold tabular-nums tracking-tight text-foreground">{monthRevenue.toLocaleString("ru-RU")}</div>
+            <p className="mt-1 text-xs text-muted-foreground">{monthReports.length} броней с заездом в этом месяце</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-[12.5px]">За всё время</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-[26px] font-semibold tabular-nums tracking-tight text-foreground">{totalRevenue.toLocaleString("ru-RU")}</div>
+            <p className="mt-1 text-xs text-muted-foreground">{revenueReports.length} броней (без отменённых)</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-[12.5px]">Долг по моим броням</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className={cn("text-[26px] font-semibold tabular-nums tracking-tight", totalDebt > 0 ? "text-destructive" : "text-foreground")}>
+              {totalDebt.toLocaleString("ru-RU")}
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">из сумм выше ещё не оплачено</p>
+          </CardContent>
+        </Card>
+      </div>
 
       {(reports ?? []).length > 0 && (
         <div className="mb-4 max-w-xs">

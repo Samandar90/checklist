@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../prisma";
 import { requireSuperAdmin } from "../middleware/auth";
+import { ROOM_HOLDING_STATUSES } from "../statuses";
 
 const router = Router();
 router.use(requireSuperAdmin);
@@ -56,8 +57,12 @@ router.get("/", async (req, res, next) => {
     const prevFrom = new Date(fromInclusive.getTime() - rangeDays * DAY_MS);
     const prevToExclusive = fromInclusive;
 
+    // Cancelled / no-show bookings hold no money and no nights — every figure
+    // below (revenue, debt, occupancy, breakdowns) must ignore them.
+    const holding = { status: { in: ROOM_HOLDING_STATUSES } };
     const reportWhere = {
       ...(branchId ? { branchId } : {}),
+      ...holding,
       date: { gte: fromInclusive, lt: toExclusive },
     };
 
@@ -77,12 +82,12 @@ router.get("/", async (req, res, next) => {
         prisma.monthlyReport.aggregate({
           _sum: { price: true },
           _count: true,
-          where: { ...(branchId ? { branchId } : {}), date: { gte: prevFrom, lt: prevToExclusive } },
+          where: { ...(branchId ? { branchId } : {}), ...holding, date: { gte: prevFrom, lt: prevToExclusive } },
         }),
         prisma.monthlyReport.aggregate({
           _sum: { price: true },
           _count: true,
-          where: { ...(branchId ? { branchId } : {}), date: { gte: today, lt: new Date(today.getTime() + DAY_MS) } },
+          where: { ...(branchId ? { branchId } : {}), ...holding, date: { gte: today, lt: new Date(today.getTime() + DAY_MS) } },
         }),
       ]);
 

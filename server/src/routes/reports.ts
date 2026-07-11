@@ -4,6 +4,7 @@ import { reportSchema } from "../validation";
 import { requireSuperAdmin } from "../middleware/auth";
 import { recordAudit, buildChanges, summarize } from "../audit";
 import { resolveBranchId, hasBranchAccess } from "../branchScope";
+import { ROOM_HOLDING_STATUSES } from "../statuses";
 
 const REPORT_AUDIT_FIELDS = ["date", "checkOut", "guestName", "price", "currency", "paymentMethod", "paymentStatus", "status", "paidAmount", "notes", "roomId"];
 
@@ -30,8 +31,8 @@ function normalizePaid(data: { paymentStatus: string; paidAmount?: number | null
   return data.paidAmount ?? 0;
 }
 
-// A room is only freed by a cancellation or a no-show; every other status still holds the nights.
-const ROOM_HOLDING_STATUSES = ["RESERVED", "CHECKED_IN", "CHECKED_OUT"];
+// A room is only freed by a cancellation or a no-show; every other status still holds the nights
+// (shared with dashboard revenue math — see ../statuses).
 
 /** Floor a date to the start of its day so overlap is compared in whole hotel-nights. */
 const dayStart = (d: Date) => {
@@ -120,7 +121,8 @@ router.get("/summary", requireSuperAdmin, async (req, res, next) => {
   try {
     const where = buildWhere(req.query, false, null);
     const reports = await prisma.monthlyReport.findMany({
-      where,
+      // Cancelled / no-show bookings hold no money — never count them as revenue.
+      where: { ...where, status: { in: ROOM_HOLDING_STATUSES } },
       include: { branch: true, admin: true, source: true },
     });
 
@@ -160,7 +162,12 @@ router.get("/debtors", requireSuperAdmin, async (req, res, next) => {
   try {
     const branchId = typeof req.query.branchId === "string" && req.query.branchId ? req.query.branchId : undefined;
     const reports = await prisma.monthlyReport.findMany({
-      where: { paymentStatus: { in: ["Частично", "Долг"] }, ...(branchId ? { branchId } : {}) },
+      where: {
+        paymentStatus: { in: ["Частично", "Долг"] },
+        // Debt on a cancelled / no-show booking is void — same rule as revenue.
+        status: { in: ROOM_HOLDING_STATUSES },
+        ...(branchId ? { branchId } : {}),
+      },
       orderBy: { date: "desc" },
       include: { branch: true, admin: true, room: true, source: true },
     });

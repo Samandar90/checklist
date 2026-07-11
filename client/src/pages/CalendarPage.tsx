@@ -431,9 +431,13 @@ export default function CalendarPage() {
     for (const b of data?.bookings ?? []) {
       if (!holdsRoom(b.status)) continue;
       const [s, e] = [dayIndex(b.date), b.checkOut ? dayIndex(b.checkOut) : dayIndex(b.date) + 1];
-      if (s === todayIndex) arrivals++;
+      if (s === todayIndex) {
+        arrivals++;
+        // Та же методика, что на «Рабочем месте»: выручка дня = сумма броней,
+        // заезжающих сегодня (целиком, без размазывания по ночам).
+        revenueToday += b.price;
+      }
       if (e === todayIndex) departures++;
-      if (todayIndex >= s && todayIndex < e) revenueToday += b.price / Math.max(1, e - s);
     }
     return {
       occPctToday,
@@ -442,8 +446,8 @@ export default function CalendarPage() {
       avg,
       arrivals,
       departures,
-      revenueToday: Math.round(revenueToday),
-      avgRate: occToday ? Math.round(revenueToday / occToday) : 0,
+      revenueToday,
+      avgRate: arrivals ? Math.round(revenueToday / arrivals) : 0,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [occupiedByDay, totalRooms, todayIndex, daysInMonth, data]);

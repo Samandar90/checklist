@@ -22,6 +22,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerBody, DrawerSec
 import { useReports } from "@/hooks/useReports";
 import { MonthlyReport } from "@/types";
 import { cn, formatDate, formatDateTime, formatMoney, nightsBetween, reportDebt, paymentStatusClass } from "@/lib/utils";
+import { holdsRoom } from "@/lib/bookingStatus";
 
 interface GuestProfile {
   key: string;
@@ -45,17 +46,23 @@ function buildGuests(reports: MonthlyReport[]): GuestProfile[] {
       map.set(key, { key, name, bookings: [], totalRevenue: 0, totalDebt: 0, stays: 0, avgNights: 0, lastVisit: r.date, branches: new Set() });
     }
     const g = map.get(key)!;
+    // История хранит все брони, но в деньги и визиты входят только состоявшиеся
+    // (отменённые и незаезды — не выручка и не проживание).
     g.bookings.push(r);
-    g.totalRevenue += r.price;
-    g.totalDebt += reportDebt(r);
-    g.stays += 1;
+    if (holdsRoom(r.status)) {
+      g.totalRevenue += r.price;
+      g.totalDebt += reportDebt(r);
+      g.stays += 1;
+    }
     g.branches.add(r.branch.name);
     if (r.date > g.lastVisit) g.lastVisit = r.date;
   }
   for (const g of map.values()) {
     g.bookings.sort((a, b) => b.date.localeCompare(a.date));
-    const totalNights = g.bookings.reduce((s, b) => s + nightsBetween(b.date, b.checkOut), 0);
-    g.avgNights = Math.round((totalNights / g.stays) * 10) / 10;
+    const totalNights = g.bookings
+      .filter((b) => holdsRoom(b.status))
+      .reduce((s, b) => s + nightsBetween(b.date, b.checkOut), 0);
+    g.avgNights = g.stays ? Math.round((totalNights / g.stays) * 10) / 10 : 0;
   }
   return Array.from(map.values()).sort((a, b) => b.totalRevenue - a.totalRevenue);
 }

@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { holdsRoom } from "@/lib/bookingStatus";
 import { escapeCsv } from "@/lib/csv";
 import { useDashboard } from "@/hooks/useDashboard";
 import { useBranches } from "@/hooks/useBranches";
@@ -110,10 +111,12 @@ export default function AnalyticsPage() {
 
   const rangeDays = Math.max(1, Math.round((new Date(range.to).getTime() - new Date(range.from).getTime()) / 86400000) + 1);
 
-  // ADR / RevPAR computed from the same check-in-date basis as dashboard revenue.
+  // ADR / RevPAR computed from the same check-in-date basis as dashboard revenue
+  // (cancelled / no-show bookings sell no nights — same rule as the server).
   const nightsSold = useMemo(() => {
     let nights = 0;
     for (const r of allReports ?? []) {
+      if (!holdsRoom(r.status)) continue;
       const d = r.date.slice(0, 10);
       if (d >= range.from && d <= range.to) nights += nightsBetween(r.date, r.checkOut);
     }
@@ -129,6 +132,7 @@ export default function AnalyticsPage() {
     const today = isoDay(new Date());
     const map = new Map<string, number>();
     for (const r of allReports ?? []) {
+      if (!holdsRoom(r.status)) continue;
       const d = r.date.slice(0, 10);
       if (d > today) map.set(d, (map.get(d) ?? 0) + r.price);
     }
