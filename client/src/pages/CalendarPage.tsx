@@ -563,23 +563,25 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {/* Occupancy header */}
+      {/* Occupancy header — компактные KPI-карточки в стиле дашборда */}
       {effectiveBranchId && data && data.rooms.length > 0 && (
-        <Card className="mb-4">
-          <div className="grid grid-cols-2 divide-x divide-y divide-border sm:grid-cols-3 lg:grid-cols-6 lg:divide-y-0">
-            {statCards.map((c) => (
-              <div key={c.label} className="flex items-center gap-3 p-4">
-                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${c.tint}`}>
+        <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {statCards.map((c) => (
+            <Card key={c.label} className="group">
+              <div className="flex items-center gap-3 p-3.5">
+                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105 ${c.tint}`}>
                   <c.icon className="h-4 w-4" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-lg font-semibold leading-tight tabular-nums text-foreground">{c.value}</div>
-                  <p className="truncate text-[11px] text-muted-foreground">{c.label}</p>
+                  <div className="font-display text-[19px] font-extrabold leading-tight tabular-nums tracking-tight text-foreground">
+                    {c.value}
+                  </div>
+                  <p className="truncate text-[11px] font-medium text-muted-foreground">{c.label}</p>
                 </div>
               </div>
-            ))}
-          </div>
-        </Card>
+            </Card>
+          ))}
+        </div>
       )}
 
       {/* Фильтр по статусу брони — matches the exact colors used on the chessboard */}
