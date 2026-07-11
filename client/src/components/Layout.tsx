@@ -52,20 +52,24 @@ function NavItemLink({
       title={collapsed ? item.label : undefined}
       className={({ isActive }) =>
         cn(
-          "group relative flex items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13.5px] font-medium transition-colors",
+          "group relative flex items-center gap-2.5 rounded-[10px] px-2.5 py-[7px] text-[13.5px] font-medium transition-colors",
           collapsed && "justify-center px-0",
           isActive
-            ? "bg-primary/[0.09] text-primary"
-            : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+            ? "bg-white/[0.09] text-sidebar-active shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
+            : "text-sidebar-foreground hover:bg-white/[0.05] hover:text-sidebar-active"
         )
       }
     >
       {({ isActive }) => (
         <>
+          {/* активный пункт помечен коротким брендовым штрихом слева */}
+          {isActive && !collapsed && (
+            <span className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-full bg-[#5ea1e6]" />
+          )}
           <item.icon
             className={cn(
-              "h-[15px] w-[15px] shrink-0",
-              isActive ? "text-primary" : "text-muted-foreground/80 group-hover:text-foreground"
+              "h-[15px] w-[15px] shrink-0 transition-colors",
+              isActive ? "text-[#5ea1e6]" : "text-sidebar-foreground/70 group-hover:text-sidebar-active"
             )}
           />
           {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
@@ -82,7 +86,7 @@ function NavItemLink({
               )}
               aria-label="Закрепить в избранном"
             >
-              <Star className={cn("h-3 w-3", favorited ? "fill-primary text-primary" : "text-muted-foreground")} />
+              <Star className={cn("h-3 w-3", favorited ? "fill-[#5ea1e6] text-[#5ea1e6]" : "text-sidebar-foreground/60")} />
             </button>
           )}
         </>
@@ -144,25 +148,25 @@ export default function Layout() {
       <motion.aside
         animate={{ width: sidebarWidth }}
         transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] as const }}
-        className="fixed inset-y-3 left-3 z-30 hidden flex-col overflow-hidden rounded-2xl border border-border bg-card/85 shadow-[0_1px_2px_rgba(16,24,40,0.04),0_8px_24px_rgba(16,24,40,0.04)] backdrop-blur-xl md:flex"
+        className="fixed inset-y-3 left-3 z-30 hidden flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-sidebar shadow-[0_1px_2px_rgba(8,15,30,0.2),0_16px_40px_rgba(8,15,30,0.25)] md:flex"
       >
         <div className={cn("flex items-center gap-2.5 px-4 py-4", collapsed && "justify-center px-0")}>
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-primary text-primary-foreground shadow-[0_1px_2px_rgba(16,24,40,0.08),inset_0_1px_0_rgba(255,255,255,0.15)]">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-b from-[#4e94d8] to-[#2d6cb3] text-white shadow-[0_2px_6px_rgba(45,108,179,0.45),inset_0_1px_0_rgba(255,255,255,0.25)]">
             <Hotel className="h-4 w-4" />
           </div>
           {!collapsed && (
             <div className="flex min-w-0 flex-col leading-tight">
-              <span className="truncate text-[13px] font-semibold tracking-tight text-foreground">Hotel Reports</span>
-              <span className="truncate text-[11px] text-muted-foreground">Система отчётности</span>
+              <span className="truncate font-display text-[13.5px] font-bold tracking-tight text-white">Hotel Reports</span>
+              <span className="truncate text-[11px] text-sidebar-foreground">Система отчётности</span>
             </div>
           )}
         </div>
 
-        <nav className="flex flex-1 flex-col gap-3 overflow-y-auto px-2.5 py-1">
+        <nav className="no-scrollbar flex flex-1 flex-col gap-3 overflow-y-auto px-2.5 py-1">
           {pinnedItems.length > 0 && (
             <div>
               {!collapsed && (
-                <p className="mb-1 px-2.5 text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground/70">
+                <p className="mb-1 px-2.5 text-[10.5px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
                   Избранное
                 </p>
               )}
@@ -176,7 +180,7 @@ export default function Layout() {
           {sections.map((section, si) => (
             <div key={si}>
               {section.label && !collapsed && (
-                <p className="mb-1 px-2.5 text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground/70">
+                <p className="mb-1 px-2.5 text-[10.5px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
                   {section.label}
                 </p>
               )}
@@ -196,11 +200,11 @@ export default function Layout() {
           ))}
         </nav>
 
-        <div className="border-t border-border/80 p-2.5">
+        <div className="border-t border-white/[0.06] p-2.5">
           <button
             onClick={() => setCollapsed((c) => !c)}
             className={cn(
-              "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground",
+              "flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-[7px] text-[13px] text-sidebar-foreground transition-colors hover:bg-white/[0.05] hover:text-sidebar-active",
               collapsed && "justify-center px-0"
             )}
           >
@@ -227,7 +231,7 @@ export default function Layout() {
 
             <button
               onClick={() => setPaletteOpen(true)}
-              className="flex items-center gap-2 rounded-lg border border-border px-2.5 py-1.5 text-[12.5px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-[12.5px] text-muted-foreground shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-all hover:border-primary/30 hover:text-foreground"
             >
               <Command className="h-[13px] w-[13px]" />
               Поиск
@@ -317,10 +321,10 @@ export default function Layout() {
         {/* Мобильный хедер */}
         <header className="flex items-center justify-between border-b border-border bg-card px-4 py-3 md:hidden">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-gradient-to-b from-[#4e94d8] to-[#2d6cb3] text-white">
               <Hotel className="h-4 w-4" />
             </div>
-            <span className="text-sm font-semibold">Hotel Reports</span>
+            <span className="font-display text-sm font-bold">Hotel Reports</span>
           </div>
           <div className="flex items-center gap-2">
             <button

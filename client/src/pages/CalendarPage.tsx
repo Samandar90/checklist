@@ -663,7 +663,7 @@ export default function CalendarPage() {
                       <div
                         className={cn(
                           "py-1.5 text-center text-[11px] font-semibold leading-none text-primary-foreground",
-                          i === todayIndex ? "bg-[#2f9fe0]" : weekend ? "bg-[#3670ad]" : "bg-[#3f7fc4]"
+                          i === todayIndex ? "bg-sky-500 text-white" : weekend ? "bg-primary/85" : "bg-primary"
                         )}
                       >
                         {WEEKDAYS[d.getDay()]} {d.getDate()}
@@ -892,7 +892,7 @@ export default function CalendarPage() {
                       style={{ width: CELL_W, minWidth: CELL_W }}
                       className={cn(
                         "border-l border-border/40 py-1.5 text-center text-[11px] font-semibold leading-none text-primary-foreground",
-                        i === todayIndex ? "bg-[#2f9fe0]" : weekend ? "bg-[#3670ad]" : "bg-[#3f7fc4]"
+                        i === todayIndex ? "bg-sky-500 text-white" : weekend ? "bg-primary/85" : "bg-primary"
                       )}
                     >
                       {WEEKDAYS[d.getDay()]} {d.getDate()}

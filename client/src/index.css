@@ -1,25 +1,32 @@
 @import "tailwindcss";
 
 @theme {
+  /*
+   * «Ink & Ocean» — премиальный отельный SaaS.
+   * Один брендовый тон (глубокий океанский синий, как стальной синий шахматки),
+   * чернильно-синие нейтрали вместо серых, тёплая бумага фона.
+   * Заголовки — Manrope, текст — Inter.
+   */
   --font-sans: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Manrope", "Inter", system-ui, sans-serif;
 
-  --color-border: #e6e6ea;
-  --color-input: #e6e6ea;
-  --color-ring: #635bff;
-  --color-background: #fafafa;
-  --color-foreground: #16161d;
+  --color-border: #e4e8ef;
+  --color-input: #e4e8ef;
+  --color-ring: #2d6cb3;
+  --color-background: #f6f7f9;
+  --color-foreground: #0f1728;
 
-  --color-primary: #5b54f0;
+  --color-primary: #2d6cb3;
   --color-primary-foreground: #ffffff;
 
-  --color-secondary: #f1f1f4;
-  --color-secondary-foreground: #16161d;
+  --color-secondary: #edf0f5;
+  --color-secondary-foreground: #0f1728;
 
-  --color-muted: #f5f5f7;
-  --color-muted-foreground: #6e6e7a;
+  --color-muted: #f1f3f7;
+  --color-muted-foreground: #667085;
 
-  --color-accent: #f1f1f4;
-  --color-accent-foreground: #16161d;
+  --color-accent: #edf0f5;
+  --color-accent-foreground: #0f1728;
 
   --color-destructive: #d4183d;
   --color-destructive-foreground: #ffffff;
@@ -34,7 +41,12 @@
   --color-info-foreground: #ffffff;
 
   --color-card: #ffffff;
-  --color-card-foreground: #16161d;
+  --color-card-foreground: #0f1728;
+
+  /* Чернильный сайдбар — одинаковый в светлой и тёмной темах. */
+  --color-sidebar: #0e1626;
+  --color-sidebar-foreground: #94a3b8;
+  --color-sidebar-active: #ffffff;
 
   --radius: 0.75rem;
 
@@ -130,23 +142,23 @@
 
 /* Class-based dark mode: override theme tokens when .dark is on <html>. */
 .dark {
-  --color-border: #24242c;
-  --color-input: #292a33;
-  --color-ring: #7c75ff;
-  --color-background: #0a0a0d;
-  --color-foreground: #ededf0;
+  --color-border: #1e2632;
+  --color-input: #232d3b;
+  --color-ring: #66a4e3;
+  --color-background: #0a0e14;
+  --color-foreground: #e6eaf1;
 
-  --color-primary: #7c75ff;
-  --color-primary-foreground: #ffffff;
+  --color-primary: #66a4e3;
+  --color-primary-foreground: #08121f;
 
-  --color-secondary: #18181d;
-  --color-secondary-foreground: #ededf0;
+  --color-secondary: #161c26;
+  --color-secondary-foreground: #e6eaf1;
 
-  --color-muted: #131318;
-  --color-muted-foreground: #8e8e99;
+  --color-muted: #121822;
+  --color-muted-foreground: #8a94a6;
 
-  --color-accent: #18181d;
-  --color-accent-foreground: #ededf0;
+  --color-accent: #161c26;
+  --color-accent-foreground: #e6eaf1;
 
   --color-destructive: #f0436a;
   --color-destructive-foreground: #ffffff;
@@ -160,8 +172,12 @@
   --color-info: #38bdf8;
   --color-info-foreground: #05141c;
 
-  --color-card: #111114;
-  --color-card-foreground: #ededf0;
+  --color-card: #10151d;
+  --color-card-foreground: #e6eaf1;
+
+  --color-sidebar: #0b111c;
+  --color-sidebar-foreground: #8a94a6;
+  --color-sidebar-active: #ffffff;
 }
 
 * {
@@ -178,13 +194,21 @@ html.dark {
 body {
   margin: 0;
   background: var(--color-background);
-  background-image: radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--color-primary) 6%, transparent), transparent 45%);
+  background-image:
+    radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--color-primary) 7%, transparent), transparent 42%),
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--color-primary) 4%, transparent), transparent 36%);
   background-attachment: fixed;
   color: var(--color-foreground);
   font-family: var(--font-sans);
   font-feature-settings: "tnum" 1, "cv11" 1;
   -webkit-font-smoothing: antialiased;
-  letter-spacing: -0.012em;
+  letter-spacing: -0.011em;
+}
+
+/* Заголовочная гарнитура: Manrope для display-текста (заголовки страниц, диалогов, карточек). */
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
 }
 
 .tabular-nums {
@@ -206,7 +230,7 @@ body {
  * .dark class — they're invisible pale swatches on a dark card. These
  * classes use the same hue at higher opacity for dark mode instead.
  */
-.tint-indigo { background: color-mix(in srgb, #6366f1 12%, transparent); color: #4f46e5; }
+.tint-indigo { background: color-mix(in srgb, #2d6cb3 12%, transparent); color: #2d6cb3; }
 .tint-violet { background: color-mix(in srgb, #8b5cf6 12%, transparent); color: #7c3aed; }
 .tint-sky { background: color-mix(in srgb, #0ea5e9 12%, transparent); color: #0284c7; }
 .tint-emerald { background: color-mix(in srgb, #10b981 12%, transparent); color: #059669; }
@@ -214,7 +238,7 @@ body {
 .tint-rose { background: color-mix(in srgb, #f43f5e 12%, transparent); color: #be123c; }
 .tint-slate { background: color-mix(in srgb, #64748b 14%, transparent); color: #475569; }
 
-.dark .tint-indigo { background: color-mix(in srgb, #818cf8 18%, transparent); color: #a5b4fc; }
+.dark .tint-indigo { background: color-mix(in srgb, #66a4e3 18%, transparent); color: #9cc4ed; }
 .dark .tint-violet { background: color-mix(in srgb, #a78bfa 18%, transparent); color: #c4b5fd; }
 .dark .tint-sky { background: color-mix(in srgb, #38bdf8 18%, transparent); color: #7dd3fc; }
 .dark .tint-emerald { background: color-mix(in srgb, #34d399 18%, transparent); color: #6ee7b7; }
@@ -237,17 +261,17 @@ body {
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #d7d9e3;
+  background: #d3d9e3;
   border-radius: 8px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #c2c5d3;
+  background: #bcc4d2;
 }
 .dark ::-webkit-scrollbar-thumb {
-  background: #2b3040;
+  background: #263140;
 }
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #383d50;
+  background: #324152;
 }
 ::-webkit-scrollbar-track {
   background: transparent;

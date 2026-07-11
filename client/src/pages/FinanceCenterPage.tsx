@@ -46,7 +46,7 @@ import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/api";
 
 const fmt = (n: number) => Math.round(n).toLocaleString("ru-RU");
-const BAR_COLORS = ["#5b54f0", "#0ea5e9", "#f59e0b", "#10b981", "#ec4899", "#8b5cf6", "#ef4444"];
+const BAR_COLORS = ["#2d6cb3", "#0ea5e9", "#f59e0b", "#10b981", "#8b5cf6", "#ec4899", "#ef4444"];
 
 function CountUp({ value, className }: { value: number; className?: string }) {
   const animated = useCountUp(value);
