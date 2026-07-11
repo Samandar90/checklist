@@ -2,9 +2,9 @@ import { STATUS_META, STATUS_BAR_CLASS } from "@/lib/bookingStatus";
 import { MonthlyReport } from "@/types";
 import { cn, formatMoney, reportDebt } from "@/lib/utils";
 
-const ROW_H = 36;
+const ROW_H = 40;
 /** Horizontal size of the slanted check-in / check-out edge, px. */
-const SLANT = 10;
+const SLANT = 12;
 
 /**
  * A single reservation block on the chessboard, drawn as a parallelogram:
@@ -113,7 +113,7 @@ export default function ReservationCard({
       {/* заливка + содержимое */}
       <span
         className={cn(
-          "absolute flex items-center gap-1 overflow-hidden whitespace-nowrap text-[11px] font-medium transition-[filter] group-hover/bar:brightness-110",
+          "absolute flex items-center gap-1.5 overflow-hidden whitespace-nowrap text-xs font-medium transition-[filter] group-hover/bar:brightness-110",
           STATUS_BAR_CLASS[booking.status]
         )}
         style={{
@@ -125,7 +125,7 @@ export default function ReservationCard({
       >
         <span className="truncate">{label}</span>
         {showPrice && (
-          <span className="ml-auto shrink-0 text-[10px] font-normal opacity-85">
+          <span className="ml-auto shrink-0 text-[11px] font-normal opacity-85">
             {Math.round(booking.price / 1000)}к
           </span>
         )}

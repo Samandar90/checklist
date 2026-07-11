@@ -49,9 +49,9 @@ const MONTHS = [
 ];
 const WEEKDAYS = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 
-const CELL_W = 46;
-const ROW_H = 36;
-const LABEL_W = 148;
+const CELL_W = 80;
+const ROW_H = 40;
+const LABEL_W = 168;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Status filter chips — driven by the same status metadata every other page uses. */
