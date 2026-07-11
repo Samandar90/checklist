@@ -264,3 +264,12 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* Scroll container with a hidden scrollbar (chessboard pans by dragging the day strips). */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

@@ -140,6 +140,33 @@ export default function CalendarPage() {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const updateReport = useUpdateReport();
 
+  // Drag-to-pan: grab the day strips / group rows and drag to scroll the board.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const panRef = useRef<{ startX: number; startLeft: number } | null>(null);
+
+  function startPan(e: React.MouseEvent) {
+    if (e.button !== 0 || !scrollRef.current) return;
+    panRef.current = { startX: e.clientX, startLeft: scrollRef.current.scrollLeft };
+    e.preventDefault();
+  }
+
+  useEffect(() => {
+    function onMove(e: MouseEvent) {
+      const p = panRef.current;
+      if (!p || !scrollRef.current) return;
+      scrollRef.current.scrollLeft = p.startLeft - (e.clientX - p.startX);
+    }
+    function onUp() {
+      panRef.current = null;
+    }
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, []);
+
   const effectiveBranchId = isMultiBranchAdmin
     ? branchId ?? user?.branchId ?? myBranches?.[0]?.id
     : isAdmin
@@ -199,6 +226,20 @@ export default function CalendarPage() {
     window.addEventListener("mouseup", finish);
     return () => window.removeEventListener("mouseup", finish);
   }, [days]);
+
+  // Center today's column once per month/branch view (scrollbar is hidden).
+  const scrolledViewRef = useRef("");
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !data) return;
+    const key = `${cursor.year}-${cursor.month}-${effectiveBranchId ?? ""}`;
+    if (scrolledViewRef.current === key) return;
+    scrolledViewRef.current = key;
+    el.scrollLeft =
+      todayIndex >= 0
+        ? Math.max(0, todayIndex * CELL_W + CELL_W / 2 - (el.clientWidth - LABEL_W) / 2)
+        : 0;
+  }, [data, cursor.year, cursor.month, effectiveBranchId, todayIndex]);
 
   // Esc cancels an in-progress selection or drag-move without side effects.
   useEffect(() => {
@@ -581,7 +622,7 @@ export default function CalendarPage() {
         <EmptyState icon={BedDouble} title="Нет номеров" description="В этом филиале ещё нет номеров." />
       ) : (
         <Card className="overflow-hidden">
-          <CardContent className="overflow-x-auto p-0">
+          <CardContent ref={scrollRef} className="no-scrollbar overflow-x-auto p-0">
             <div style={{ width: gridWidth }} className="relative text-xs">
               {/* Маркер текущего времени */}
               {todayIndex >= 0 && (
@@ -592,8 +633,12 @@ export default function CalendarPage() {
                   <span className="absolute -left-[3px] -top-1 h-1.5 w-1.5 rounded-full bg-primary" />
                 </div>
               )}
-              {/* Заголовок: синяя полоса дней + свободно + загрузка % (sticky) */}
-              <div className="sticky top-0 z-30 flex border-b border-border bg-card">
+              {/* Заголовок: синяя полоса дней + свободно + загрузка % (sticky).
+                  Зажмите и тяните — горизонтальная прокрутка. */}
+              <div
+                onMouseDown={startPan}
+                className="sticky top-0 z-30 flex cursor-grab select-none border-b border-border bg-card active:cursor-grabbing"
+              >
                 <div
                   className="sticky left-0 z-40 flex flex-col justify-center gap-0.5 border-r border-border bg-card px-3"
                   style={{ width: LABEL_W, minWidth: LABEL_W }}
@@ -665,23 +710,26 @@ export default function CalendarPage() {
                       />
                       {g.type} · {g.rooms.length}
                     </button>
-                    {days.map((d, i) => {
-                      const occInGroup = g.rooms.filter((r) => occupiedByDay[i].has(r.id)).length;
-                      const free = g.rooms.length - occInGroup;
-                      return (
-                        <div
-                          key={i}
-                          style={{ width: CELL_W, minWidth: CELL_W }}
-                          className={cn(
-                            "border-l border-border/70 py-1 text-center text-[11px] font-medium",
-                            i === todayIndex && "bg-primary/10",
-                            free === 0 ? "text-rose-500" : "text-muted-foreground"
-                          )}
-                        >
-                          {free}
-                        </div>
-                      );
-                    })}
+                    {/* Зажмите и тяните строку группы — горизонтальная прокрутка */}
+                    <div onMouseDown={startPan} className="flex cursor-grab select-none active:cursor-grabbing">
+                      {days.map((d, i) => {
+                        const occInGroup = g.rooms.filter((r) => occupiedByDay[i].has(r.id)).length;
+                        const free = g.rooms.length - occInGroup;
+                        return (
+                          <div
+                            key={i}
+                            style={{ width: CELL_W, minWidth: CELL_W }}
+                            className={cn(
+                              "border-l border-border/70 py-1 text-center text-[11px] font-medium",
+                              i === todayIndex && "bg-primary/10",
+                              free === 0 ? "text-rose-500" : "text-muted-foreground"
+                            )}
+                          >
+                            {free}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   {!collapsed.has(g.type) && g.rooms.map((room, ri) => (
@@ -822,8 +870,12 @@ export default function CalendarPage() {
                 </div>
               ))}
 
-              {/* Нижняя полоса дней — чтобы на длинных списках не скроллить к шапке */}
-              <div className="flex border-t border-border">
+              {/* Нижняя полоса дней — чтобы на длинных списках не скроллить к шапке.
+                  Зажмите и тяните — горизонтальная прокрутка. */}
+              <div
+                onMouseDown={startPan}
+                className="flex cursor-grab select-none border-t border-border active:cursor-grabbing"
+              >
                 <div
                   className="sticky left-0 z-20 border-r border-border bg-card"
                   style={{ width: LABEL_W, minWidth: LABEL_W }}
