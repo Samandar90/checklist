@@ -195,15 +195,27 @@ body {
   margin: 0;
   background: var(--color-background);
   background-image:
-    radial-gradient(60% 55% at 8% 0%, color-mix(in srgb, var(--color-primary) 14%, transparent), transparent 60%),
-    radial-gradient(50% 50% at 100% 8%, color-mix(in srgb, #38bdf8 12%, transparent), transparent 55%),
-    radial-gradient(55% 55% at 92% 100%, color-mix(in srgb, #8b5cf6 9%, transparent), transparent 60%);
+    radial-gradient(55% 60% at 6% 0%, rgba(45, 108, 179, 0.34), transparent 62%),
+    radial-gradient(50% 58% at 100% 4%, rgba(56, 189, 248, 0.3), transparent 60%),
+    radial-gradient(58% 62% at 94% 100%, rgba(139, 92, 246, 0.28), transparent 62%),
+    radial-gradient(48% 55% at 24% 100%, rgba(16, 185, 129, 0.2), transparent 60%),
+    radial-gradient(75% 85% at 55% 45%, rgba(90, 140, 220, 0.1), transparent 72%);
   background-attachment: fixed;
   color: var(--color-foreground);
   font-family: var(--font-sans);
   font-feature-settings: "tnum" 1, "cv11" 1;
   -webkit-font-smoothing: antialiased;
   letter-spacing: -0.011em;
+}
+
+/* В тёмной теме те же аврора-пятна, но приглушённее — чтобы стекло светилось на почти-чёрном. */
+.dark body {
+  background-image:
+    radial-gradient(55% 60% at 6% 0%, rgba(45, 108, 179, 0.42), transparent 62%),
+    radial-gradient(50% 58% at 100% 4%, rgba(56, 189, 248, 0.26), transparent 60%),
+    radial-gradient(58% 62% at 94% 100%, rgba(139, 92, 246, 0.3), transparent 62%),
+    radial-gradient(48% 55% at 24% 100%, rgba(16, 185, 129, 0.2), transparent 60%),
+    radial-gradient(75% 85% at 55% 45%, rgba(90, 140, 220, 0.12), transparent 72%);
 }
 
 /* Заголовочная гарнитура: Manrope для display-текста (заголовки страниц, диалогов, карточек). */
@@ -268,61 +280,72 @@ h1, h2, h3, .font-display {
  * would freeze the glass to the light-theme colour. Explicit per-theme values.
  */
 .glass-card {
-  background-color: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(26px) saturate(185%);
+  -webkit-backdrop-filter: blur(26px) saturate(185%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.55),
-    0 1px 2px rgba(16, 24, 40, 0.04),
-    0 10px 30px rgba(16, 24, 40, 0.07);
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 2px 6px rgba(16, 24, 40, 0.05),
+    0 14px 40px rgba(20, 40, 80, 0.1);
 }
 .glass-card:hover {
-  border-color: rgba(45, 108, 179, 0.26);
+  border-color: rgba(255, 255, 255, 0.9);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    0 1px 2px rgba(16, 24, 40, 0.04),
-    0 16px 42px rgba(16, 24, 40, 0.1);
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 2px 6px rgba(16, 24, 40, 0.05),
+    0 20px 50px rgba(20, 40, 80, 0.15);
 }
 .dark .glass-card {
-  background-color: rgba(16, 21, 29, 0.55);
-  border-color: rgba(255, 255, 255, 0.08);
+  background-color: rgba(18, 26, 38, 0.5);
+  border-color: rgba(255, 255, 255, 0.12);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 1px 2px rgba(0, 0, 0, 0.3),
-    0 10px 30px rgba(0, 0, 0, 0.45);
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 2px 6px rgba(0, 0, 0, 0.35),
+    0 16px 44px rgba(0, 0, 0, 0.5);
 }
 .dark .glass-card:hover {
-  border-color: rgba(102, 164, 227, 0.4);
+  border-color: rgba(102, 164, 227, 0.45);
 }
 
 /* Heavier glass for floating layers (dialogs, drawers, popovers). */
 .glass-strong {
-  background-color: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(32px) saturate(180%);
-  -webkit-backdrop-filter: blur(32px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  background-color: rgba(255, 255, 255, 0.68);
+  backdrop-filter: blur(40px) saturate(190%);
+  -webkit-backdrop-filter: blur(40px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.75);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    0 1px 2px rgba(16, 24, 40, 0.05),
-    0 32px 64px rgba(16, 24, 40, 0.22);
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 2px 8px rgba(16, 24, 40, 0.06),
+    0 40px 80px rgba(16, 24, 40, 0.28);
 }
 .dark .glass-strong {
-  background-color: rgba(16, 21, 29, 0.72);
-  border-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(18, 26, 38, 0.66);
+  border-color: rgba(255, 255, 255, 0.14);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 32px 64px rgba(0, 0, 0, 0.55);
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 40px 80px rgba(0, 0, 0, 0.6);
 }
 
-/* Frosted bar (sticky top bars, toolbars) — subtle blur, no heavy shadow. */
+/* Frosted bar (sticky top bars, toolbars) — heavier blur so content behind smears. */
 .glass-bar {
-  background-color: rgba(246, 247, 249, 0.68);
-  backdrop-filter: blur(18px) saturate(180%);
-  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  background-color: rgba(246, 247, 249, 0.55);
+  backdrop-filter: blur(24px) saturate(185%);
+  -webkit-backdrop-filter: blur(24px) saturate(185%);
 }
 .dark .glass-bar {
-  background-color: rgba(10, 14, 20, 0.6);
+  background-color: rgba(10, 14, 20, 0.5);
+}
+
+/* Floating ink sidebar as dark glass — the colourful page behind smears at its edges. */
+.glass-sidebar {
+  background-color: rgba(12, 19, 33, 0.74);
+  backdrop-filter: blur(30px) saturate(160%);
+  -webkit-backdrop-filter: blur(30px) saturate(160%);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-sidebar { background-color: #0e1626; }
 }
 
 /* Browsers without backdrop-filter fall back to a near-opaque surface. */

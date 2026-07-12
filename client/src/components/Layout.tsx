@@ -148,7 +148,7 @@ export default function Layout() {
       <motion.aside
         animate={{ width: sidebarWidth }}
         transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] as const }}
-        className="fixed inset-y-3 left-3 z-30 hidden flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-sidebar shadow-[0_1px_2px_rgba(8,15,30,0.2),0_16px_40px_rgba(8,15,30,0.25)] md:flex"
+        className="glass-sidebar fixed inset-y-3 left-3 z-30 hidden flex-col overflow-hidden rounded-2xl border border-white/[0.08] shadow-[0_1px_2px_rgba(8,15,30,0.2),0_16px_40px_rgba(8,15,30,0.28)] md:flex"
       >
         <div className={cn("flex items-center gap-2.5 px-4 py-4", collapsed && "justify-center px-0")}>
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-b from-[#4e94d8] to-[#2d6cb3] text-white shadow-[0_2px_6px_rgba(45,108,179,0.45),inset_0_1px_0_rgba(255,255,255,0.25)]">
