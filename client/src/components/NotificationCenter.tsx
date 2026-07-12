@@ -89,7 +89,7 @@ export default function NotificationCenter() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-[calc(100%+6px)] z-30 w-[420px] overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
+            className="glass-strong absolute right-0 top-[calc(100%+6px)] z-30 w-[420px] overflow-hidden rounded-2xl"
           >
             <div className="border-b border-border px-4 py-3">
               <div className="flex items-center justify-between">

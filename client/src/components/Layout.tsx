@@ -233,7 +233,7 @@ export default function Layout() {
         style={{ "--sidebar-pad": `${sidebarWidth + 24}px` } as React.CSSProperties}
       >
         {/* Верхний бар: хлебная крошка + профиль (только десктоп) */}
-        <header className="sticky top-0 z-20 hidden h-16 items-center justify-between border-b border-border/70 bg-background/80 px-2 backdrop-blur-xl md:flex">
+        <header className="glass-bar sticky top-0 z-20 hidden h-16 items-center justify-between border-b border-border/60 px-2 md:flex">
           <div className="flex items-center gap-1.5 text-sm">
             <span className="text-muted-foreground">Hotel Reports</span>
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
@@ -288,7 +288,7 @@ export default function Layout() {
               </button>
 
               {profileOpen && (
-                <div className="absolute right-0 top-[calc(100%+6px)] w-52 overflow-hidden rounded-xl border border-border bg-card py-1 text-sm shadow-xl animate-pop-in">
+                <div className="glass-strong absolute right-0 top-[calc(100%+6px)] w-52 overflow-hidden rounded-2xl py-1 text-sm animate-pop-in">
                   <button
                     onClick={() => {
                       setPreferencesOpen(true);
@@ -333,7 +333,7 @@ export default function Layout() {
         </header>
 
         {/* Мобильный хедер */}
-        <header className="flex items-center justify-between border-b border-border bg-card px-4 py-3 md:hidden">
+        <header className="glass-bar sticky top-0 z-20 flex items-center justify-between border-b border-border px-4 py-3 md:hidden">
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-gradient-to-b from-[#4e94d8] to-[#2d6cb3] text-white">
               <Hotel className="h-4 w-4" />

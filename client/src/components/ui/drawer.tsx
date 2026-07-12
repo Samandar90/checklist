@@ -15,7 +15,7 @@ const DrawerOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-background/60 backdrop-blur-[2px] data-[state=open]:animate-overlay-in data-[state=closed]:animate-overlay-out",
+      "fixed inset-0 z-50 bg-[#0b1220]/40 backdrop-blur-md data-[state=open]:animate-overlay-in data-[state=closed]:animate-overlay-out",
       className
     )}
     {...props}
@@ -32,7 +32,7 @@ const DrawerContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed right-0 top-0 z-50 flex h-full w-full max-w-[640px] flex-col border-l border-border bg-card shadow-[-8px_0_32px_rgba(16,24,40,0.12)] focus:outline-none data-[state=open]:animate-drawer-in data-[state=closed]:animate-drawer-out",
+        "glass-strong fixed right-0 top-0 z-50 flex h-full w-full max-w-[640px] flex-col rounded-l-[24px] border-y-0 border-r-0 focus:outline-none data-[state=open]:animate-drawer-in data-[state=closed]:animate-drawer-out",
         className
       )}
       {...props}

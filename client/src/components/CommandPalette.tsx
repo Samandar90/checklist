@@ -192,10 +192,10 @@ export default function CommandPalette({
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-background/60 backdrop-blur-[2px] data-[state=open]:animate-overlay-in data-[state=closed]:animate-overlay-out" />
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[#0b1220]/40 backdrop-blur-md data-[state=open]:animate-overlay-in data-[state=closed]:animate-overlay-out" />
         <DialogPrimitive.Content
           onKeyDown={onKeyDown}
-          className="fixed left-1/2 top-[12%] z-50 w-full max-w-[560px] -translate-x-1/2 overflow-hidden rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgba(16,24,40,0.04),0_24px_48px_rgba(16,24,40,0.18)] focus:outline-none data-[state=open]:animate-scale-in data-[state=closed]:animate-scale-out"
+          className="glass-strong fixed left-1/2 top-[12%] z-50 w-full max-w-[560px] -translate-x-1/2 overflow-hidden rounded-2xl focus:outline-none data-[state=open]:animate-scale-in data-[state=closed]:animate-scale-out"
         >
           <DialogPrimitive.Title className="sr-only">Командный центр</DialogPrimitive.Title>
           <div className="flex items-center gap-2.5 border-b border-border px-4 py-3">

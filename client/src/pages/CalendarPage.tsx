@@ -511,7 +511,7 @@ export default function CalendarPage() {
       <PageHeader title="Шахматка" description="Загрузка номеров по датам заезда и выезда." />
 
       {/* Тулбар */}
-      <div className="sticky top-0 z-30 -mx-4 mb-4 border-b border-border bg-background/85 px-4 py-3 backdrop-blur-xl md:-mx-8 md:px-8">
+      <div className="glass-bar sticky top-0 z-30 -mx-4 mb-4 border-b border-border px-4 py-3 md:-mx-8 md:px-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="flex flex-wrap items-end gap-3">
             {(!isAdmin || isMultiBranchAdmin) && (
@@ -983,7 +983,7 @@ function HoverCard({ booking, x, y }: { booking: MonthlyReport; x: number; y: nu
   const nights = nightsBetween(booking.date, booking.checkOut);
   return (
     <div
-      className="pointer-events-none fixed z-50 rounded-xl border border-border bg-card p-3 text-xs shadow-xl animate-fade-in"
+      className="glass-strong pointer-events-none fixed z-50 rounded-2xl p-3 text-xs animate-fade-in"
       style={{ left, top, width: W }}
     >
       <div className="mb-1.5 flex items-center justify-between gap-2">
@@ -1030,7 +1030,7 @@ function FreeCellCard({ room, day, x, y }: { room: Room; day: Date; x: number; y
   const top = Math.min(y + 16, window.innerHeight - 90);
   return (
     <div
-      className="pointer-events-none fixed z-50 rounded-xl border border-border bg-card p-3 text-xs shadow-xl animate-fade-in"
+      className="glass-strong pointer-events-none fixed z-50 rounded-2xl p-3 text-xs animate-fade-in"
       style={{ left, top, width: W }}
     >
       <div className="mb-1 flex items-center justify-between gap-2">
