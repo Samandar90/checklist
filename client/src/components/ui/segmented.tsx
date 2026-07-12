@@ -17,7 +17,7 @@ interface SegmentedProps<T extends string> {
 export function Segmented<T extends string>({ options, value, onChange, className }: SegmentedProps<T>) {
   return (
     <div
-      className={cn("grid gap-1 rounded-xl bg-secondary p-1", className)}
+      className={cn("grid gap-1 rounded-2xl bg-secondary/70 p-1 ring-1 ring-inset ring-border/60", className)}
       style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
     >
       {options.map((o) => {
@@ -28,9 +28,9 @@ export function Segmented<T extends string>({ options, value, onChange, classNam
             type="button"
             onClick={() => onChange(o.value)}
             className={cn(
-              "rounded-lg px-2 py-1.5 text-sm font-medium transition-all",
+              "rounded-xl px-2 py-1.5 text-sm font-medium transition-all",
               active
-                ? o.activeCls ?? "bg-card text-foreground shadow-sm"
+                ? o.activeCls ?? "bg-card text-foreground shadow-[0_1px_3px_rgba(16,24,40,0.14)] ring-1 ring-black/[0.04]"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
