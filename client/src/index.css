@@ -338,14 +338,29 @@ h1, h2, h3, .font-display {
   background-color: rgba(10, 14, 20, 0.5);
 }
 
-/* Floating ink sidebar as dark glass — the colourful page behind smears at its edges. */
+/*
+ * Floating sidebar — the same liquid-glass material as the cards, theme-aware
+ * (light frost in light mode / dark frost in dark mode), Apple-Settings style.
+ */
 .glass-sidebar {
-  background-color: rgba(12, 19, 33, 0.74);
-  backdrop-filter: blur(30px) saturate(160%);
-  -webkit-backdrop-filter: blur(30px) saturate(160%);
+  background-color: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(30px) saturate(185%);
+  -webkit-backdrop-filter: blur(30px) saturate(185%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 8px 40px rgba(20, 40, 80, 0.1);
+}
+.dark .glass-sidebar {
+  background-color: rgba(18, 26, 38, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 8px 40px rgba(0, 0, 0, 0.5);
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass-sidebar { background-color: #0e1626; }
+  .glass-sidebar { background-color: #ffffff; }
+  .dark .glass-sidebar { background-color: #10151d; }
 }
 
 /* Browsers without backdrop-filter fall back to a near-opaque surface. */

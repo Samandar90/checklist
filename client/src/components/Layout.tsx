@@ -52,11 +52,11 @@ function NavItemLink({
       title={collapsed ? item.label : undefined}
       className={({ isActive }) =>
         cn(
-          "group relative flex items-center gap-2.5 rounded-[10px] px-2.5 py-[7px] text-[13.5px] font-medium transition-colors",
+          "group relative flex items-center gap-2.5 rounded-xl px-2.5 py-[7px] text-[13.5px] font-medium transition-all",
           collapsed && "justify-center px-0",
           isActive
-            ? "bg-white/[0.09] text-sidebar-active shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
-            : "text-sidebar-foreground hover:bg-white/[0.05] hover:text-sidebar-active"
+            ? "bg-primary/[0.1] text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]"
+            : "text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground"
         )
       }
     >
@@ -64,12 +64,12 @@ function NavItemLink({
         <>
           {/* активный пункт помечен коротким брендовым штрихом слева */}
           {isActive && !collapsed && (
-            <span className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-full bg-[#5ea1e6]" />
+            <span className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-full bg-primary" />
           )}
           <item.icon
             className={cn(
               "h-[15px] w-[15px] shrink-0 transition-colors",
-              isActive ? "text-[#5ea1e6]" : "text-sidebar-foreground/70 group-hover:text-sidebar-active"
+              isActive ? "text-primary" : "text-muted-foreground/70 group-hover:text-foreground"
             )}
           />
           {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
@@ -86,7 +86,7 @@ function NavItemLink({
               )}
               aria-label="Закрепить в избранном"
             >
-              <Star className={cn("h-3 w-3", favorited ? "fill-[#5ea1e6] text-[#5ea1e6]" : "text-sidebar-foreground/60")} />
+              <Star className={cn("h-3 w-3", favorited ? "fill-primary text-primary" : "text-muted-foreground/60")} />
             </button>
           )}
         </>
@@ -148,16 +148,16 @@ export default function Layout() {
       <motion.aside
         animate={{ width: sidebarWidth }}
         transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] as const }}
-        className="glass-sidebar fixed inset-y-3 left-3 z-30 hidden flex-col overflow-hidden rounded-2xl border border-white/[0.08] shadow-[0_1px_2px_rgba(8,15,30,0.2),0_16px_40px_rgba(8,15,30,0.28)] md:flex"
+        className="glass-sidebar fixed inset-y-3 left-3 z-30 hidden flex-col overflow-hidden rounded-[22px] md:flex"
       >
         <div className={cn("flex items-center gap-2.5 px-4 py-4", collapsed && "justify-center px-0")}>
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-gradient-to-b from-[#4e94d8] to-[#2d6cb3] text-white shadow-[0_2px_6px_rgba(45,108,179,0.45),inset_0_1px_0_rgba(255,255,255,0.25)]">
-            <Hotel className="h-4 w-4" />
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-gradient-to-b from-[#4e94d8] to-[#2d6cb3] text-white shadow-[0_4px_12px_rgba(45,108,179,0.4),inset_0_1px_0_rgba(255,255,255,0.35)]">
+            <Hotel className="h-4.5 w-4.5" />
           </div>
           {!collapsed && (
             <div className="flex min-w-0 flex-col leading-tight">
-              <span className="truncate font-display text-[13.5px] font-bold tracking-tight text-white">Hotel Reports</span>
-              <span className="truncate text-[11px] text-sidebar-foreground">Система отчётности</span>
+              <span className="truncate font-display text-[14px] font-extrabold tracking-tight text-foreground">Hotel Reports</span>
+              <span className="truncate text-[11px] text-muted-foreground">Система отчётности</span>
             </div>
           )}
         </div>
@@ -166,7 +166,7 @@ export default function Layout() {
           {pinnedItems.length > 0 && (
             <div>
               {!collapsed && (
-                <p className="mb-1 px-2.5 text-[10.5px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
+                <p className="mb-1 px-2.5 text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground/60">
                   Избранное
                 </p>
               )}
@@ -180,7 +180,7 @@ export default function Layout() {
           {sections.map((section, si) => (
             <div key={si}>
               {section.label && !collapsed && (
-                <p className="mb-1 px-2.5 text-[10.5px] font-semibold uppercase tracking-wider text-sidebar-foreground/50">
+                <p className="mb-1 px-2.5 text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground/60">
                   {section.label}
                 </p>
               )}
@@ -200,16 +200,16 @@ export default function Layout() {
           ))}
         </nav>
 
-        <div className="border-t border-white/[0.06] p-2.5">
+        <div className="border-t border-border/60 p-2.5">
           {/* мини-профиль — кто сейчас за стойкой */}
           {!collapsed && (
-            <div className="mb-1.5 flex items-center gap-2.5 rounded-[10px] bg-white/[0.04] px-2.5 py-2">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-b from-[#4e94d8] to-[#2d6cb3] text-[11px] font-bold text-white">
+            <div className="mb-1.5 flex items-center gap-2.5 rounded-xl bg-foreground/[0.03] px-2.5 py-2">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-b from-[#4e94d8] to-[#2d6cb3] text-[11px] font-bold text-white shadow-[0_2px_6px_rgba(45,108,179,0.35)]">
                 {(user?.fullName ?? user?.username ?? "?").slice(0, 1).toUpperCase()}
               </span>
               <span className="flex min-w-0 flex-col leading-tight">
-                <span className="truncate text-[12.5px] font-semibold text-white">{user?.fullName ?? user?.username}</span>
-                <span className="truncate text-[10.5px] text-sidebar-foreground">
+                <span className="truncate text-[12.5px] font-semibold text-foreground">{user?.fullName ?? user?.username}</span>
+                <span className="truncate text-[10.5px] text-muted-foreground">
                   {isSuperAdmin ? "Главный аккаунт" : user?.branchName}
                 </span>
               </span>
@@ -218,7 +218,7 @@ export default function Layout() {
           <button
             onClick={() => setCollapsed((c) => !c)}
             className={cn(
-              "flex w-full items-center gap-2.5 rounded-[10px] px-2.5 py-[7px] text-[13px] text-sidebar-foreground transition-colors hover:bg-white/[0.05] hover:text-sidebar-active",
+              "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-[7px] text-[13px] text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground",
               collapsed && "justify-center px-0"
             )}
           >
