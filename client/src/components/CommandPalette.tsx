@@ -192,7 +192,7 @@ export default function CommandPalette({
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[#0b1220]/40 backdrop-blur-md data-[state=open]:animate-overlay-in data-[state=closed]:animate-overlay-out" />
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[#0b1220]/45 backdrop-blur-xl data-[state=open]:animate-overlay-in data-[state=closed]:animate-overlay-out" />
         <DialogPrimitive.Content
           onKeyDown={onKeyDown}
           className="glass-strong fixed left-1/2 top-[12%] z-50 w-full max-w-[560px] -translate-x-1/2 overflow-hidden rounded-2xl focus:outline-none data-[state=open]:animate-scale-in data-[state=closed]:animate-scale-out"
