@@ -4,16 +4,17 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-semibold tracking-tight transition-all active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+  "relative inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-semibold tracking-tight transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50 disabled:hover:translate-y-0 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/25",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow-[0_1px_2px_rgba(16,24,40,0.08),inset_0_1px_0_rgba(255,255,255,0.18)] hover:brightness-110 hover:shadow-[0_6px_16px_color-mix(in_srgb,var(--color-primary)_40%,transparent)]",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm hover:shadow-md",
-        outline: "border border-border bg-card hover:bg-secondary hover:border-foreground/20 text-foreground shadow-[0_1px_2px_rgba(16,24,40,0.04)]",
+          "bg-primary text-primary-foreground shadow-[0_1px_2px_rgba(16,24,40,0.12),0_8px_20px_-6px_rgba(45,108,179,0.5),inset_0_1px_0_rgba(255,255,255,0.22)] hover:brightness-[1.08] hover:shadow-[0_2px_5px_rgba(16,24,40,0.14),0_14px_30px_-6px_rgba(45,108,179,0.55),inset_0_1px_0_rgba(255,255,255,0.3)]",
+        destructive:
+          "bg-destructive text-destructive-foreground shadow-[0_1px_2px_rgba(16,24,40,0.12),0_8px_20px_-6px_rgba(212,24,61,0.5),inset_0_1px_0_rgba(255,255,255,0.2)] hover:brightness-[1.06] hover:shadow-[0_2px_5px_rgba(16,24,40,0.14),0_14px_30px_-6px_rgba(212,24,61,0.55)]",
+        outline: "glass-btn",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-secondary text-foreground",
+        ghost: "text-foreground hover:bg-foreground/[0.05]",
       },
       size: {
         default: "h-9 px-4 py-2",

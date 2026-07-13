@@ -328,6 +328,66 @@ h1, h2, h3, .font-display {
     0 40px 80px rgba(0, 0, 0, 0.6);
 }
 
+/*
+ * Glass controls — translucent, theme-aware inputs & secondary buttons.
+ * Hover/focus states live here (not Tailwind utilities) so they win over the
+ * unlayered base class; transitions come from the element's `transition-all`.
+ */
+.glass-field {
+  background-color: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(8px) saturate(160%);
+  -webkit-backdrop-filter: blur(8px) saturate(160%);
+  border: 1px solid rgba(96, 120, 150, 0.22);
+  box-shadow: inset 0 1px 2px rgba(16, 24, 40, 0.05);
+}
+.dark .glass-field {
+  background-color: rgba(30, 40, 54, 0.45);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+.glass-field:focus,
+.glass-field:focus-visible,
+.glass-field[data-state="open"] {
+  outline: none;
+  border-color: rgba(45, 108, 179, 0.55);
+  box-shadow: inset 0 1px 2px rgba(16, 24, 40, 0.05), 0 0 0 4px rgba(45, 108, 179, 0.16);
+}
+.dark .glass-field:focus,
+.dark .glass-field:focus-visible,
+.dark .glass-field[data-state="open"] {
+  border-color: rgba(102, 164, 227, 0.6);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25), 0 0 0 4px rgba(102, 164, 227, 0.2);
+}
+
+.glass-btn {
+  background-color: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 1px 2px rgba(16, 24, 40, 0.05);
+  color: var(--color-foreground);
+}
+.dark .glass-btn {
+  background-color: rgba(40, 52, 68, 0.5);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+.glass-btn:hover {
+  background-color: rgba(255, 255, 255, 0.72);
+  border-color: rgba(45, 108, 179, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 8px 20px rgba(20, 40, 80, 0.1);
+}
+.dark .glass-btn:hover {
+  background-color: rgba(50, 64, 82, 0.62);
+  border-color: rgba(102, 164, 227, 0.4);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-field { background-color: #ffffff; }
+  .glass-btn { background-color: #ffffff; }
+  .dark .glass-field { background-color: #161c26; }
+  .dark .glass-btn { background-color: #1c2532; }
+}
+
 /* Frosted bar (sticky top bars, toolbars) — heavier blur so content behind smears. */
 .glass-bar {
   background-color: rgba(246, 247, 249, 0.55);
