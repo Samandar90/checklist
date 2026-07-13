@@ -409,6 +409,58 @@ h1, h2, h3, .font-display {
   .dark .glass-btn { background-color: #1c2532; }
 }
 
+/*
+ * Data tables — rows behave like floating layers: soft hairline separators,
+ * a lift + soft shadow + tinted rounded highlight on hover.
+ */
+.data-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.data-table thead th {
+  border-bottom: 1px solid rgba(96, 120, 150, 0.16);
+}
+.dark .data-table thead th {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+.data-table tbody td {
+  border-bottom: 1px solid rgba(96, 120, 150, 0.12);
+}
+.dark .data-table tbody td {
+  border-bottom-color: rgba(255, 255, 255, 0.05);
+}
+.data-table tbody tr:last-child td {
+  border-bottom-color: transparent;
+}
+.data-table tbody tr {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, background-color 0.2s ease;
+}
+.data-table tbody tr:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(20, 40, 80, 0.1);
+}
+.dark .data-table tbody tr:hover {
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.42);
+}
+.data-table tbody tr:hover td {
+  background-color: rgba(45, 108, 179, 0.06);
+  border-bottom-color: transparent;
+}
+.dark .data-table tbody tr:hover td {
+  background-color: rgba(102, 164, 227, 0.09);
+}
+.data-table tbody tr td:first-child {
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+}
+.data-table tbody tr td:last-child {
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+.data-table tbody tr:active {
+  transform: translateY(0) scale(0.998);
+}
+
 /* Frosted bar (sticky top bars, toolbars) — heavier blur so content behind smears. */
 .glass-bar {
   background-color: rgba(246, 247, 249, 0.55);

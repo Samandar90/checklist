@@ -3,8 +3,8 @@ import { cn } from "@/lib/utils";
 
 const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (
-    <div className="glass-card w-full animate-fade-in overflow-auto rounded-2xl">
-      <table ref={ref} className={cn("w-full caption-bottom text-sm", className)} {...props} />
+    <div className="glass-card w-full animate-fade-in overflow-auto rounded-2xl p-1.5">
+      <table ref={ref} className={cn("data-table w-full caption-bottom text-sm", className)} {...props} />
     </div>
   )
 );
@@ -26,11 +26,7 @@ TableBody.displayName = "TableBody";
 
 const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTMLTableRowElement>>(
   ({ className, ...props }, ref) => (
-    <tr
-      ref={ref}
-      className={cn("border-b border-border transition-colors hover:bg-muted/40", className)}
-      {...props}
-    />
+    <tr ref={ref} className={cn("cursor-default", className)} {...props} />
   )
 );
 TableRow.displayName = "TableRow";
