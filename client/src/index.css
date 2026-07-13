@@ -349,37 +349,57 @@ h1, h2, h3, .font-display {
 .glass-field:focus-visible,
 .glass-field[data-state="open"] {
   outline: none;
-  border-color: rgba(45, 108, 179, 0.55);
-  box-shadow: inset 0 1px 2px rgba(16, 24, 40, 0.05), 0 0 0 4px rgba(45, 108, 179, 0.16);
+  border-color: rgba(45, 108, 179, 0.75);
+  box-shadow:
+    inset 0 1px 2px rgba(16, 24, 40, 0.04),
+    0 0 0 3px rgba(45, 108, 179, 0.2),
+    0 0 20px rgba(45, 108, 179, 0.28);
 }
 .dark .glass-field:focus,
 .dark .glass-field:focus-visible,
 .dark .glass-field[data-state="open"] {
-  border-color: rgba(102, 164, 227, 0.6);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25), 0 0 0 4px rgba(102, 164, 227, 0.2);
+  border-color: rgba(102, 164, 227, 0.85);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.25),
+    0 0 0 3px rgba(102, 164, 227, 0.25),
+    0 0 22px rgba(102, 164, 227, 0.35);
 }
 
+/* Frosted secondary button — a real slab of glass with an inner sheen. */
 .glass-btn {
-  background-color: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(12px) saturate(180%);
-  -webkit-backdrop-filter: blur(12px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 1px 2px rgba(16, 24, 40, 0.05);
+  background-color: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(16px) saturate(185%);
+  -webkit-backdrop-filter: blur(16px) saturate(185%);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 0 20px rgba(255, 255, 255, 0.15),
+    0 2px 6px rgba(16, 24, 40, 0.06);
   color: var(--color-foreground);
 }
 .dark .glass-btn {
-  background-color: rgba(40, 52, 68, 0.5);
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 1px 2px rgba(0, 0, 0, 0.3);
+  background-color: rgba(58, 72, 92, 0.42);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 0 20px rgba(255, 255, 255, 0.05),
+    0 2px 6px rgba(0, 0, 0, 0.3);
 }
 .glass-btn:hover {
-  background-color: rgba(255, 255, 255, 0.72);
-  border-color: rgba(45, 108, 179, 0.3);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 8px 20px rgba(20, 40, 80, 0.1);
+  background-color: rgba(255, 255, 255, 0.68);
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 0 24px rgba(255, 255, 255, 0.22),
+    0 10px 26px rgba(20, 40, 80, 0.14);
 }
 .dark .glass-btn:hover {
-  background-color: rgba(50, 64, 82, 0.62);
-  border-color: rgba(102, 164, 227, 0.4);
+  background-color: rgba(72, 88, 110, 0.55);
+  border-color: rgba(255, 255, 255, 0.24);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 0 24px rgba(255, 255, 255, 0.08),
+    0 10px 26px rgba(0, 0, 0, 0.4);
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .glass-field { background-color: #ffffff; }
