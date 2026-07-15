@@ -55,7 +55,6 @@ import {
 import { holdsRoom } from "@/lib/bookingStatus";
 import { exportReportsToCsv } from "@/lib/csv";
 
-const currencies = ["UZS", "USD", "EUR"];
 
 const paymentMethodOptions = paymentMethods.map((m) => ({ value: m, label: m }));
 const paymentStatusOptions = PAYMENT_STATUS_OPTIONS;
@@ -498,8 +497,8 @@ export default function MyReportsPage() {
               )}
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="price">Цена за ночь</Label>
+            <div className="col-span-2 space-y-1.5">
+              <Label htmlFor="price">Цена за ночь, UZS</Label>
               <Controller
                 control={form.control}
                 name="pricePerNight"
@@ -509,31 +508,6 @@ export default function MyReportsPage() {
               />
               {form.formState.errors.pricePerNight && (
                 <p className="text-xs text-destructive">{form.formState.errors.pricePerNight.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Валюта</Label>
-              <Controller
-                control={form.control}
-                name="currency"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Валюта" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {currencies.map((c) => (
-                        <SelectItem key={c} value={c}>
-                          {c}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {form.formState.errors.currency && (
-                <p className="text-xs text-destructive">{form.formState.errors.currency.message}</p>
               )}
             </div>
 

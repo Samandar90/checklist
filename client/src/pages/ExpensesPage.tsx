@@ -31,7 +31,6 @@ import { useExpenses, useCreateExpense, useUpdateExpense, useDeleteExpense } fro
 import { Expense, ExpenseFilters, expenseCategories } from "@/types";
 import { getErrorMessage } from "@/lib/api";
 
-const currencies = ["UZS", "USD", "EUR"];
 
 const expenseFormSchema = z.object({
   date: z.string().trim().min(1, "Укажите дату"),
@@ -337,8 +336,8 @@ export default function ExpensesPage() {
               )}
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="amount">Сумма</Label>
+            <div className="col-span-2 space-y-1.5">
+              <Label htmlFor="amount">Сумма, UZS</Label>
               <Controller
                 control={form.control}
                 name="amount"
@@ -346,31 +345,6 @@ export default function ExpensesPage() {
               />
               {form.formState.errors.amount && (
                 <p className="text-xs text-destructive">{form.formState.errors.amount.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Валюта</Label>
-              <Controller
-                control={form.control}
-                name="currency"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Валюта" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {currencies.map((c) => (
-                        <SelectItem key={c} value={c}>
-                          {c}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {form.formState.errors.currency && (
-                <p className="text-xs text-destructive">{form.formState.errors.currency.message}</p>
               )}
             </div>
 

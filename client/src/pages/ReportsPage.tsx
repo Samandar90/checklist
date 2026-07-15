@@ -81,8 +81,6 @@ const BULK_ACTIONS: { action: BulkBookingAction; label: string; icon: typeof Log
   { action: "DELETE", label: "Удалить", icon: Trash2, destructive: true },
 ];
 
-const currencies = ["UZS", "USD", "EUR"];
-
 const paymentMethodOptions = paymentMethods.map((m) => ({ value: m, label: m }));
 const paymentStatusOptions = PAYMENT_STATUS_OPTIONS;
 
@@ -910,8 +908,8 @@ export default function ReportsPage() {
               )}
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="price">Цена</Label>
+            <div className="col-span-2 space-y-1.5">
+              <Label htmlFor="price">Цена, UZS</Label>
               <Controller
                 control={form.control}
                 name="price"
@@ -921,31 +919,6 @@ export default function ReportsPage() {
               />
               {form.formState.errors.price && (
                 <p className="text-xs text-destructive">{form.formState.errors.price.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Валюта</Label>
-              <Controller
-                control={form.control}
-                name="currency"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Валюта" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {currencies.map((c) => (
-                        <SelectItem key={c} value={c}>
-                          {c}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {form.formState.errors.currency && (
-                <p className="text-xs text-destructive">{form.formState.errors.currency.message}</p>
               )}
             </div>
 

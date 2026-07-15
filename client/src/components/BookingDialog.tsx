@@ -43,8 +43,6 @@ const STATUS_ACTIONS: { status: BookingStatus; label: string; icon: typeof LogIn
   { status: "CANCELLED", label: "Отменить", icon: Ban },
 ];
 
-const currencies = ["UZS", "USD", "EUR"];
-
 const paymentMethodOptions = paymentMethods.map((m) => ({ value: m, label: m }));
 const paymentStatusOptions = PAYMENT_STATUS_OPTIONS;
 
@@ -398,8 +396,8 @@ export default function BookingDialog({
 
               <DrawerSection title="Оплата">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="bd-price">Цена за ночь</Label>
+                  <div className="col-span-2 space-y-1.5">
+                    <Label htmlFor="bd-price">Цена за ночь, UZS</Label>
                     <Controller
                       control={form.control}
                       name="pricePerNight"
@@ -408,27 +406,6 @@ export default function BookingDialog({
                     {form.formState.errors.pricePerNight && (
                       <p className="text-xs text-destructive">{form.formState.errors.pricePerNight.message}</p>
                     )}
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>Валюта</Label>
-                    <Controller
-                      control={form.control}
-                      name="currency"
-                      render={({ field }) => (
-                        <Select value={field.value} onValueChange={field.onChange}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Валюта" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {currencies.map((c) => (
-                              <SelectItem key={c} value={c}>
-                                {c}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
                   </div>
 
                   <div className="col-span-2 flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2">

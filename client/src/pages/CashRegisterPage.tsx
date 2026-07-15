@@ -35,7 +35,6 @@ import {
 import { getErrorMessage } from "@/lib/api";
 import { formatMoney, cn } from "@/lib/utils";
 
-const currencies = ["UZS", "USD", "EUR"];
 
 const openSchema = z.object({
   openingAmount: z.number({ invalid_type_error: "Укажите сумму" }).min(0, "Не может быть отрицательной"),
@@ -253,8 +252,8 @@ export default function CashRegisterPage() {
                 />
               </div>
             )}
-            <div className="space-y-1.5">
-              <Label htmlFor="open-amount">Остаток на начало</Label>
+            <div className="col-span-2 space-y-1.5">
+              <Label htmlFor="open-amount">Остаток на начало, UZS</Label>
               <Controller
                 control={openForm.control}
                 name="openingAmount"
@@ -265,27 +264,6 @@ export default function CashRegisterPage() {
               {openForm.formState.errors.openingAmount && (
                 <p className="text-xs text-destructive">{openForm.formState.errors.openingAmount.message}</p>
               )}
-            </div>
-            <div className="space-y-1.5">
-              <Label>Валюта</Label>
-              <Controller
-                control={openForm.control}
-                name="currency"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {currencies.map((c) => (
-                        <SelectItem key={c} value={c}>
-                          {c}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label htmlFor="open-notes">Заметка</Label>

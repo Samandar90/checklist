@@ -153,7 +153,7 @@ export default function BookingWizard({
       sourceId: extra.sourceId || sources?.[0]?.id || "",
       adminId: isAdmin ? user?.adminId ?? "" : extra.adminId || branchAdmins[0]?.id || "",
       pricePerNight: extra.pricePerNight ?? 0,
-      currency: extra.currency ?? "UZS",
+      currency: "UZS",
       paymentMethod: extra.paymentMethod ?? "Наличные",
       paymentStatus: extra.paymentStatus ?? "Оплачено",
       paidAmount: extra.paidAmount,
@@ -410,35 +410,14 @@ export default function BookingWizard({
                         </div>
                       )}
 
-                      <div className="space-y-1.5">
-                        <Label htmlFor="bw-price">Цена за ночь</Label>
+                      <div className="col-span-2 space-y-1.5">
+                        <Label htmlFor="bw-price">Цена за ночь, UZS</Label>
                         <Controller
                           control={form.control}
                           name="pricePerNight"
                           render={({ field }) => <CurrencyInput id="bw-price" value={field.value} onChange={field.onChange} />}
                         />
                         {form.formState.errors.pricePerNight && <p className="text-xs text-destructive">{form.formState.errors.pricePerNight.message}</p>}
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label>Валюта</Label>
-                        <Controller
-                          control={form.control}
-                          name="currency"
-                          render={({ field }) => (
-                            <Select value={field.value} onValueChange={field.onChange}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Валюта" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {["UZS", "USD", "EUR"].map((c) => (
-                                  <SelectItem key={c} value={c}>
-                                    {c}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
-                        />
                       </div>
                     </div>
                   )}
