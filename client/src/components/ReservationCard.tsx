@@ -1,4 +1,4 @@
-import { STATUS_META, STATUS_BAR_CLASS } from "@/lib/bookingStatus";
+import { STATUS_META, STATUS_BAR_GRADIENT } from "@/lib/bookingStatus";
 import { MonthlyReport } from "@/types";
 import { cn, formatMoney, reportDebt } from "@/lib/utils";
 
@@ -102,23 +102,21 @@ export default function ReservationCard({
       onContextMenu={onContextMenu}
       title={`${label} · ${formatMoney(booking.price, booking.currency)} · ${statusInfo.label}`}
       className={cn(
-        "group/bar absolute cursor-pointer drop-shadow-sm transition-[filter] duration-150 hover:z-30 hover:drop-shadow-md focus-visible:z-30 focus-visible:outline-none active:cursor-grabbing",
+        "group/bar absolute cursor-pointer drop-shadow-[0_1px_2px_rgba(16,24,40,0.25)] transition-[filter,transform] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] hover:z-30 hover:-translate-y-[1.5px] hover:drop-shadow-[0_6px_12px_rgba(16,24,40,0.35)] focus-visible:z-30 focus-visible:outline-none active:translate-y-0 active:cursor-grabbing",
         dimmed && "opacity-20 grayscale",
-        dragging && "z-40 opacity-85 drop-shadow-lg"
+        dragging && "z-40 opacity-85 drop-shadow-[0_10px_20px_rgba(16,24,40,0.45)]"
       )}
       style={{ left, width, top: 4, height: ROW_H - 8 }}
     >
       {/* контур (окантовка по статусу оплаты) */}
       <span className="absolute inset-0" style={{ clipPath: clip, background: borderColor }} />
-      {/* заливка + содержимое */}
+      {/* стеклянная заливка: градиент статуса + содержимое */}
       <span
-        className={cn(
-          "absolute flex items-center gap-1.5 overflow-hidden whitespace-nowrap text-xs font-medium transition-[filter] group-hover/bar:brightness-110",
-          STATUS_BAR_CLASS[booking.status]
-        )}
+        className="absolute flex items-center gap-1.5 overflow-hidden whitespace-nowrap text-xs font-medium text-white transition-[filter] group-hover/bar:brightness-110"
         style={{
           inset: 1.5,
           clipPath: clip,
+          background: STATUS_BAR_GRADIENT[booking.status],
           paddingLeft: lt ? lt * 0.8 + 3 : 6,
           paddingRight: rb ? rb * 0.8 + 3 : 6,
         }}
@@ -130,6 +128,16 @@ export default function ReservationCard({
           </span>
         )}
       </span>
+      {/* световой блик по верхней кромке — эффект стекла */}
+      <span
+        className="pointer-events-none absolute"
+        style={{
+          inset: 1.5,
+          clipPath: clip,
+          background:
+            "linear-gradient(to bottom, rgba(255,255,255,0.32), rgba(255,255,255,0.08) 42%, transparent 60%)",
+        }}
+      />
       {/* индикатор долга — красная точка на правом верхнем углу, как в референсе */}
       {debt > 0 && (
         <span

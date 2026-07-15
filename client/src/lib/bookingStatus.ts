@@ -36,6 +36,18 @@ export const STATUS_BAR_CLASS: Record<BookingStatus, string> = {
   NO_SHOW: "bg-[#d79a3f] text-white",
 };
 
+/**
+ * Glassy vertical gradients for the chessboard bars — same hues as
+ * STATUS_BAR_CLASS but with a lit top edge, like the primary buttons.
+ */
+export const STATUS_BAR_GRADIENT: Record<BookingStatus, string> = {
+  RESERVED: "linear-gradient(to bottom, #61a4e2, #3d7cbd)",
+  CHECKED_IN: "linear-gradient(to bottom, #53b671, #389252)",
+  CHECKED_OUT: "linear-gradient(to bottom, #8e98a4, #6b7684)",
+  CANCELLED: "linear-gradient(to bottom, #cf6a7e, #b04c60)",
+  NO_SHOW: "linear-gradient(to bottom, #e0a94f, #c78b31)",
+};
+
 /** Plain solid-dot classes matching STATUS_BAR_CLASS, for small legend/filter swatches. */
 export const STATUS_DOT_CLASS: Record<BookingStatus, string> = {
   RESERVED: "bg-[#4f96d8]",
