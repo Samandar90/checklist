@@ -68,7 +68,7 @@ function NavItemLink({
           )}
           <item.icon
             className={cn(
-              "h-[15px] w-[15px] shrink-0 transition-colors",
+              "h-[15px] w-[15px] shrink-0 transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-110",
               isActive ? "text-primary" : "text-muted-foreground/70 group-hover:text-foreground"
             )}
           />

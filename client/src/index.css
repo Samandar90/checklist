@@ -187,6 +187,7 @@
 
 html {
   color-scheme: light;
+  scroll-behavior: smooth;
 }
 html.dark {
   color-scheme: dark;
@@ -536,6 +537,36 @@ h1, h2, h3, .font-display {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/*
+ * Premium skeletons — translucent base with a sweeping specular highlight
+ * (Apple-style shimmer) instead of a flat opacity pulse. The global
+ * reduced-motion rule freezes the sweep automatically.
+ */
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background-color: rgba(96, 120, 150, 0.14);
+}
+.dark .skeleton-shimmer {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+.skeleton-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 25%, rgba(255, 255, 255, 0.55) 50%, transparent 75%);
+  transform: translateX(-100%);
+  animation: skeleton-sweep 1.6s ease-in-out infinite;
+}
+.dark .skeleton-shimmer::after {
+  background: linear-gradient(100deg, transparent 25%, rgba(255, 255, 255, 0.1) 50%, transparent 75%);
+}
+@keyframes skeleton-sweep {
+  to {
+    transform: translateX(100%);
   }
 }
 
