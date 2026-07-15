@@ -222,13 +222,13 @@ export default function DashboardPage() {
       {/* Фильтры */}
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-border pb-5">
         <div className="flex flex-wrap items-end gap-3">
-          <div className="flex gap-1 rounded-full border border-border bg-secondary/60 p-1">
+          <div className="no-scrollbar flex max-w-full gap-1 overflow-x-auto rounded-full border border-border bg-secondary/60 p-1">
             {presets.map((p) => (
               <button
                 key={p.key}
                 onClick={() => setPreset(p.key)}
                 className={cn(
-                  "rounded-full px-3 py-1.5 text-[13px] font-medium transition-all",
+                  "shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-medium transition-all",
                   preset === p.key
                     ? "bg-card text-foreground shadow-[0_1px_2px_rgba(16,24,40,0.08)]"
                     : "text-muted-foreground hover:text-foreground"
