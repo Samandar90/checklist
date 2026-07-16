@@ -38,7 +38,7 @@ export default function ReservationCard({
   cellWidth: number;
   dimmed: boolean;
   dragging: boolean;
-  onMoveStart: (e: React.MouseEvent, mode: "move" | "resize") => void;
+  onMoveStart: (e: React.PointerEvent, mode: "move" | "resize") => void;
   onOpenDetails: () => void;
   onHover: (x: number, y: number) => void;
   onLeave: () => void;
@@ -94,7 +94,7 @@ export default function ReservationCard({
       role="button"
       tabIndex={0}
       aria-label={`${label}, ${statusInfo.label}, ${formatMoney(booking.price, booking.currency)}`}
-      onMouseDown={(e) => onMoveStart(e, "move")}
+      onPointerDown={(e) => onMoveStart(e, "move")}
       onKeyDown={handleKeyDown}
       onMouseEnter={(e) => onHover(e.clientX, e.clientY)}
       onMouseMove={(e) => onHover(e.clientX, e.clientY)}
@@ -106,7 +106,7 @@ export default function ReservationCard({
         dimmed && "opacity-20 grayscale",
         dragging && "z-40 opacity-85 drop-shadow-[0_10px_20px_rgba(16,24,40,0.45)]"
       )}
-      style={{ left, width, top: 4, height: ROW_H - 8 }}
+      style={{ left, width, top: 4, height: ROW_H - 8, touchAction: "none" }}
     >
       {/* контур (окантовка по статусу оплаты) */}
       <span className="absolute inset-0" style={{ clipPath: clip, background: borderColor }} />
@@ -148,7 +148,7 @@ export default function ReservationCard({
       {/* ручка изменения срока (правый край) */}
       {slantRight && (
         <span
-          onMouseDown={(e) => onMoveStart(e, "resize")}
+          onPointerDown={(e) => onMoveStart(e, "resize")}
           className="absolute inset-y-0 right-0 z-10 w-2.5 cursor-ew-resize opacity-0 transition-opacity group-hover/bar:opacity-100"
           title="Потяните, чтобы изменить срок"
         >

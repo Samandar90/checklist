@@ -144,14 +144,13 @@ export default function CalendarPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const panRef = useRef<{ startX: number; startLeft: number } | null>(null);
 
-  function startPan(e: React.MouseEvent) {
+  function startPan(e: React.PointerEvent) {
     if (e.button !== 0 || !scrollRef.current) return;
     panRef.current = { startX: e.clientX, startLeft: scrollRef.current.scrollLeft };
-    e.preventDefault();
   }
 
   useEffect(() => {
-    function onMove(e: MouseEvent) {
+    function onMove(e: PointerEvent) {
       const p = panRef.current;
       if (!p || !scrollRef.current) return;
       scrollRef.current.scrollLeft = p.startLeft - (e.clientX - p.startX);
@@ -159,11 +158,13 @@ export default function CalendarPage() {
     function onUp() {
       panRef.current = null;
     }
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
     return () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
     };
   }, []);
 
@@ -223,9 +224,36 @@ export default function CalendarPage() {
       setDraft({ roomId: d.roomId, date: isoDay(days[a]), checkOut: isoDay(checkOut) });
       setBookingOpen(true);
     }
-    window.addEventListener("mouseup", finish);
-    return () => window.removeEventListener("mouseup", finish);
+    window.addEventListener("pointerup", finish);
+    window.addEventListener("pointercancel", finish);
+    return () => {
+      window.removeEventListener("pointerup", finish);
+      window.removeEventListener("pointercancel", finish);
+    };
   }, [days]);
+
+  // Extend the drag-selection as the pointer moves. Uses elementFromPoint because
+  // touch sets implicit pointer capture on the origin cell, so per-cell enter
+  // events never fire on other cells — the finger's position is read directly.
+  useEffect(() => {
+    function onPointerMove(e: PointerEvent) {
+      const d = dragRef.current;
+      if (!d) return;
+      const cell = (document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null)?.closest(
+        "[data-cell]"
+      ) as HTMLElement | null;
+      if (!cell) return;
+      const rowEl = cell.closest("[data-room-row]") as HTMLElement | null;
+      if (rowEl?.dataset.roomId !== d.roomId) return; // only extend within the started room
+      const i = Number(cell.dataset.day);
+      if (Number.isNaN(i) || i === d.b) return;
+      const next = { ...d, b: i };
+      dragRef.current = next;
+      setDrag(next);
+    }
+    window.addEventListener("pointermove", onPointerMove);
+    return () => window.removeEventListener("pointermove", onPointerMove);
+  }, []);
 
   // Center today's column once per month/branch view (scrollbar is hidden).
   const scrolledViewRef = useRef("");
@@ -326,7 +354,7 @@ export default function CalendarPage() {
   }, [move]);
 
   useEffect(() => {
-    function onMouseMove(e: MouseEvent) {
+    function onPointerMove(e: PointerEvent) {
       const m = moveRef.current;
       if (!m) return;
       const day = Math.floor((e.clientX - m.gridLeft) / CELL_W);
@@ -346,7 +374,7 @@ export default function CalendarPage() {
       if (curStart !== m.curStart || curEnd !== m.curEnd || targetRoomId !== m.targetRoomId)
         setMove({ ...m, curStart, curEnd, targetRoomId });
     }
-    async function onMouseUp() {
+    async function onPointerUp() {
       const m = moveRef.current;
       if (!m) return;
       setMove(null);
@@ -385,16 +413,18 @@ export default function CalendarPage() {
         toast.error(getErrorMessage(err));
       }
     }
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
     return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cursor.year, cursor.month, monthStartMs]);
 
-  function startMove(e: React.MouseEvent, booking: MonthlyReport, mode: "move" | "resize") {
+  function startMove(e: React.PointerEvent, booking: MonthlyReport, mode: "move" | "resize") {
     e.stopPropagation();
     e.preventDefault();
     const gridEl = (e.currentTarget as HTMLElement).closest("[data-grid-row]") as HTMLElement | null;
@@ -642,7 +672,8 @@ export default function CalendarPage() {
               {/* Заголовок: синяя полоса дней + свободно + загрузка % (sticky).
                   Зажмите и тяните — горизонтальная прокрутка. */}
               <div
-                onMouseDown={startPan}
+                onPointerDown={startPan}
+                style={{ touchAction: "pan-y" }}
                 className="sticky top-0 z-30 flex cursor-grab select-none border-b border-border bg-card active:cursor-grabbing"
               >
                 <div
@@ -717,7 +748,7 @@ export default function CalendarPage() {
                       {g.type} · {g.rooms.length}
                     </button>
                     {/* Зажмите и тяните строку группы — горизонтальная прокрутка */}
-                    <div onMouseDown={startPan} className="flex cursor-grab select-none active:cursor-grabbing">
+                    <div onPointerDown={startPan} style={{ touchAction: "pan-y" }} className="flex cursor-grab select-none active:cursor-grabbing">
                       {days.map((d, i) => {
                         const occInGroup = g.rooms.filter((r) => occupiedByDay[i].has(r.id)).length;
                         const free = g.rooms.length - occInGroup;
@@ -774,31 +805,27 @@ export default function CalendarPage() {
                             return (
                               <div
                                 key={i}
-                                style={{ width: CELL_W, minWidth: CELL_W }}
-                                onMouseDown={() => {
+                                data-cell
+                                data-day={i}
+                                style={{ width: CELL_W, minWidth: CELL_W, touchAction: "pan-y" }}
+                                onPointerDown={() => {
                                   const next = { roomId: room.id, a: i, b: i };
                                   dragRef.current = next;
                                   setDrag(next);
                                 }}
-                                onMouseEnter={(e) => {
-                                  setDrag((dr) => {
-                                    if (dr && dr.roomId === room.id) {
-                                      const next = { ...dr, b: i };
-                                      dragRef.current = next;
-                                      return next;
-                                    }
-                                    return dr;
-                                  });
-                                  if (free && !dragRef.current && !moveRef.current) {
+                                onPointerEnter={(e) => {
+                                  // Hover-preview is mouse-only; drag extension is handled
+                                  // globally via elementFromPoint (works for touch too).
+                                  if (e.pointerType === "mouse" && free && !dragRef.current && !moveRef.current) {
                                     setFreeHover({ room, day: d, x: e.clientX, y: e.clientY });
                                   }
                                 }}
-                                onMouseMove={(e) => {
-                                  if (free && !dragRef.current && !moveRef.current) {
+                                onPointerMove={(e) => {
+                                  if (e.pointerType === "mouse" && free && !dragRef.current && !moveRef.current) {
                                     setFreeHover({ room, day: d, x: e.clientX, y: e.clientY });
                                   }
                                 }}
-                                onMouseLeave={() => setFreeHover(null)}
+                                onPointerLeave={() => setFreeHover(null)}
                                 className={cn(
                                   "cursor-pointer border-l border-border/40 transition-colors hover:bg-primary/10",
                                   i === todayIndex && "bg-primary/[0.07]",
@@ -879,7 +906,8 @@ export default function CalendarPage() {
               {/* Нижняя полоса дней — чтобы на длинных списках не скроллить к шапке.
                   Зажмите и тяните — горизонтальная прокрутка. */}
               <div
-                onMouseDown={startPan}
+                onPointerDown={startPan}
+                style={{ touchAction: "pan-y" }}
                 className="flex cursor-grab select-none border-t border-border active:cursor-grabbing"
               >
                 <div
