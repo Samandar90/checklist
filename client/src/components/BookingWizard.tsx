@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, User2, CalendarRange, BedDouble, Wallet, ClipboardCheck, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerBody, DrawerFooter, DrawerCloseButton } from "@/components/ui/drawer";
+import GuestAutocomplete from "@/components/GuestAutocomplete";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,7 +28,7 @@ import { Segmented } from "@/components/ui/segmented";
 
 import { useAdmins } from "@/hooks/useAdmins";
 import { useSources } from "@/hooks/useSources";
-import { useCreateReport } from "@/hooks/useReports";
+import { useCreateReport, useReports } from "@/hooks/useReports";
 import { useAuth } from "@/contexts/AuthContext";
 import { Room, paymentMethods, paymentStatuses } from "@/types";
 import { getErrorMessage } from "@/lib/api";
@@ -111,6 +112,25 @@ export default function BookingWizard({
   const { data: sources } = useSources();
   const createReport = useCreateReport();
   const [confirmClose, setConfirmClose] = useState(false);
+
+  // Гости выводятся из истории броней филиала (отдельной таблицы гостей нет).
+  const { data: guestReports } = useReports({ branchId });
+  const guestSuggestions = useMemo(() => {
+    const map = new Map<string, { name: string; stays: number; lastVisit: string }>();
+    for (const r of guestReports ?? []) {
+      const name = r.guestName?.trim();
+      if (!name) continue;
+      const key = name.toLowerCase();
+      const ex = map.get(key);
+      if (ex) {
+        ex.stays += 1;
+        if (r.date > ex.lastVisit) ex.lastVisit = r.date;
+      } else {
+        map.set(key, { name, stays: 1, lastVisit: r.date });
+      }
+    }
+    return [...map.values()].sort((a, b) => b.lastVisit.localeCompare(a.lastVisit));
+  }, [guestReports]);
   // Админ подходит, если работает в этом филиале (мульти-филиальные — по branchIds).
   const branchAdmins = (admins ?? []).filter((a) => (a.branchIds?.length ? a.branchIds.includes(branchId) : a.branchId === branchId));
 
@@ -313,8 +333,18 @@ export default function BookingWizard({
                   {step.key === "guest" && (
                     <div className="space-y-1.5">
                       <Label htmlFor="bw-guest">Имя гостя</Label>
-                      <Input id="bw-guest" placeholder="например, Иван Иванов" {...form.register("guestName")} />
-                      <p className="text-xs text-muted-foreground">Поиск по базе гостей пока не подключён — введите имя вручную.</p>
+                      <Controller
+                        control={form.control}
+                        name="guestName"
+                        render={({ field }) => (
+                          <GuestAutocomplete value={field.value ?? ""} onChange={field.onChange} guests={guestSuggestions} />
+                        )}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        {guestSuggestions.length > 0
+                          ? "Начните вводить — подскажем гостей из истории."
+                          : "Введите имя гостя."}
+                      </p>
                     </div>
                   )}
 
@@ -575,3 +605,4 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
