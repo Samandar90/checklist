@@ -5,6 +5,7 @@ import { requireSuperAdmin } from "../middleware/auth";
 import { recordAudit, buildChanges, summarize } from "../audit";
 import { resolveBranchId, hasBranchAccess } from "../branchScope";
 import { ROOM_HOLDING_STATUSES } from "../statuses";
+import { DAY_MS, nightRange, normalizePaid } from "../lib/bookings";
 
 const REPORT_AUDIT_FIELDS = ["date", "checkOut", "guestName", "price", "currency", "paymentMethod", "paymentStatus", "status", "paidAmount", "notes", "roomId"];
 
@@ -17,37 +18,12 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const money = (n: number) => n.toLocaleString("ru-RU");
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 const router = Router();
 
-/**
- * Normalize the stored paid amount so debt is always `price - (paidAmount ?? price)`:
- * "Оплачено" → null (fully paid), "Долг" → 0, "Частично" → the entered amount.
- */
-function normalizePaid(data: { paymentStatus: string; paidAmount?: number | null; price: number }) {
-  if (data.paymentStatus === "Оплачено") return null;
-  if (data.paymentStatus === "Долг") return 0;
-  return data.paidAmount ?? 0;
-}
-
-// A room is only freed by a cancellation or a no-show; every other status still holds the nights
-// (shared with dashboard revenue math — see ../statuses).
-
-/** Floor a date to the start of its day so overlap is compared in whole hotel-nights. */
-const dayStart = (d: Date) => {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-};
-
-/** Half-open night range [start, end) for a booking; a missing checkout means a single night. */
-function nightRange(date: Date, checkOut: Date | null) {
-  const start = dayStart(date);
-  const out = checkOut ? dayStart(checkOut) : null;
-  const end = out && out.getTime() > start.getTime() ? out : new Date(start.getTime() + DAY_MS);
-  return { start, end };
-}
+// Night maths, overlap and paid-amount normalization live in ../lib/bookings
+// (pure + unit-tested). A room is only freed by a cancellation or a no-show;
+// every other status still holds the nights (shared statuses — see ../statuses).
 
 /**
  * Find an active booking that overlaps [start, end) on the same room, or null.
