@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -134,9 +134,19 @@ export default function BookingWizard({
     },
   });
 
-  // Seed from draft (drag-selected cell) + restore any autosaved extra fields.
+  // Seed the form ONCE per open+draft. Deliberately independent of the async
+  // admins/sources queries: if we re-ran when those lists arrived, the reset
+  // would throw the user back to step 1 and wipe what they'd already typed.
+  const seededKeyRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!open || !draft) return;
+    if (!open || !draft) {
+      if (!open) seededKeyRef.current = null; // allow a fresh seed on next open
+      return;
+    }
+    const key = `${draft.roomId}|${draft.date}|${draft.checkOut}`;
+    if (seededKeyRef.current === key) return; // already seeded this draft
+    seededKeyRef.current = key;
+
     setStepIdx(0);
     let extra: Partial<FormValues> = {};
     try {
@@ -160,7 +170,22 @@ export default function BookingWizard({
       notes: extra.notes ?? "",
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, draft, admins, sources]);
+  }, [open, draft]);
+
+  // Backfill the default source / admin once those lists finish loading —
+  // only into still-empty fields, without a reset, so the current step and any
+  // user input are preserved. shouldDirty:false keeps the "unsaved changes"
+  // close-guard from firing on an auto-filled default.
+  useEffect(() => {
+    if (!open) return;
+    if (!form.getValues("sourceId") && sources?.[0]?.id) {
+      form.setValue("sourceId", sources[0].id, { shouldDirty: false });
+    }
+    if (!isAdmin && !form.getValues("adminId") && branchAdmins[0]?.id) {
+      form.setValue("adminId", branchAdmins[0].id, { shouldDirty: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, sources, admins, branchId]);
 
   // Autosave the editable extras (not the drag-selected room/dates) on every change.
   useEffect(() => {
