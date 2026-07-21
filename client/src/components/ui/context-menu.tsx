@@ -46,7 +46,7 @@ export function ContextMenu({
           <div
             ref={menuRef}
             style={{ left: pos.x, top: pos.y }}
-            className="fixed z-[100] min-w-[180px] overflow-hidden rounded-xl border border-border bg-card p-1 shadow-xl animate-pop-in"
+            className="glass-strong fixed z-[100] min-w-[180px] overflow-hidden rounded-2xl p-1 animate-pop-in"
             onMouseDown={(e) => e.stopPropagation()}
           >
             {items.map((item) => (
@@ -57,7 +57,7 @@ export function ContextMenu({
                   setPos(null);
                 }}
                 className={cn(
-                  "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] transition-colors hover:bg-secondary",
+                  "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-[13px] transition-colors hover:bg-primary/10",
                   item.destructive ? "text-destructive" : "text-foreground"
                 )}
               >

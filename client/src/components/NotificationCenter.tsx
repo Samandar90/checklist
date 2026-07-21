@@ -132,7 +132,7 @@ export default function NotificationCenter() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Поиск по уведомлениям…"
-                  className="w-full rounded-lg border border-border bg-background py-1.5 pl-8 pr-7 text-[12.5px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
+                  className="glass-field w-full rounded-xl py-1.5 pl-8 pr-7 text-[12.5px] text-foreground transition-all placeholder:text-muted-foreground focus:outline-none"
                 />
                 {search && (
                   <button onClick={() => setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
