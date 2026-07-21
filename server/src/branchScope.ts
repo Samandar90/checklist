@@ -22,9 +22,17 @@ export function resolveBranchId(user: TokenPayload, requested?: string | null): 
   return user.branchId ?? allowed[0] ?? "";
 }
 
+/**
+ * Every branch this admin may work in. Empty for SUPER_ADMIN, who is
+ * unrestricted — callers must treat "empty" as "no branch filter".
+ */
+export function allowedBranchIds(user: TokenPayload): string[] {
+  if (user.role !== "ADMIN") return [];
+  return user.branchIds && user.branchIds.length ? user.branchIds : user.branchId ? [user.branchId] : [];
+}
+
 /** Does this admin have access to the given branch? SUPER_ADMIN always does. */
 export function hasBranchAccess(user: TokenPayload, branchId: string): boolean {
   if (user.role !== "ADMIN") return true;
-  const allowed = user.branchIds && user.branchIds.length ? user.branchIds : user.branchId ? [user.branchId] : [];
-  return allowed.includes(branchId);
+  return allowedBranchIds(user).includes(branchId);
 }

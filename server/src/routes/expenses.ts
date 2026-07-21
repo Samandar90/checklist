@@ -2,7 +2,8 @@ import { Router } from "express";
 import { prisma } from "../prisma";
 import { expenseSchema } from "../validation";
 import { recordAudit, buildChanges, summarize } from "../audit";
-import { resolveBranchId, hasBranchAccess } from "../branchScope";
+import { resolveBranchId, hasBranchAccess, allowedBranchIds } from "../branchScope";
+import { TokenPayload } from "../auth";
 
 /** Any admin assigned to the expense's branch may manage it, not only its creator. */
 function canManage(req: any, existing: { branchId: string }) {
@@ -14,11 +15,15 @@ const router = Router();
 const EXPENSE_AUDIT_FIELDS = ["date", "category", "amount", "currency", "note"];
 const money = (n: number) => n.toLocaleString("ru-RU");
 
-function buildWhere(query: any, isAdmin: boolean, ownAdminId: string | null) {
+function buildWhere(query: any, user: TokenPayload) {
   const where: any = {};
 
-  if (isAdmin) {
-    where.adminId = ownAdminId ?? "__none__";
+  if (user.role === "ADMIN") {
+    // Расходы смены — общие для филиала, а не личные: администратор видит все
+    // расходы своих филиалов, иначе в конце смены не собрать общую картину
+    // (и это уже согласуется с правами на изменение — см. canManage).
+    const branches = allowedBranchIds(user);
+    where.branchId = branches.length ? { in: branches } : "__none__";
   } else {
     if (query.branchId) where.branchId = String(query.branchId);
     if (query.adminId) where.adminId = String(query.adminId);
@@ -40,9 +45,8 @@ function buildWhere(query: any, isAdmin: boolean, ownAdminId: string | null) {
 
 router.get("/", async (req, res, next) => {
   try {
-    const isAdmin = req.user!.role === "ADMIN";
     const expenses = await prisma.expense.findMany({
-      where: buildWhere(req.query, isAdmin, req.user!.adminId),
+      where: buildWhere(req.query, req.user!),
       orderBy: { date: "desc" },
       include: { branch: true, admin: true },
     });

@@ -124,7 +124,7 @@ export default function MyExpensesPage() {
     <div>
       <PageHeader
         title="Расходы за смену"
-        description={`${user?.fullName ?? user?.username} · ${user?.branchName ?? ""}`}
+        description={`${user?.branchName ?? ""} — общие расходы филиала, видны всем администраторам`}
         action={
           <Button onClick={openCreate}>
             <Plus className="h-4 w-4" /> Добавить расход
@@ -134,7 +134,7 @@ export default function MyExpensesPage() {
 
       <Card className="mb-6 max-w-xs">
         <CardHeader className="pb-2">
-          <CardTitle className="text-[12.5px]">Мои расходы</CardTitle>
+          <CardTitle className="text-[12.5px]">Расходы филиала</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-[26px] font-semibold tabular-nums tracking-tight text-foreground">{total.toLocaleString("ru-RU")}</div>
@@ -165,8 +165,8 @@ export default function MyExpensesPage() {
       ) : (expenses ?? []).length === 0 ? (
         <EmptyState
           icon={Wallet}
-          title="У вас пока нет расходов"
-          description="Добавьте расход за смену, чтобы он попал в общий учёт."
+          title="Расходов пока нет"
+          description="Добавьте расход за смену — он попадёт в общий учёт филиала."
         />
       ) : visible.length === 0 ? (
         <EmptyState
@@ -175,7 +175,7 @@ export default function MyExpensesPage() {
           description="По вашему запросу нет расходов. Измените поиск."
         />
       ) : (
-        <ExpenseDayList expenses={visible} onEdit={openEdit} onDelete={setDeleteTarget} />
+        <ExpenseDayList expenses={visible} showSpender onEdit={openEdit} onDelete={setDeleteTarget} />
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
