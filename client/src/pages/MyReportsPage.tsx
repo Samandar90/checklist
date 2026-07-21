@@ -107,7 +107,10 @@ export default function MyReportsPage() {
   const { user } = useAuth();
   const { data: rooms } = useRooms();
   const { data: sources } = useSources();
-  const { data: reports, isLoading } = useReports({});
+  // Смотрим один год за раз — иначе страница тянет всю историю броней админа.
+  const [year, setYear] = useState(() => String(new Date().getFullYear()));
+  const years = Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - i);
+  const { data: reports, isLoading } = useReports({ year });
   const controls = useTableControls(reports ?? [], reportMatches, 10);
 
   const createReport = useCreateReport();
@@ -258,7 +261,7 @@ export default function MyReportsPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-[12.5px]">За всё время</CardTitle>
+            <CardTitle className="text-[12.5px]">За {year} год</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-[26px] font-semibold tabular-nums tracking-tight text-foreground">{totalRevenue.toLocaleString("ru-RU")}</div>
@@ -278,19 +281,37 @@ export default function MyReportsPage() {
         </Card>
       </div>
 
-      {(reports ?? []).length > 0 && (
-        <div className="mb-4 max-w-xs">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={controls.search}
-              onChange={(e) => controls.setSearch(e.target.value)}
-              placeholder="Поиск: номер, источник…"
-              className="pl-8"
-            />
-          </div>
+      <div className="mb-4 flex flex-wrap items-end gap-3">
+        <div className="w-28 space-y-1.5">
+          <Label>Год</Label>
+          <Select value={year} onValueChange={setYear}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {years.map((y) => (
+                <SelectItem key={y} value={String(y)}>
+                  {y}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-      )}
+        {(reports ?? []).length > 0 && (
+          <div className="w-full max-w-xs space-y-1.5">
+            <Label>Поиск</Label>
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={controls.search}
+                onChange={(e) => controls.setSearch(e.target.value)}
+                placeholder="Номер, источник…"
+                className="pl-8"
+              />
+            </div>
+          </div>
+        )}
+      </div>
 
       {isLoading ? (
         <div className="space-y-2">

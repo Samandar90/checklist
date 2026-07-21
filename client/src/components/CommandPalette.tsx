@@ -49,7 +49,9 @@ export default function CommandPalette({
   const { recentSearches, addSearch, clearSearches } = useRecentSearches();
   const updateStatus = useUpdateReportStatus();
 
-  const { data: reports } = useReports({});
+  // Палитра — быстрый переход по свежим данным; грузится на каждой странице,
+  // поэтому ограничиваем текущим годом вместо всей истории броней.
+  const { data: reports } = useReports({ year: String(new Date().getFullYear()) });
   const { data: rooms } = useRooms();
   const { data: branches } = useBranches({ enabled: isSuperAdmin });
   const { data: admins } = useAdmins({ enabled: isSuperAdmin });

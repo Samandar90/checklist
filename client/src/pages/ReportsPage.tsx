@@ -145,7 +145,9 @@ export default function ReportsPage() {
   const { data: rooms } = useRooms();
   const { data: sources } = useSources();
 
-  const [filters, setFilters] = useState<ReportFilters>({});
+  // Открываемся на текущем годе, а не на «всём времени»: иначе страница тянет
+  // всю историю броней разом. «Все годы» остаётся доступен явным выбором.
+  const [filters, setFilters] = useState<ReportFilters>(() => ({ year: String(new Date().getFullYear()) }));
   const { data: reports, isLoading } = useReports(filters);
   const { data: summary } = useReportSummary(filters);
   const controls = useTableControls(reports ?? [], reportMatches, 10);

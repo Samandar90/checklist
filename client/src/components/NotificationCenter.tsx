@@ -22,7 +22,10 @@ export default function NotificationCenter() {
   const [activeCategories, setActiveCategories] = useState<Set<NotificationCategory>>(new Set(CATEGORY_ORDER));
   const ref = useRef<HTMLDivElement>(null);
 
-  const { data: reports } = useReports({});
+  // Уведомления — про сегодня (заезды/выезды/долги/конфликты), поэтому берём
+  // текущий год, а не всю историю: этот запрос идёт на каждой странице.
+  // Полный список задолженностей всегда доступен на странице «Должники».
+  const { data: reports } = useReports({ year: String(new Date().getFullYear()) });
   const { data: rooms } = useRooms();
   const hk = useHousekeeping();
   const state = useNotificationState();

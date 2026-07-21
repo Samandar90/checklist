@@ -38,7 +38,9 @@ function isoDay(d: Date) {
 
 export default function StaffWorkspacePage() {
   const { user } = useAuth();
-  const { data: reports, isLoading } = useReports({});
+  // Странице нужны только текущий месяц и последние 14 дней — незачем тянуть
+  // всю историю броней, ограничиваемся текущим годом.
+  const { data: reports, isLoading } = useReports({ year: String(new Date().getFullYear()) });
   const { data: expenses } = useExpenses({});
   const { data: shift, isLoading: shiftLoading } = useActiveCashShift();
   const updateStatus = useUpdateReportStatus();
