@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { nightsBetween, reportDebt, pluralRu, addDaysIso } from "./utils";
+import { nightsBetween, reportDebt, pluralRu, addDaysIso, isoDay, todayIso, currentMonthKey } from "./utils";
 
 describe("nightsBetween", () => {
   it("counts nights between two ISO dates", () => {
@@ -46,6 +46,32 @@ describe("pluralRu", () => {
     expect(nights(12)).toBe("ночей");
     expect(nights(14)).toBe("ночей");
     expect(nights(0)).toBe("ночей");
+  });
+});
+
+describe("isoDay / todayIso (local calendar, not UTC)", () => {
+  it("uses the local date parts", () => {
+    // 2026-07-06 00:30 local — in any timezone east of UTC this is still the 6th
+    // locally, while toISOString() would report the 5th.
+    const d = new Date(2026, 6, 6, 0, 30, 0);
+    expect(isoDay(d)).toBe("2026-07-06");
+  });
+
+  it("keeps the local day just before midnight", () => {
+    const d = new Date(2026, 6, 6, 23, 59, 0);
+    expect(isoDay(d)).toBe("2026-07-06");
+  });
+
+  it("todayIso matches the local calendar day", () => {
+    const now = new Date();
+    const expected = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
+      now.getDate()
+    ).padStart(2, "0")}`;
+    expect(todayIso()).toBe(expected);
+  });
+
+  it("currentMonthKey is the local YYYY-MM", () => {
+    expect(currentMonthKey()).toBe(todayIso().slice(0, 7));
   });
 });
 

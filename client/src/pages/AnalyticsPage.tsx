@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import { cn, isoDay } from "@/lib/utils";
 import { holdsRoom } from "@/lib/bookingStatus";
 import { escapeCsv } from "@/lib/csv";
 import { useDashboard } from "@/hooks/useDashboard";
@@ -31,12 +31,6 @@ import { useCountUp } from "@/hooks/useCountUp";
 import { useTheme } from "@/contexts/ThemeContext";
 import { DashboardFilters } from "@/types";
 
-function isoDay(d: Date) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
 function nightsBetween(date: string, checkOut?: string | null) {
   if (!checkOut) return 1;
   const diff = Math.round((new Date(checkOut).getTime() - new Date(date).getTime()) / 86400000);

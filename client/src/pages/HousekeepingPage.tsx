@@ -15,12 +15,9 @@ import { useRooms } from "@/hooks/useRooms";
 import { useCalendar } from "@/hooks/useCalendar";
 import { useHousekeeping, HKStatus, HKPriority } from "@/hooks/useHousekeeping";
 import { useAuth } from "@/contexts/AuthContext";
-import { cn, formatDateTime } from "@/lib/utils";
+import { cn, formatDateTime, todayIso } from "@/lib/utils";
 
-function isoDay(d: Date) {
-  return d.toISOString().slice(0, 10);
-}
-const today = isoDay(new Date());
+const today = todayIso();
 
 const statusMeta: Record<HKStatus, { label: string; tint: string }> = {
   Clean: { label: "Чисто", tint: "tint-emerald" },

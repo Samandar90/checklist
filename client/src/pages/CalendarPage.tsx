@@ -41,7 +41,7 @@ import { useUpdateReport, useDeleteReport } from "@/hooks/useReports";
 import { STATUS_META, STATUS_DOT_CLASS, holdsRoom } from "@/lib/bookingStatus";
 import { MonthlyReport, Room, BookingStatus, bookingStatuses } from "@/types";
 import { getErrorMessage } from "@/lib/api";
-import { cn, formatDate, formatMoney, nightsBetween, pluralRu, reportDebt, paymentStatusClass } from "@/lib/utils";
+import { cn, formatDate, formatMoney, isoDay, nightsBetween, pluralRu, reportDebt, paymentStatusClass } from "@/lib/utils";
 
 const MONTHS = [
   "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
@@ -57,12 +57,6 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 /** Status filter chips — driven by the same status metadata every other page uses. */
 const STATUS_FILTERS = bookingStatuses.map((status) => ({ status, ...STATUS_META[status] }));
 
-function isoDay(d: Date) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
 
 function dayStartMs(d: string | Date) {
   const x = new Date(d);

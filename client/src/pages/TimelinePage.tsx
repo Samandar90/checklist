@@ -13,16 +13,13 @@ import { Segmented } from "@/components/ui/segmented";
 
 import { useAudit } from "@/hooks/useAudit";
 import { AuditFilters, AuditLog } from "@/types";
-import { cn, formatDate, formatDateTime, addDaysIso } from "@/lib/utils";
+import { cn, formatDate, formatDateTime, addDaysIso, todayIso } from "@/lib/utils";
 import { categorize, iconFor, CATEGORY_META, TimelineCategory, CategorizedLog } from "@/lib/timelineCategorize";
 
 type Grouping = "day" | "booking";
 
 const CATEGORY_ORDER: TimelineCategory[] = ["booking", "status", "room", "payment", "other"];
 
-function todayIso() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 function matchesSearch(entry: CategorizedLog, q: string) {
   if (!q) return true;

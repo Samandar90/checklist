@@ -57,6 +57,7 @@ import {
   paymentStatusClass,
   nightsBetween,
   addDaysIso,
+  todayIso,
   PAYMENT_STATUS_OPTIONS,
 } from "@/lib/utils";
 import { exportReportsToCsv } from "@/lib/csv";
@@ -123,9 +124,6 @@ const months = [
   "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь",
 ];
 
-function todayIso() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 function reportMatches(r: MonthlyReport, q: string) {
   return (

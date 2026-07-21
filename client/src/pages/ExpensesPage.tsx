@@ -30,6 +30,7 @@ import { useAdmins } from "@/hooks/useAdmins";
 import { useExpenses, useCreateExpense, useUpdateExpense, useDeleteExpense } from "@/hooks/useExpenses";
 import { Expense, ExpenseFilters, expenseCategories } from "@/types";
 import { getErrorMessage } from "@/lib/api";
+import { todayIso } from "@/lib/utils";
 
 
 const expenseFormSchema = z.object({
@@ -42,9 +43,6 @@ const expenseFormSchema = z.object({
 });
 type ExpenseFormValues = z.infer<typeof expenseFormSchema>;
 
-function todayIso() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 function expenseMatches(e: Expense, q: string) {
   return (

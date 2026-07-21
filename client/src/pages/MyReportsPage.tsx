@@ -50,6 +50,8 @@ import {
   paymentStatusClass,
   nightsBetween,
   addDaysIso,
+  todayIso,
+  currentMonthKey,
   PAYMENT_STATUS_OPTIONS,
 } from "@/lib/utils";
 import { holdsRoom } from "@/lib/bookingStatus";
@@ -89,9 +91,6 @@ const reportFormSchema = z
   });
 type ReportFormValues = z.infer<typeof reportFormSchema>;
 
-function todayIso() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 function reportMatches(r: MonthlyReport, q: string) {
   return (
@@ -220,7 +219,7 @@ export default function MyReportsPage() {
 
   // Единое правило по всей системе: отменённые брони и незаезды не считаются выручкой.
   const revenueReports = (reports ?? []).filter((r) => holdsRoom(r.status));
-  const monthKey = new Date().toISOString().slice(0, 7);
+  const monthKey = currentMonthKey();
   const monthReports = revenueReports.filter((r) => r.date.slice(0, 7) === monthKey);
   const monthRevenue = monthReports.reduce((sum, r) => sum + r.price, 0);
   const totalRevenue = revenueReports.reduce((sum, r) => sum + r.price, 0);

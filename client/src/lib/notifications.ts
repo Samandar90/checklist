@@ -1,7 +1,7 @@
 import { LogIn, LogOut, AlertTriangle, Sparkles, GitCompareArrows, Wrench } from "lucide-react";
 import { HKRoomState } from "@/hooks/useHousekeeping";
 import { MonthlyReport, Room } from "@/types";
-import { nightsBetween, reportDebt } from "@/lib/utils";
+import { nightsBetween, reportDebt, todayIso } from "@/lib/utils";
 
 export type NotificationCategory = "ARRIVAL" | "DEPARTURE" | "OVERDUE" | "CLEANING" | "CONFLICT" | "MAINTENANCE";
 
@@ -23,9 +23,6 @@ export const CATEGORY_META: Record<NotificationCategory, { label: string; icon: 
   MAINTENANCE: { label: "Требует ремонта", icon: Wrench, tint: "tint-amber" },
 };
 
-function todayIso() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 function overlaps(a: MonthlyReport, b: MonthlyReport) {
   const aStart = a.date.slice(0, 10);

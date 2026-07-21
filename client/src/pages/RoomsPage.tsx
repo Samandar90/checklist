@@ -29,7 +29,7 @@ import { useReports } from "@/hooks/useReports";
 import { useHousekeeping, HKStatus } from "@/hooks/useHousekeeping";
 import { Room } from "@/types";
 import { getErrorMessage } from "@/lib/api";
-import { cn, formatMoney } from "@/lib/utils";
+import { cn, formatMoney, todayIso } from "@/lib/utils";
 import { holdsRoom } from "@/lib/bookingStatus";
 
 const roomFormSchema = z.object({
@@ -50,7 +50,7 @@ const statusMeta: Record<HKStatus, { label: string; tint: string }> = {
   Maintenance: { label: "Ремонт", tint: "tint-amber" },
 };
 
-const today = new Date().toISOString().slice(0, 10);
+const today = todayIso();
 type SortKey = "roomNumber" | "revenue" | "occupancy";
 
 export default function RoomsPage() {

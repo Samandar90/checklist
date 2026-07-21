@@ -9,6 +9,11 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # Render runs containers in UTC. The server does date maths in local time
+      # (startOfDay, month/year ranges), so without this "сегодня" would mean the
+      # UTC day — i.e. yesterday for the hotel between 00:00 and 05:00 local.
+      - key: TZ
+        value: Asia/Tashkent
       - key: DATABASE_URL
         value: file:/data/prod.db
       - key: JWT_SECRET

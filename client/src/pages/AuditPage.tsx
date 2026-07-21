@@ -29,7 +29,7 @@ import { Segmented } from "@/components/ui/segmented";
 
 import { useAudit } from "@/hooks/useAudit";
 import { AuditFilters, AuditFieldChange, AuditLog } from "@/types";
-import { cn, formatDate, formatDateTime, addDaysIso } from "@/lib/utils";
+import { cn, formatDate, formatDateTime, addDaysIso, todayIso } from "@/lib/utils";
 import { exportAuditToCsv } from "@/lib/csv";
 
 type Grouping = "day" | "actor";
@@ -58,9 +58,6 @@ const ACTION_META: Record<ActionKey, { label: string; icon: typeof Plus; tint: s
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function todayIso() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 function parseChanges(raw: string | null): AuditFieldChange[] {
   if (!raw) return [];

@@ -50,7 +50,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn, formatDate, formatMoney, reportDebt } from "@/lib/utils";
+import { cn, formatDate, formatMoney, isoDay, reportDebt } from "@/lib/utils";
 import { useDashboard } from "@/hooks/useDashboard";
 import { useBranches } from "@/hooks/useBranches";
 import { useReports } from "@/hooks/useReports";
@@ -61,12 +61,6 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useActiveBranch } from "@/contexts/BranchContext";
 import { DashboardFilters } from "@/types";
 
-function isoDay(d: Date) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
 function addDays(iso: string, n: number) {
   const d = new Date(iso);
   d.setDate(d.getDate() + n);

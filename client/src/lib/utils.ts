@@ -47,6 +47,30 @@ export function pluralRu(n: number, one: string, few: string, many: string) {
   return many;
 }
 
+/**
+ * A date as YYYY-MM-DD in the *local* calendar.
+ *
+ * Deliberately not `toISOString().slice(0, 10)`: that yields the UTC date, so
+ * east-of-UTC hotels (Tashkent is UTC+5) would see "yesterday" from midnight
+ * until 05:00 local — exactly during the night shift.
+ */
+export function isoDay(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** Today as YYYY-MM-DD in the local calendar. */
+export function todayIso() {
+  return isoDay(new Date());
+}
+
+/** The current month as YYYY-MM in the local calendar. */
+export function currentMonthKey() {
+  return todayIso().slice(0, 7);
+}
+
 /** Add `days` to a YYYY-MM-DD string, returning YYYY-MM-DD. */
 export function addDaysIso(iso: string, days: number) {
   const d = new Date(iso);

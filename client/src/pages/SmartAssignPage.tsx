@@ -18,14 +18,11 @@ import { useBranches, useMyBranches } from "@/hooks/useBranches";
 import { useRooms } from "@/hooks/useRooms";
 import { useCalendar } from "@/hooks/useCalendar";
 import { useAuth } from "@/contexts/AuthContext";
-import { addDaysIso, nightsBetween } from "@/lib/utils";
+import { addDaysIso, nightsBetween, todayIso } from "@/lib/utils";
 import { buildRoomProfiles, rankRooms, RankedRoom } from "@/lib/roomAssignment";
 
 const OCCUPANCY_WINDOW_NIGHTS = 30;
 
-function todayIso() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 export default function SmartAssignPage() {
   const { user } = useAuth();

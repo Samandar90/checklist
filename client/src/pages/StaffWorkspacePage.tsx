@@ -29,12 +29,8 @@ import { useExpenses } from "@/hooks/useExpenses";
 import { useActiveCashShift } from "@/hooks/useCashShifts";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/api";
-import { cn, formatDate, formatDateTime, formatMoney, reportDebt } from "@/lib/utils";
+import { cn, formatDate, formatDateTime, formatMoney, isoDay, reportDebt } from "@/lib/utils";
 import { holdsRoom } from "@/lib/bookingStatus";
-
-function isoDay(d: Date) {
-  return d.toISOString().slice(0, 10);
-}
 
 export default function StaffWorkspacePage() {
   const { user } = useAuth();
