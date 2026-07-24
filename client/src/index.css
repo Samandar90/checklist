@@ -2,53 +2,52 @@
 
 @theme {
   /*
-   * «Ink & Ocean» — премиальный отельный SaaS.
-   * Один брендовый тон (глубокий океанский синий, как стальной синий шахматки),
-   * чернильно-синие нейтрали вместо серых, тёплая бумага фона.
-   * Заголовки — Manrope, текст — Inter.
+   * Clean minimal — inspired by Linear / Stripe. Flat solid surfaces, crisp
+   * hairline borders, one restrained accent, calm neutral greys, generous
+   * whitespace. No glass, no gradients, no aurora. One typeface (Inter).
    */
   --font-sans: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
-  --font-display: "Manrope", "Inter", system-ui, sans-serif;
+  --font-display: "Inter", system-ui, sans-serif;
 
-  --color-border: #e4e8ef;
-  --color-input: #e4e8ef;
-  --color-ring: #2d6cb3;
-  --color-background: #f6f7f9;
-  --color-foreground: #0f1728;
+  --color-border: #e8e8ec;
+  --color-input: #e8e8ec;
+  --color-ring: #3b5bdb;
+  --color-background: #fbfbfc;
+  --color-foreground: #1a1a1f;
 
-  --color-primary: #2d6cb3;
+  --color-primary: #3b5bdb;
   --color-primary-foreground: #ffffff;
 
-  --color-secondary: #edf0f5;
-  --color-secondary-foreground: #0f1728;
+  --color-secondary: #f3f3f5;
+  --color-secondary-foreground: #1a1a1f;
 
-  --color-muted: #f1f3f7;
-  --color-muted-foreground: #667085;
+  --color-muted: #f7f7f8;
+  --color-muted-foreground: #71717a;
 
-  --color-accent: #edf0f5;
-  --color-accent-foreground: #0f1728;
+  --color-accent: #f3f3f5;
+  --color-accent-foreground: #1a1a1f;
 
-  --color-destructive: #d4183d;
+  --color-destructive: #dc2626;
   --color-destructive-foreground: #ffffff;
 
-  --color-success: #059669;
+  --color-success: #16a34a;
   --color-success-foreground: #ffffff;
 
-  --color-warning: #b45309;
+  --color-warning: #d97706;
   --color-warning-foreground: #ffffff;
 
-  --color-info: #0284c7;
+  --color-info: #2563eb;
   --color-info-foreground: #ffffff;
 
   --color-card: #ffffff;
-  --color-card-foreground: #0f1728;
+  --color-card-foreground: #1a1a1f;
 
-  /* Чернильный сайдбар — одинаковый в светлой и тёмной темах. */
-  --color-sidebar: #0e1626;
-  --color-sidebar-foreground: #94a3b8;
-  --color-sidebar-active: #ffffff;
+  /* Sidebar is a flat, very light neutral — flush with the app, not a dark panel. */
+  --color-sidebar: #f7f7f8;
+  --color-sidebar-foreground: #52525b;
+  --color-sidebar-active: #1a1a1f;
 
-  --radius: 0.75rem;
+  --radius: 0.625rem;
 
   /* Spring-tuned motion (back-out easing = natural overshoot, Framer-like). */
   --animate-fade-in: fade-in 0.3s ease-out;
@@ -143,41 +142,41 @@
 
 /* Class-based dark mode: override theme tokens when .dark is on <html>. */
 .dark {
-  --color-border: #1e2632;
-  --color-input: #232d3b;
-  --color-ring: #66a4e3;
-  --color-background: #0a0e14;
-  --color-foreground: #e6eaf1;
+  --color-border: #26262b;
+  --color-input: #2a2a30;
+  --color-ring: #7c8cff;
+  --color-background: #0c0c0e;
+  --color-foreground: #ededf0;
 
-  --color-primary: #66a4e3;
-  --color-primary-foreground: #08121f;
+  --color-primary: #7c8cff;
+  --color-primary-foreground: #0c0c0e;
 
-  --color-secondary: #161c26;
-  --color-secondary-foreground: #e6eaf1;
+  --color-secondary: #1a1a1e;
+  --color-secondary-foreground: #ededf0;
 
-  --color-muted: #121822;
-  --color-muted-foreground: #8a94a6;
+  --color-muted: #161619;
+  --color-muted-foreground: #8f8f99;
 
-  --color-accent: #161c26;
-  --color-accent-foreground: #e6eaf1;
+  --color-accent: #1a1a1e;
+  --color-accent-foreground: #ededf0;
 
-  --color-destructive: #f0436a;
+  --color-destructive: #f04444;
   --color-destructive-foreground: #ffffff;
 
-  --color-success: #10b981;
+  --color-success: #22c55e;
   --color-success-foreground: #06150f;
 
   --color-warning: #f59e0b;
   --color-warning-foreground: #1a1203;
 
-  --color-info: #38bdf8;
-  --color-info-foreground: #05141c;
+  --color-info: #3b82f6;
+  --color-info-foreground: #ffffff;
 
-  --color-card: #10151d;
-  --color-card-foreground: #e6eaf1;
+  --color-card: #141416;
+  --color-card-foreground: #ededf0;
 
-  --color-sidebar: #0b111c;
-  --color-sidebar-foreground: #8a94a6;
+  --color-sidebar: #0f0f11;
+  --color-sidebar-foreground: #8f8f99;
   --color-sidebar-active: #ffffff;
 }
 
@@ -196,13 +195,6 @@ html.dark {
 body {
   margin: 0;
   background: var(--color-background);
-  background-image:
-    radial-gradient(55% 60% at 6% 0%, rgba(45, 108, 179, 0.34), transparent 62%),
-    radial-gradient(50% 58% at 100% 4%, rgba(56, 189, 248, 0.3), transparent 60%),
-    radial-gradient(58% 62% at 94% 100%, rgba(139, 92, 246, 0.28), transparent 62%),
-    radial-gradient(48% 55% at 24% 100%, rgba(16, 185, 129, 0.2), transparent 60%),
-    radial-gradient(75% 85% at 55% 45%, rgba(90, 140, 220, 0.1), transparent 72%);
-  background-attachment: fixed;
   color: var(--color-foreground);
   font-family: var(--font-sans);
   font-feature-settings: "tnum" 1, "cv11" 1;
@@ -210,17 +202,7 @@ body {
   letter-spacing: -0.011em;
 }
 
-/* В тёмной теме те же аврора-пятна, но приглушённее — чтобы стекло светилось на почти-чёрном. */
-.dark body {
-  background-image:
-    radial-gradient(55% 60% at 6% 0%, rgba(45, 108, 179, 0.42), transparent 62%),
-    radial-gradient(50% 58% at 100% 4%, rgba(56, 189, 248, 0.26), transparent 60%),
-    radial-gradient(58% 62% at 94% 100%, rgba(139, 92, 246, 0.3), transparent 62%),
-    radial-gradient(48% 55% at 24% 100%, rgba(16, 185, 129, 0.2), transparent 60%),
-    radial-gradient(75% 85% at 55% 45%, rgba(90, 140, 220, 0.12), transparent 72%);
-}
-
-/* Заголовочная гарнитура: Manrope для display-текста (заголовки страниц, диалогов, карточек). */
+/* Headings: same Inter, tight tracking, medium-heavy weight — no separate display face. */
 h1, h2, h3, .font-display {
   font-family: var(--font-display);
   letter-spacing: -0.02em;
@@ -245,7 +227,7 @@ h1, h2, h3, .font-display {
  * .dark class — they're invisible pale swatches on a dark card. These
  * classes use the same hue at higher opacity for dark mode instead.
  */
-.tint-indigo { background: color-mix(in srgb, #2d6cb3 12%, transparent); color: #2d6cb3; }
+.tint-indigo { background: color-mix(in srgb, #3b5bdb 12%, transparent); color: #3b5bdb; }
 .tint-violet { background: color-mix(in srgb, #8b5cf6 12%, transparent); color: #7c3aed; }
 .tint-sky { background: color-mix(in srgb, #0ea5e9 12%, transparent); color: #0284c7; }
 .tint-emerald { background: color-mix(in srgb, #10b981 12%, transparent); color: #059669; }
@@ -253,7 +235,7 @@ h1, h2, h3, .font-display {
 .tint-rose { background: color-mix(in srgb, #f43f5e 12%, transparent); color: #be123c; }
 .tint-slate { background: color-mix(in srgb, #64748b 14%, transparent); color: #475569; }
 
-.dark .tint-indigo { background: color-mix(in srgb, #66a4e3 18%, transparent); color: #9cc4ed; }
+.dark .tint-indigo { background: color-mix(in srgb, #7c8cff 18%, transparent); color: #aeb8ff; }
 .dark .tint-violet { background: color-mix(in srgb, #a78bfa 18%, transparent); color: #c4b5fd; }
 .dark .tint-sky { background: color-mix(in srgb, #38bdf8 18%, transparent); color: #7dd3fc; }
 .dark .tint-emerald { background: color-mix(in srgb, #34d399 18%, transparent); color: #6ee7b7; }
@@ -272,142 +254,56 @@ h1, h2, h3, .font-display {
 .status-info    { background: var(--color-info); color: var(--color-info-foreground); }
 
 /*
- * Liquid glass (iOS-style): translucent, blurred surfaces with a bright
- * top-edge highlight and soft ambient shadow. The body's colour blobs show
- * through the blur, giving real depth. Kept readable via high opacity.
- */
-/*
- * NB: literal rgba() colours (not var(--color-card)) on purpose — Tailwind v4's
- * Lightning CSS inlines @theme variables inside color-mix() at build time, which
- * would freeze the glass to the light-theme colour. Explicit per-theme values.
+ * Surfaces — flat, solid, clean. The old glass-* utility names are kept so the
+ * whole app re-skins from here, but they now render as Linear/Stripe-style
+ * cards: solid fill, 1px hairline border, whisper of shadow. No blur, no glow.
  */
 .glass-card {
-  background-color: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(26px) saturate(185%);
-  -webkit-backdrop-filter: blur(26px) saturate(185%);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.85),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
-    0 2px 6px rgba(16, 24, 40, 0.05),
-    0 14px 40px rgba(20, 40, 80, 0.1);
-}
-.glass-card:hover {
-  border-color: rgba(255, 255, 255, 0.9);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 2px 6px rgba(16, 24, 40, 0.05),
-    0 20px 50px rgba(20, 40, 80, 0.15);
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
 }
 .dark .glass-card {
-  background-color: rgba(18, 26, 38, 0.5);
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 2px 6px rgba(0, 0, 0, 0.35),
-    0 16px 44px rgba(0, 0, 0, 0.5);
-}
-.dark .glass-card:hover {
-  border-color: rgba(102, 164, 227, 0.45);
+  box-shadow: none;
 }
 
-/* Heavier glass for floating layers (dialogs, drawers, popovers). */
+/* Floating layers (dialogs, drawers, popovers, menus) — solid + a real shadow. */
 .glass-strong {
-  background-color: rgba(255, 255, 255, 0.68);
-  backdrop-filter: blur(40px) saturate(190%);
-  -webkit-backdrop-filter: blur(40px) saturate(190%);
-  border: 1px solid rgba(255, 255, 255, 0.75);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 2px 8px rgba(16, 24, 40, 0.06),
-    0 40px 80px rgba(16, 24, 40, 0.28);
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 16px 48px -12px rgba(16, 24, 40, 0.18), 0 4px 12px rgba(16, 24, 40, 0.06);
 }
 .dark .glass-strong {
-  background-color: rgba(18, 26, 38, 0.66);
-  border-color: rgba(255, 255, 255, 0.14);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 40px 80px rgba(0, 0, 0, 0.6);
+  border-color: #2a2a30;
+  box-shadow: 0 16px 48px -12px rgba(0, 0, 0, 0.65);
 }
 
-/*
- * Glass controls — translucent, theme-aware inputs & secondary buttons.
- * Hover/focus states live here (not Tailwind utilities) so they win over the
- * unlayered base class; transitions come from the element's `transition-all`.
- */
+/* Inputs & selects — solid, hairline border, crisp accent focus ring (no glow). */
 .glass-field {
-  background-color: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(8px) saturate(160%);
-  -webkit-backdrop-filter: blur(8px) saturate(160%);
-  border: 1px solid rgba(96, 120, 150, 0.22);
-  box-shadow: inset 0 1px 2px rgba(16, 24, 40, 0.05);
-}
-.dark .glass-field {
-  background-color: rgba(30, 40, 54, 0.45);
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
 }
 .glass-field:focus,
 .glass-field:focus-visible,
 .glass-field[data-state="open"] {
   outline: none;
-  border-color: rgba(45, 108, 179, 0.75);
-  box-shadow:
-    inset 0 1px 2px rgba(16, 24, 40, 0.04),
-    0 0 0 3px rgba(45, 108, 179, 0.2),
-    0 0 20px rgba(45, 108, 179, 0.28);
+  border-color: var(--color-ring);
+  box-shadow: 0 0 0 3px rgba(59, 91, 219, 0.16);
 }
 .dark .glass-field:focus,
 .dark .glass-field:focus-visible,
 .dark .glass-field[data-state="open"] {
-  border-color: rgba(102, 164, 227, 0.85);
-  box-shadow:
-    inset 0 1px 2px rgba(0, 0, 0, 0.25),
-    0 0 0 3px rgba(102, 164, 227, 0.25),
-    0 0 22px rgba(102, 164, 227, 0.35);
+  box-shadow: 0 0 0 3px rgba(124, 140, 255, 0.22);
 }
 
-/* Frosted secondary button — a real slab of glass with an inner sheen. */
+/* Secondary / outline button — solid, bordered, subtle grey hover. */
 .glass-btn {
-  background-color: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(16px) saturate(185%);
-  -webkit-backdrop-filter: blur(16px) saturate(185%);
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    inset 0 0 20px rgba(255, 255, 255, 0.15),
-    0 2px 6px rgba(16, 24, 40, 0.06);
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
   color: var(--color-foreground);
 }
-.dark .glass-btn {
-  background-color: rgba(58, 72, 92, 0.42);
-  border-color: rgba(255, 255, 255, 0.16);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    inset 0 0 20px rgba(255, 255, 255, 0.05),
-    0 2px 6px rgba(0, 0, 0, 0.3);
-}
 .glass-btn:hover {
-  background-color: rgba(255, 255, 255, 0.68);
-  border-color: rgba(255, 255, 255, 0.9);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.95),
-    inset 0 0 24px rgba(255, 255, 255, 0.22),
-    0 10px 26px rgba(20, 40, 80, 0.14);
-}
-.dark .glass-btn:hover {
-  background-color: rgba(72, 88, 110, 0.55);
-  border-color: rgba(255, 255, 255, 0.24);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    inset 0 0 24px rgba(255, 255, 255, 0.08),
-    0 10px 26px rgba(0, 0, 0, 0.4);
-}
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass-field { background-color: #ffffff; }
-  .glass-btn { background-color: #ffffff; }
-  .dark .glass-field { background-color: #161c26; }
-  .dark .glass-btn { background-color: #1c2532; }
+  background-color: var(--color-secondary);
 }
 
 /*
@@ -434,77 +330,33 @@ h1, h2, h3, .font-display {
   border-bottom-color: transparent;
 }
 .data-table tbody tr {
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, background-color 0.2s ease;
-}
-.data-table tbody tr:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(20, 40, 80, 0.1);
-}
-.dark .data-table tbody tr:hover {
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.42);
+  transition: background-color 0.12s ease;
 }
 .data-table tbody tr:hover td {
-  background-color: rgba(45, 108, 179, 0.06);
+  background-color: var(--color-secondary);
   border-bottom-color: transparent;
 }
-.dark .data-table tbody tr:hover td {
-  background-color: rgba(102, 164, 227, 0.09);
-}
 .data-table tbody tr td:first-child {
-  border-top-left-radius: 12px;
-  border-bottom-left-radius: 12px;
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
 }
 .data-table tbody tr td:last-child {
-  border-top-right-radius: 12px;
-  border-bottom-right-radius: 12px;
-}
-.data-table tbody tr:active {
-  transform: translateY(0) scale(0.998);
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
 }
 
-/* Frosted bar (sticky top bars, toolbars) — heavier blur so content behind smears. */
+/* Sticky bars (top bar, toolbars) — solid, theme-aware, no blur. */
 .glass-bar {
-  background-color: rgba(246, 247, 249, 0.55);
-  backdrop-filter: blur(24px) saturate(185%);
-  -webkit-backdrop-filter: blur(24px) saturate(185%);
-}
-.dark .glass-bar {
-  background-color: rgba(10, 14, 20, 0.5);
+  background-color: var(--color-background);
 }
 
-/*
- * Floating sidebar — the same liquid-glass material as the cards, theme-aware
- * (light frost in light mode / dark frost in dark mode), Apple-Settings style.
- */
+/* Sidebar — flat, very light neutral, hairline border. Flush with the app. */
 .glass-sidebar {
-  background-color: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(30px) saturate(185%);
-  -webkit-backdrop-filter: blur(30px) saturate(185%);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.85),
-    0 8px 40px rgba(20, 40, 80, 0.1);
+  background-color: var(--color-sidebar);
+  border-right: 1px solid var(--color-border);
 }
 .dark .glass-sidebar {
-  background-color: rgba(18, 26, 38, 0.6);
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 8px 40px rgba(0, 0, 0, 0.5);
-}
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass-sidebar { background-color: #ffffff; }
-  .dark .glass-sidebar { background-color: #10151d; }
-}
-
-/* Browsers without backdrop-filter fall back to a near-opaque surface. */
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass-card { background-color: #ffffff; }
-  .glass-strong { background-color: #ffffff; }
-  .glass-bar { background-color: #f6f7f9; }
-  .dark .glass-card { background-color: #10151d; }
-  .dark .glass-strong { background-color: #10151d; }
-  .dark .glass-bar { background-color: #0a0e14; }
+  border-color: #26262b;
 }
 
 ::-webkit-scrollbar {
@@ -512,17 +364,17 @@ h1, h2, h3, .font-display {
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #d3d9e3;
+  background: #dcdce0;
   border-radius: 8px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #bcc4d2;
+  background: #c4c4ca;
 }
 .dark ::-webkit-scrollbar-thumb {
-  background: #263140;
+  background: #2c2c32;
 }
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #324152;
+  background: #3a3a42;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
