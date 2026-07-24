@@ -61,52 +61,28 @@ export default function LoginPage() {
   }
 
   return (
-    <div
-      className="relative min-h-screen w-full overflow-hidden text-white"
-      style={{
-        background:
-          "radial-gradient(120% 160% at 100% 0%, rgba(94,161,230,0.35), transparent 55%), radial-gradient(90% 140% at 0% 100%, rgba(45,108,179,0.5), transparent 60%), linear-gradient(135deg, #0e1626 0%, #16305a 60%, #24578f 100%)",
-      }}
-    >
-      {/* тонкая сетка-текстура, как на hero-панелях внутри системы */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.07]"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)",
-          backgroundSize: "36px 36px",
-        }}
-      />
-      {/* парящие световые орбы */}
-      <div className="pointer-events-none absolute -top-24 -left-24 h-72 w-72 rounded-full bg-[#4e94d8]/30 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-[-6rem] right-[-4rem] h-80 w-80 rounded-full bg-[#8b5cf6]/25 blur-3xl" />
-
-      <div className="relative grid min-h-screen lg:grid-cols-2">
+    <div className="relative grid min-h-screen w-full bg-background text-foreground lg:grid-cols-2">
         {/* ЛЕВАЯ ПАНЕЛЬ — брендовый hero (скрыта на мобильных) */}
-        <div className="relative hidden flex-col justify-between p-12 lg:flex xl:p-16">
+        <div className="relative hidden flex-col justify-between bg-[#141416] p-12 text-white lg:flex xl:p-16">
           <div className="flex items-center gap-3 animate-fade-in">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-b from-[#4e94d8] to-[#2d6cb3] text-white shadow-[0_8px_24px_rgba(45,108,179,0.5),inset_0_1px_0_rgba(255,255,255,0.25)]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
               <Hotel className="h-5 w-5" />
             </div>
             <div>
-              <div className="font-display text-lg font-extrabold tracking-tight">Hotel Reports</div>
+              <div className="text-lg font-semibold tracking-tight">Hotel Reports</div>
               <div className="text-[12px] text-white/55">Система управления сетью отелей</div>
             </div>
           </div>
 
           <div className="max-w-md">
             <h2
-              className="font-display text-[34px] font-extrabold leading-[1.1] tracking-tight animate-fade-in xl:text-[40px]"
+              className="text-[32px] font-semibold leading-[1.15] tracking-tight animate-fade-in xl:text-[38px]"
               style={{ animationDelay: "60ms" }}
             >
-              Управляйте отелями
-              <br />
-              <span className="bg-gradient-to-r from-white via-[#bcd8f5] to-[#8fbdf0] bg-clip-text text-transparent">
-                с одного экрана
-              </span>
+              Управляйте отелями с одного экрана
             </h2>
             <p
-              className="mt-4 text-[15px] leading-relaxed text-white/60 animate-fade-in"
+              className="mt-4 text-[15px] leading-relaxed text-white/55 animate-fade-in"
               style={{ animationDelay: "120ms" }}
             >
               Бронирования, касса, финансы и аналитика — быстро, наглядно и под контролем.
@@ -119,22 +95,19 @@ export default function LoginPage() {
                   className="flex items-start gap-4 animate-fade-in"
                   style={{ animationDelay: `${180 + i * 80}ms` }}
                 >
-                  <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/10 backdrop-blur-md">
-                    <f.icon className="h-5 w-5 text-[#bcd8f5]" />
+                  <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04]">
+                    <f.icon className="h-[18px] w-[18px] text-white/70" />
                   </div>
                   <div>
-                    <div className="text-[14px] font-semibold text-white/90">{f.title}</div>
-                    <div className="mt-0.5 text-[13px] leading-snug text-white/50">{f.desc}</div>
+                    <div className="text-[14px] font-medium text-white/90">{f.title}</div>
+                    <div className="mt-0.5 text-[13px] leading-snug text-white/45">{f.desc}</div>
                   </div>
                 </li>
               ))}
             </ul>
           </div>
 
-          <div
-            className="text-[12px] text-white/35 animate-fade-in"
-            style={{ animationDelay: "440ms" }}
-          >
+          <div className="text-[12px] text-white/30 animate-fade-in" style={{ animationDelay: "440ms" }}>
             © {new Date().getFullYear()} Hotel Reports · Все права защищены
           </div>
         </div>
@@ -144,19 +117,17 @@ export default function LoginPage() {
           <div className="w-full max-w-sm animate-fade-in" style={{ animationDelay: "80ms" }}>
             {/* компактный логотип для мобильных */}
             <div className="mb-8 flex flex-col items-center gap-3 text-center lg:hidden">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-b from-[#4e94d8] to-[#2d6cb3] text-white shadow-[0_8px_24px_rgba(45,108,179,0.5),inset_0_1px_0_rgba(255,255,255,0.25)]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
                 <Hotel className="h-5 w-5" />
               </div>
               <div>
-                <h1 className="font-display text-[22px] font-extrabold tracking-tight text-white">
-                  Hotel Reports
-                </h1>
-                <p className="mt-0.5 text-[13px] text-white/55">Система управления сетью отелей</p>
+                <h1 className="text-[20px] font-semibold tracking-tight text-foreground">Hotel Reports</h1>
+                <p className="mt-0.5 text-[13px] text-muted-foreground">Система управления сетью отелей</p>
               </div>
             </div>
 
-            <div className="glass-strong rounded-3xl p-7 sm:p-8">
-              <h2 className="font-display text-[20px] font-bold text-foreground">С возвращением 👋</h2>
+            <div className="glass-strong rounded-xl p-7 sm:p-8">
+              <h2 className="text-[19px] font-semibold text-foreground">С возвращением 👋</h2>
               <p className="mt-1 text-[13px] text-muted-foreground">
                 Войдите в систему, чтобы продолжить работу.
               </p>
@@ -221,12 +192,11 @@ export default function LoginPage() {
               </form>
             </div>
 
-            <p className="mt-6 text-center text-[11px] text-white/35">
+            <p className="mt-6 text-center text-[11px] text-muted-foreground">
               Доступ выдаёт главный администратор сети
             </p>
           </div>
         </div>
-      </div>
     </div>
   );
 }

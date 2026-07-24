@@ -148,15 +148,15 @@ export default function Layout() {
       <motion.aside
         animate={{ width: sidebarWidth }}
         transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] as const }}
-        className="glass-sidebar fixed inset-y-3 left-3 z-30 hidden flex-col overflow-hidden rounded-[22px] md:flex"
+        className="glass-sidebar fixed inset-y-0 left-0 z-30 hidden flex-col overflow-hidden md:flex"
       >
         <div className={cn("flex items-center gap-2.5 px-4 py-4", collapsed && "justify-center px-0")}>
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-gradient-to-b from-[#4e94d8] to-[#2d6cb3] text-white shadow-[0_4px_12px_rgba(45,108,179,0.4),inset_0_1px_0_rgba(255,255,255,0.35)]">
-            <Hotel className="h-4.5 w-4.5" />
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <Hotel className="h-4 w-4" />
           </div>
           {!collapsed && (
             <div className="flex min-w-0 flex-col leading-tight">
-              <span className="truncate font-display text-[14px] font-extrabold tracking-tight text-foreground">Hotel Reports</span>
+              <span className="truncate text-[14px] font-semibold tracking-tight text-foreground">Hotel Reports</span>
               <span className="truncate text-[11px] text-muted-foreground">Система отчётности</span>
             </div>
           )}
@@ -204,7 +204,7 @@ export default function Layout() {
           {/* мини-профиль — кто сейчас за стойкой */}
           {!collapsed && (
             <div className="mb-1.5 flex items-center gap-2.5 rounded-xl bg-foreground/[0.03] px-2.5 py-2">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-b from-[#4e94d8] to-[#2d6cb3] text-[11px] font-bold text-white shadow-[0_2px_6px_rgba(45,108,179,0.35)]">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
                 {(user?.fullName ?? user?.username ?? "?").slice(0, 1).toUpperCase()}
               </span>
               <span className="flex min-w-0 flex-col leading-tight">
@@ -230,7 +230,7 @@ export default function Layout() {
 
       <div
         className="flex w-full flex-1 flex-col transition-[padding-left] duration-200 md:pl-[var(--sidebar-pad)]"
-        style={{ "--sidebar-pad": `${sidebarWidth + 24}px` } as React.CSSProperties}
+        style={{ "--sidebar-pad": `${sidebarWidth}px` } as React.CSSProperties}
       >
         {/* Верхний бар: хлебная крошка + профиль (только десктоп) */}
         <header className="glass-bar sticky top-0 z-20 hidden h-16 items-center justify-between border-b border-border/60 px-2 md:flex">

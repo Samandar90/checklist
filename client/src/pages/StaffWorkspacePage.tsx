@@ -111,76 +111,58 @@ export default function StaffWorkspacePage() {
 
   return (
     <div>
-      {/* Hero: градиентная панель — приветствие, смена и показатели дня */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-        className="relative mb-6 overflow-hidden rounded-3xl p-6 text-white shadow-[0_16px_44px_rgba(14,32,64,0.35)] md:p-7"
-        style={{
-          background:
-            "radial-gradient(120% 160% at 100% 0%, rgba(94,161,230,0.35), transparent 55%), radial-gradient(90% 140% at 0% 100%, rgba(45,108,179,0.5), transparent 60%), linear-gradient(135deg, #0e1626 0%, #16305a 60%, #24578f 100%)",
-        }}
-      >
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.07]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)",
-            backgroundSize: "36px 36px",
-          }}
-        />
-        <div className="relative flex flex-wrap items-center justify-between gap-4">
-          <div className="flex min-w-0 items-center gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 font-display text-lg font-extrabold ring-1 ring-white/15">
-              {(user?.fullName ?? user?.username ?? "?").slice(0, 1).toUpperCase()}
+      {/* Приветствие, смена и показатели дня — чистая карточка */}
+      <Card className="mb-6">
+        <CardContent className="p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-3.5">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-secondary text-base font-semibold text-foreground">
+                {(user?.fullName ?? user?.username ?? "?").slice(0, 1).toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <h1 className="truncate text-[20px] font-semibold leading-tight tracking-tight text-foreground">
+                  {greeting}, {user?.fullName ?? user?.username}
+                </h1>
+                <p className="text-[13px] text-muted-foreground">{user?.branchName} · показатели и задачи на сегодня</p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <h1 className="truncate font-display text-[24px] font-extrabold leading-tight tracking-tight">
-                {greeting}, {user?.fullName ?? user?.username}
-              </h1>
-              <p className="text-[13px] text-white/55">{user?.branchName} · администратор · смена, показатели и задачи на сегодня</p>
-            </div>
+
+            {shiftLoading ? (
+              <Skeleton className="h-9 w-40" />
+            ) : shift ? (
+              <span className="flex items-center gap-1.5 rounded-md bg-emerald-500/10 px-2.5 py-1.5 text-[12.5px] font-semibold text-emerald-600">
+                <LockOpen className="h-3.5 w-3.5" /> Смена открыта · {formatDateTime(shift.openedAt)}
+              </span>
+            ) : (
+              <Button asChild size="sm">
+                <Link to="/cash-register">
+                  <Lock className="h-3.5 w-3.5" /> Открыть смену
+                </Link>
+              </Button>
+            )}
           </div>
 
-          {shiftLoading ? (
-            <Skeleton className="h-9 w-40 bg-white/10" />
-          ) : shift ? (
-            <span className="flex items-center gap-1.5 rounded-full bg-emerald-400/20 px-3.5 py-1.5 text-[12.5px] font-bold text-emerald-300">
-              <LockOpen className="h-3.5 w-3.5" /> Смена открыта · {formatDateTime(shift.openedAt)}
-            </span>
-          ) : (
-            <Button asChild size="sm" className="bg-white text-[#16305a] shadow-none hover:bg-white/90 hover:brightness-100">
-              <Link to="/cash-register">
-                <Lock className="h-3.5 w-3.5" /> Открыть смену
-              </Link>
-            </Button>
-          )}
-        </div>
-
-        <div className="relative mt-6 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
-          {[
-            { icon: ClipboardList, label: "Бронирований сегодня", value: todayReports.length, money: false },
-            { icon: Wallet, label: "Выручка сегодня", value: todayRevenue, money: true },
-            { icon: TrendingUp, label: "Бронирований за месяц", value: monthReports.length, money: false },
-            { icon: Wallet, label: "Выручка за месяц", value: monthRevenue, money: true },
-          ].map((c) => (
-            <div
-              key={c.label}
-              className="rounded-2xl border border-white/[0.08] bg-white/[0.07] px-3.5 py-3 backdrop-blur-sm transition-colors hover:bg-white/[0.12]"
-            >
-              <div className="flex items-center gap-1.5 text-white/55">
-                <c.icon className="h-3.5 w-3.5" />
-                <span className="truncate text-[11px] font-medium">{c.label}</span>
+          <div className="mt-6 grid grid-cols-2 gap-3 border-t border-border pt-5 lg:grid-cols-4">
+            {[
+              { icon: ClipboardList, label: "Бронирований сегодня", value: todayReports.length, money: false },
+              { icon: Wallet, label: "Выручка сегодня", value: todayRevenue, money: true },
+              { icon: TrendingUp, label: "Бронирований за месяц", value: monthReports.length, money: false },
+              { icon: Wallet, label: "Выручка за месяц", value: monthRevenue, money: true },
+            ].map((c) => (
+              <div key={c.label}>
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <c.icon className="h-3.5 w-3.5" />
+                  <span className="truncate text-[11px] font-medium">{c.label}</span>
+                </div>
+                <div className="mt-1 text-lg font-semibold tabular-nums leading-tight text-foreground">
+                  {isLoading ? "—" : c.value.toLocaleString("ru-RU")}
+                  {c.money && <span className="ml-1 text-[11px] font-medium text-muted-foreground">UZS</span>}
+                </div>
               </div>
-              <div className="mt-1 text-lg font-bold tabular-nums leading-tight">
-                {isLoading ? "—" : c.value.toLocaleString("ru-RU")}
-                {c.money && <span className="ml-1 text-[11px] font-medium text-white/50">UZS</span>}
-              </div>
-            </div>
-          ))}
-        </div>
-      </motion.div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
