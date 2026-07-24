@@ -591,13 +591,13 @@ export default function CalendarPage() {
       {effectiveBranchId && data && data.rooms.length > 0 && (
         <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {statCards.map((c) => (
-            <Card key={c.label} className="group">
+            <Card key={c.label} className="animate-rise">
               <div className="flex items-center gap-3 p-3.5">
-                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105 ${c.tint}`}>
+                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${c.tint}`}>
                   <c.icon className="h-4 w-4" />
                 </div>
                 <div className="min-w-0">
-                  <div className="font-display text-[19px] font-extrabold leading-tight tabular-nums tracking-tight text-foreground">
+                  <div className="text-[18px] font-semibold leading-tight tabular-nums tracking-tight text-foreground">
                     {c.value}
                   </div>
                   <p className="truncate text-[11px] font-medium text-muted-foreground">{c.label}</p>

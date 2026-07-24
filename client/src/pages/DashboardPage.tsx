@@ -344,24 +344,19 @@ export default function DashboardPage() {
           <motion.div variants={staggerContainer} initial="hidden" animate="show" className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {kpis.map((c) => (
               <motion.div key={c.label} variants={staggerItem}>
-                <Card className="group">
-                  <CardContent className="flex items-center gap-4 p-5">
-                    <div
-                      className={cn(
-                        "flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-105",
-                        c.tint
-                      )}
-                    >
-                      <c.icon className="h-5 w-5" />
+                <Card>
+                  <CardContent className="flex items-center gap-3.5 p-5">
+                    <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg", c.tint)}>
+                      <c.icon className="h-[18px] w-[18px]" />
                     </div>
                     <div className="min-w-0">
                       {isLoading ? (
-                        <Skeleton className="h-8 w-20" />
+                        <Skeleton className="h-7 w-20" />
                       ) : (
                         <CountUp
                           value={c.value}
                           className={cn(
-                            "font-display block text-[26px] font-extrabold leading-tight tabular-nums tracking-tight",
+                            "block text-[24px] font-semibold leading-tight tabular-nums tracking-tight",
                             c.negative ? "text-destructive" : "text-foreground"
                           )}
                         />

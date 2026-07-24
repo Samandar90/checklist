@@ -400,26 +400,79 @@ h1, h2, h3, .font-display {
 .skeleton-shimmer {
   position: relative;
   overflow: hidden;
-  background-color: rgba(96, 120, 150, 0.14);
+  background-color: rgba(0, 0, 0, 0.05);
 }
 .dark .skeleton-shimmer {
-  background-color: rgba(255, 255, 255, 0.06);
+  background-color: rgba(255, 255, 255, 0.05);
 }
 .skeleton-shimmer::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(100deg, transparent 25%, rgba(255, 255, 255, 0.55) 50%, transparent 75%);
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.5) 50%, transparent 70%);
   transform: translateX(-100%);
-  animation: skeleton-sweep 1.6s ease-in-out infinite;
+  animation: skeleton-sweep 1.5s ease-in-out infinite;
 }
 .dark .skeleton-shimmer::after {
-  background: linear-gradient(100deg, transparent 25%, rgba(255, 255, 255, 0.1) 50%, transparent 75%);
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.08) 50%, transparent 70%);
 }
 @keyframes skeleton-sweep {
   to {
     transform: translateX(100%);
   }
+}
+
+/*
+ * Soft, consistent motion for interactive elements — smooth colour/shadow
+ * transitions and a gentle press. Kept subtle (150ms ease-out), the way
+ * premium tools feel: responsive but never bouncy.
+ */
+button:not(:disabled),
+a,
+[role="button"],
+summary,
+label[for] {
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease,
+    box-shadow 0.15s ease, transform 0.12s ease;
+}
+
+/* Content rises softly into place on mount / route change. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-rise {
+  animation: rise-in 0.34s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Branded loader — a thin accent ring sweeping around the logo mark. */
+@keyframes loader-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+@keyframes loader-breathe {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.92);
+    opacity: 0.85;
+  }
+}
+.loader-ring {
+  border-radius: 9999px;
+  background: conic-gradient(from 90deg, transparent 0deg, transparent 90deg, var(--color-primary) 340deg, var(--color-primary));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  animation: loader-spin 0.85s linear infinite;
 }
 
 /* Scroll container with a hidden scrollbar (chessboard pans by dragging the day strips). */

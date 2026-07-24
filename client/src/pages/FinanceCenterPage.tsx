@@ -191,10 +191,10 @@ export default function FinanceCenterPage() {
       {/* KPI — крупные карточки с акцентной плиткой иконки */}
       <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {kpis.map((c) => (
-          <Card key={c.label} className="group">
+          <Card key={c.label} className="animate-rise">
             <CardContent className="flex items-center gap-3.5 p-4">
-              <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-105", c.tint)}>
-                <c.icon className="h-4.5 w-4.5" />
+              <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", c.tint)}>
+                <c.icon className="h-4 w-4" />
               </div>
               <div className="min-w-0">
                 {dashLoading ? (
@@ -203,7 +203,7 @@ export default function FinanceCenterPage() {
                   <CountUp
                     value={c.value}
                     className={cn(
-                      "font-display block text-[21px] font-extrabold leading-tight tabular-nums tracking-tight",
+                      "block text-[20px] font-semibold leading-tight tabular-nums tracking-tight",
                       c.negative ? "text-destructive" : "text-foreground"
                     )}
                   />

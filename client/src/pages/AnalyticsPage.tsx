@@ -221,19 +221,19 @@ export default function AnalyticsPage() {
       {/* KPI — крупные карточки с акцентной плиткой иконки */}
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {kpis.map((c) => (
-          <Card key={c.label} className="group">
-            <CardContent className="flex items-center gap-4 p-5">
-              <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-105", c.tint)}>
-                <c.icon className="h-5 w-5" />
+          <Card key={c.label} className="animate-rise">
+            <CardContent className="flex items-center gap-3.5 p-5">
+              <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg", c.tint)}>
+                <c.icon className="h-[18px] w-[18px]" />
               </div>
               <div className="min-w-0">
                 {isLoading ? (
-                  <Skeleton className="h-8 w-20" />
+                  <Skeleton className="h-7 w-20" />
                 ) : (
                   <CountUp
                     value={c.value}
                     suffix={c.suffix}
-                    className="font-display block text-[24px] font-extrabold leading-tight tabular-nums tracking-tight text-foreground"
+                    className="block text-[22px] font-semibold leading-tight tabular-nums tracking-tight text-foreground"
                   />
                 )}
                 <span className="text-[12.5px] font-medium text-muted-foreground">{c.label}</span>

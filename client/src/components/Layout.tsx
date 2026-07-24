@@ -335,10 +335,10 @@ export default function Layout() {
         {/* Мобильный хедер */}
         <header className="glass-bar sticky top-0 z-20 flex items-center justify-between border-b border-border px-4 py-3 md:hidden">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-gradient-to-b from-[#4e94d8] to-[#2d6cb3] text-white">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <Hotel className="h-4 w-4" />
             </div>
-            <span className="font-display text-sm font-bold">Hotel Reports</span>
+            <span className="text-sm font-semibold">Hotel Reports</span>
           </div>
           <div className="flex items-center gap-2">
             <button
