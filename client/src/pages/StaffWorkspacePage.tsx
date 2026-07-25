@@ -29,7 +29,7 @@ import { useExpenses } from "@/hooks/useExpenses";
 import { useActiveCashShift } from "@/hooks/useCashShifts";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/api";
-import { cn, formatDate, formatDateTime, formatMoney, isoDay, reportDebt } from "@/lib/utils";
+import { formatDate, formatDateTime, formatMoney, isoDay, reportDebt } from "@/lib/utils";
 import { holdsRoom } from "@/lib/bookingStatus";
 
 export default function StaffWorkspacePage() {
