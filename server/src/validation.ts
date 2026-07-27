@@ -113,7 +113,14 @@ export const expenseCategories = [
 ] as const;
 
 export const expenseSchema = z.object({
-  date: z.string().trim().min(1, "Дата обязательна"),
+  // Проверяем разбор даты так же, как в reportSchema: без этого строка вроде
+  // "31.02.2026" доходила до `new Date(...)` в маршруте, Prisma получала
+  // Invalid Date и падала с 500 вместо понятной ошибки валидации.
+  date: z
+    .string()
+    .trim()
+    .min(1, "Дата обязательна")
+    .refine((v) => !Number.isNaN(new Date(v).getTime()), "Некорректная дата"),
   branchId: z.string().trim().optional(),
   category: z.enum(expenseCategories, {
     errorMap: () => ({ message: "Выберите категорию" }),
