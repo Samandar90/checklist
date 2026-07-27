@@ -263,6 +263,17 @@ router.post("/bulk", async (req, res, next) => {
       const room = await prisma.room.findUnique({ where: { id: roomId } });
       if (!room) return res.status(404).json({ message: "Номер не найден" });
 
+      // Тот же инвариант, что и в POST/PUT: номер должен принадлежать филиалу,
+      // к которому у пользователя есть доступ, и филиалу самой брони. Без этой
+      // проверки админ филиала A мог массово перенести свои брони в номер
+      // филиала B — бронь оставалась с branchId=A и пропадала с обоих календарей.
+      if (!hasBranchAccess(req.user!, room.branchId)) {
+        return res.status(403).json({ message: "Этот филиал вам не назначен" });
+      }
+      if (allowed.some((r) => r.branchId !== room.branchId)) {
+        return res.status(400).json({ message: "Номер не принадлежит выбранному филиалу" });
+      }
+
       // Тот же инвариант, что и при создании: целевой номер не должен быть занят
       // на ночи переносимых бронирований (включая конфликты между самими переносимыми).
       const moving = allowed
