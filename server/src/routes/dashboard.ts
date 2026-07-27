@@ -2,6 +2,7 @@ import { Router } from "express";
 import { prisma } from "../prisma";
 import { requireSuperAdmin } from "../middleware/auth";
 import { ROOM_HOLDING_STATUSES } from "../statuses";
+import { nightsWithinWindow } from "../lib/bookings";
 
 const router = Router();
 router.use(requireSuperAdmin);
@@ -66,7 +67,21 @@ router.get("/", async (req, res, next) => {
       date: { gte: fromInclusive, lt: toExclusive },
     };
 
-    const [totalBranches, totalAdmins, totalRooms, roomsInScope, reports, expenses, prevAgg, todayAgg] =
+    // Occupancy needs every stay whose NIGHTS touch the window, not only the
+    // ones that check in inside it: a guest who arrived on 25 June and leaves
+    // on 10 July occupies 9 July nights. `reports` (filtered by check-in date,
+    // which is how revenue is attributed) misses those, so it is queried apart.
+    const occupancyWhere = {
+      ...(branchId ? { branchId } : {}),
+      ...holding,
+      date: { lt: toExclusive },
+      OR: [
+        { checkOut: { gt: fromInclusive } },
+        { checkOut: null, date: { gte: fromInclusive, lt: toExclusive } },
+      ],
+    };
+
+    const [totalBranches, totalAdmins, totalRooms, roomsInScope, reports, expenses, prevAgg, todayAgg, staysInWindow] =
       await Promise.all([
         prisma.branch.count(),
         prisma.admin.count(),
@@ -89,6 +104,10 @@ router.get("/", async (req, res, next) => {
           _count: true,
           where: { ...(branchId ? { branchId } : {}), ...holding, date: { gte: today, lt: new Date(today.getTime() + DAY_MS) } },
         }),
+        prisma.monthlyReport.findMany({
+          where: occupancyWhere,
+          select: { date: true, checkOut: true },
+        }),
       ]);
 
     const revenue = reports.reduce((sum, r) => sum + r.price, 0);
@@ -101,15 +120,13 @@ router.get("/", async (req, res, next) => {
     const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
     const netProfit = revenue - totalExpenses;
 
-    // Occupancy: count occupied room-nights within the window using check-in/out.
-    let occupiedNights = 0;
-    for (const r of reports) {
-      const start = new Date(r.date);
-      const end = r.checkOut ? new Date(r.checkOut) : new Date(start.getTime() + DAY_MS);
-      const clampedEnd = Math.min(end.getTime(), toExclusive.getTime());
-      const nights = Math.round((clampedEnd - start.getTime()) / DAY_MS);
-      occupiedNights += Math.max(1, nights);
-    }
+    // Occupancy: room-nights inside the window, clamped at both ends so a stay
+    // that straddles the boundary contributes only the nights that fall inside.
+    const occupiedNights = staysInWindow.reduce(
+      (sum, r) =>
+        sum + nightsWithinWindow(new Date(r.date), r.checkOut ? new Date(r.checkOut) : null, fromInclusive, toExclusive),
+      0
+    );
     const capacity = roomsInScope * rangeDays;
     const occupancy = capacity > 0 ? Math.min(100, (occupiedNights / capacity) * 100) : 0;
 

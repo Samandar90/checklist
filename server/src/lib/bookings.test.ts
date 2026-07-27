@@ -4,6 +4,7 @@ import {
   nightsBetween,
   rangesOverlap,
   bookingsOverlap,
+  nightsWithinWindow,
   normalizePaid,
   outstandingDebt,
 } from "./bookings";
@@ -74,6 +75,44 @@ describe("bookingsOverlap", () => {
     const a = { date: d("2026-07-06"), checkOut: null };
     const b = { date: d("2026-07-06"), checkOut: null };
     expect(bookingsOverlap(a, b)).toBe(true);
+  });
+});
+
+describe("nightsWithinWindow (dashboard occupancy)", () => {
+  // Window = the whole of July 2026, half-open [1 July, 1 Aug).
+  const wStart = d("2026-07-01");
+  const wEnd = d("2026-08-01");
+
+  it("counts every night of a stay fully inside the window", () => {
+    expect(nightsWithinWindow(d("2026-07-06"), d("2026-07-09"), wStart, wEnd)).toBe(3);
+  });
+
+  it("counts only the in-window nights of a stay that started earlier", () => {
+    // 25 June → 10 July: nine nights fall in July.
+    expect(nightsWithinWindow(d("2026-06-25"), d("2026-07-10"), wStart, wEnd)).toBe(9);
+  });
+
+  it("clamps a stay that runs past the end of the window", () => {
+    // 28 July → 5 Aug: four nights fall in July.
+    expect(nightsWithinWindow(d("2026-07-28"), d("2026-08-05"), wStart, wEnd)).toBe(4);
+  });
+
+  it("clamps a stay that straddles the whole window", () => {
+    expect(nightsWithinWindow(d("2026-06-01"), d("2026-09-01"), wStart, wEnd)).toBe(31);
+  });
+
+  it("is 0 for stays entirely outside the window", () => {
+    expect(nightsWithinWindow(d("2026-05-01"), d("2026-05-05"), wStart, wEnd)).toBe(0);
+    expect(nightsWithinWindow(d("2026-09-01"), d("2026-09-05"), wStart, wEnd)).toBe(0);
+  });
+
+  it("is 0 when the checkout day equals the window start (edge, no shared night)", () => {
+    expect(nightsWithinWindow(d("2026-06-25"), d("2026-07-01"), wStart, wEnd)).toBe(0);
+  });
+
+  it("counts a checkout-less stay as its single night", () => {
+    expect(nightsWithinWindow(d("2026-07-15"), null, wStart, wEnd)).toBe(1);
+    expect(nightsWithinWindow(d("2026-06-30"), null, wStart, wEnd)).toBe(0);
   });
 });
 

@@ -47,6 +47,25 @@ export function bookingsOverlap(
 }
 
 /**
+ * Room-nights this booking occupies inside the half-open window
+ * [windowStart, windowEnd). Both ends are clamped, so a stay that starts
+ * before the window (or runs past its end) still contributes exactly the
+ * nights that fall inside it. No overlap → 0.
+ */
+export function nightsWithinWindow(
+  date: Date,
+  checkOut: Date | null,
+  windowStart: Date,
+  windowEnd: Date
+): number {
+  const { start, end } = nightRange(date, checkOut);
+  const from = Math.max(start.getTime(), dayStart(windowStart).getTime());
+  const to = Math.min(end.getTime(), dayStart(windowEnd).getTime());
+  if (to <= from) return 0;
+  return Math.round((to - from) / DAY_MS);
+}
+
+/**
  * Normalize the stored paid amount so debt is always `price - (paidAmount ?? price)`:
  * "Оплачено" → null (fully paid), "Долг" → 0, "Частично" → the entered amount.
  */
