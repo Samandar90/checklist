@@ -205,9 +205,12 @@ router.post("/:id/settle", requireSuperAdmin, async (req, res, next) => {
  * NB: this means the next shift cannot check in a guest booked by the
  * previous one; that is the intended policy — each admin owns their bookings.
  */
-function canManage(req: any, existing: { branchId: string; adminId: string }) {
+function canManage(req: any, existing: { adminId: string }) {
   if (req.user!.role !== "ADMIN") return true;
-  if (!hasBranchAccess(req.user!, existing.branchId)) return false;
+  // Владение — единственный критерий, филиал сознательно не проверяем: главный
+  // аккаунт вправе оформить бронь на администратора в филиале, где тот не
+  // числится, и такая бронь всё равно должна остаться управляемой её автором
+  // (иначе она видна в «Моих отчётах», но 403 на любое действие).
   return existing.adminId === req.user!.adminId;
 }
 
@@ -426,7 +429,15 @@ router.post("/", async (req, res, next) => {
       action: "CREATE",
       entity: "report",
       entityId: report.id,
-      summary: summarize("CREATE", "report", [], `${money(report.price)} ${report.currency}, номер ${report.room.roomNumber}`),
+      // Главный аккаунт может оформить бронь на любого администратора — тогда
+      // в сводке видно, на кого именно она записана.
+      summary: summarize(
+        "CREATE",
+        "report",
+        [],
+        `${money(report.price)} ${report.currency}, номер ${report.room.roomNumber}` +
+          (req.user!.role === "ADMIN" ? "" : `, админ ${report.admin.fullName}`)
+      ),
     });
     res.status(201).json(report);
   } catch (err) {
@@ -436,7 +447,10 @@ router.post("/", async (req, res, next) => {
 
 router.put("/:id", async (req, res, next) => {
   try {
-    const existing = await prisma.monthlyReport.findUnique({ where: { id: req.params.id } });
+    const existing = await prisma.monthlyReport.findUnique({
+      where: { id: req.params.id },
+      include: { admin: true, branch: true },
+    });
     if (!existing) {
       return res.status(404).json({ message: "Запись не найдена" });
     }
@@ -447,7 +461,13 @@ router.put("/:id", async (req, res, next) => {
     const body = { ...req.body };
     if (req.user!.role === "ADMIN") {
       body.adminId = req.user!.adminId;
-      body.branchId = resolveBranchId(req.user!, body.branchId ?? existing.branchId);
+      // Если бронь оформлена на этого администратора в филиале, где он не
+      // числится (так может сделать главный аккаунт), сохраняем филиал брони
+      // как есть: resolveBranchId увёл бы её в «домашний» филиал, и запрос
+      // упал бы на проверке «номер не принадлежит филиалу».
+      body.branchId = hasBranchAccess(req.user!, existing.branchId)
+        ? resolveBranchId(req.user!, body.branchId ?? existing.branchId)
+        : existing.branchId;
     }
 
     const data = reportSchema.parse(body);
@@ -483,6 +503,25 @@ router.put("/:id", async (req, res, next) => {
       report as unknown as Record<string, unknown>,
       REPORT_AUDIT_FIELDS
     );
+    // Переназначение брони на другого администратора (или в другой филиал) —
+    // это решение главного аккаунта, и оно обязано оставлять след. Пишем имена,
+    // а не cuid: REPORT_AUDIT_FIELDS их не отслеживает намеренно.
+    if (existing.adminId !== report.adminId) {
+      changes.push({
+        field: "adminName",
+        label: "Администратор",
+        from: existing.admin.fullName,
+        to: report.admin.fullName,
+      });
+    }
+    if (existing.branchId !== report.branchId) {
+      changes.push({
+        field: "branchName",
+        label: "Филиал",
+        from: existing.branch.name,
+        to: report.branch.name,
+      });
+    }
     if (changes.length) {
       await recordAudit(req, {
         action: "UPDATE",

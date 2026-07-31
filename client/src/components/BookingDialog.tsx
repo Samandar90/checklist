@@ -33,6 +33,7 @@ import { useAudit } from "@/hooks/useAudit";
 import { MonthlyReport, Room, paymentMethods, paymentStatuses, BookingStatus } from "@/types";
 import { getErrorMessage } from "@/lib/api";
 import { addDaysIso, nightsBetween, formatMoney, formatDateTime, reportDebt, paymentStatusClass, PAYMENT_STATUS_OPTIONS } from "@/lib/utils";
+import { adminsForBranch, adminOptionLabel } from "@/lib/admins";
 import BookingStatusBadge from "@/components/BookingStatusBadge";
 import ActivityTimeline from "@/components/ActivityTimeline";
 
@@ -110,7 +111,9 @@ export default function BookingDialog({
   const isSuperAdmin = user?.role === "SUPER_ADMIN";
   const { data: history } = useAudit({ entity: "report", entityId: editing?.id }, !!editing && isSuperAdmin);
 
-  const branchAdmins = (admins ?? []).filter((a) => a.branchId === branchId);
+  // Все администраторы, «свои» сверху: главный аккаунт может держать бронь на
+  // администраторе из другого филиала — иначе в режиме правки поле было бы пустым.
+  const branchAdmins = adminsForBranch(admins ?? [], branchId);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -267,7 +270,7 @@ export default function BookingDialog({
         {noAdmins ? (
           <DrawerBody>
             <p className="py-6 text-center text-sm text-muted-foreground">
-              В этом филиале нет администраторов. Сначала добавьте администратора в разделе «Администраторы».
+              В системе нет администраторов. Сначала добавьте администратора в разделе «Администраторы».
             </p>
           </DrawerBody>
         ) : (
@@ -369,7 +372,7 @@ export default function BookingDialog({
                             <SelectContent>
                               {branchAdmins.map((a) => (
                                 <SelectItem key={a.id} value={a.id}>
-                                  {a.fullName}
+                                  {adminOptionLabel(a, branchId)}
                                 </SelectItem>
                               ))}
                             </SelectContent>

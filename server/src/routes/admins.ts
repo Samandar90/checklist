@@ -10,7 +10,14 @@ router.use(requireSuperAdmin);
 
 function serializeAdmin(admin: any) {
   const { user, ...rest } = admin;
-  return { ...rest, username: user?.username ?? null };
+  return {
+    ...rest,
+    username: user?.username ?? null,
+    // Плоский список филиалов — клиент фильтрует и подписывает админов по нему.
+    // Без него `branchIds` на клиенте всегда пустой, и мульти-филиальный админ
+    // молча считается работающим только в своём основном филиале.
+    branchIds: Array.isArray(admin.branches) ? admin.branches.map((b: any) => b.id) : [],
+  };
 }
 
 router.get("/", async (_req, res, next) => {

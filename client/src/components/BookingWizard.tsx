@@ -33,6 +33,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Room, paymentMethods, paymentStatuses } from "@/types";
 import { getErrorMessage } from "@/lib/api";
 import { cn, addDaysIso, nightsBetween, pluralRu, formatMoney, formatDate, PAYMENT_STATUS_OPTIONS } from "@/lib/utils";
+import { adminsForBranch, adminOptionLabel } from "@/lib/admins";
 
 const DRAFT_KEY = "booking-wizard-draft";
 
@@ -131,8 +132,9 @@ export default function BookingWizard({
     }
     return [...map.values()].sort((a, b) => b.lastVisit.localeCompare(a.lastVisit));
   }, [guestReports]);
-  // Админ подходит, если работает в этом филиале (мульти-филиальные — по branchIds).
-  const branchAdmins = (admins ?? []).filter((a) => (a.branchIds?.length ? a.branchIds.includes(branchId) : a.branchId === branchId));
+  // Список не режем по филиалу: главный аккаунт вправе оформить бронь на любого
+  // администратора, даже если тот в этом филиале не работает. Свои — сверху.
+  const branchAdmins = adminsForBranch(admins ?? [], branchId);
 
   const [stepIdx, setStepIdx] = useState(0);
 
@@ -316,7 +318,7 @@ export default function BookingWizard({
         {noAdmins ? (
           <DrawerBody>
             <p className="py-6 text-center text-sm text-muted-foreground">
-              В этом филиале нет администраторов. Сначала добавьте администратора в разделе «Администраторы».
+              В системе нет администраторов. Сначала добавьте администратора в разделе «Администраторы».
             </p>
           </DrawerBody>
         ) : (
@@ -454,7 +456,7 @@ export default function BookingWizard({
                                 <SelectContent>
                                   {branchAdmins.map((a) => (
                                     <SelectItem key={a.id} value={a.id}>
-                                      {a.fullName}
+                                      {adminOptionLabel(a, branchId)}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>

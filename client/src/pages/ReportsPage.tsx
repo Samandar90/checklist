@@ -61,6 +61,7 @@ import {
   PAYMENT_STATUS_OPTIONS,
 } from "@/lib/utils";
 import { exportReportsToCsv } from "@/lib/csv";
+import { adminsForBranch, adminOptionLabel } from "@/lib/admins";
 
 const COLUMNS = [
   { id: "guest", label: "Гость" },
@@ -188,8 +189,11 @@ export default function ReportsPage() {
   const selectedBranchId = form.watch("branchId");
   const selectedPaymentStatus = form.watch("paymentStatus");
 
+  // Администраторы не режутся по филиалу: главный аккаунт вправе записать бронь
+  // на любого из них. Те, кто работает в выбранном филиале, идут первыми.
+  // Номера ниже фильтруются по филиалу — там сервер строго требует совпадения.
   const filteredAdmins = useMemo(
-    () => (admins ?? []).filter((a) => !selectedBranchId || a.branchId === selectedBranchId),
+    () => adminsForBranch(admins ?? [], selectedBranchId),
     [admins, selectedBranchId]
   );
   const filteredRooms = useMemo(
@@ -814,7 +818,9 @@ export default function ReportsPage() {
                     value={field.value}
                     onValueChange={(v) => {
                       field.onChange(v);
-                      form.setValue("adminId", "");
+                      // Администратора не сбрасываем: он может быть из другого
+                      // филиала и остаётся допустимым. Номер — сбрасываем,
+                      // он обязан принадлежать выбранному филиалу.
                       form.setValue("roomId", "");
                     }}
                   >
@@ -849,7 +855,7 @@ export default function ReportsPage() {
                     <SelectContent>
                       {filteredAdmins.map((a) => (
                         <SelectItem key={a.id} value={a.id}>
-                          {a.fullName}
+                          {adminOptionLabel(a, selectedBranchId)}
                         </SelectItem>
                       ))}
                     </SelectContent>
