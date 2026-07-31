@@ -309,8 +309,10 @@ export default function ReportsPage() {
       return;
     }
     try {
-      await bulkAction.mutateAsync({ ids, action });
-      toast.success(`Применено к ${ids.length} бронированиям`);
+      // Сервер пропускает чужие брони — отчитываемся по факту, а не по выбору.
+      const res = await bulkAction.mutateAsync({ ids, action });
+      toast.success(`Применено к ${res.count} бронированиям`);
+      if (res.skipped) toast.warning(`Пропущено ${res.skipped}: это брони других администраторов`);
       setSelected(new Set());
     } catch (err) {
       toast.error(getErrorMessage(err));
@@ -320,8 +322,9 @@ export default function ReportsPage() {
   async function confirmBulkDelete() {
     const ids = Array.from(selected);
     try {
-      await bulkAction.mutateAsync({ ids, action: "DELETE" });
-      toast.success(`Удалено ${ids.length} бронирований`);
+      const res = await bulkAction.mutateAsync({ ids, action: "DELETE" });
+      toast.success(`Удалено ${res.count} бронирований`);
+      if (res.skipped) toast.warning(`Пропущено ${res.skipped}: это брони других администраторов`);
       setSelected(new Set());
       setBulkDeleteOpen(false);
     } catch (err) {

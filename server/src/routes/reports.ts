@@ -198,19 +198,26 @@ router.post("/:id/settle", requireSuperAdmin, async (req, res, next) => {
 });
 
 /**
- * Any admin assigned to this reservation's branch may manage it — not only
- * the admin who originally created it. A different receptionist on the same
- * branch (e.g. the next shift) must be able to check a guest in or out.
+ * An ADMIN may only manage the bookings they created — editing, deleting,
+ * moving and even changing the status of a colleague's booking is refused.
+ * SUPER_ADMIN is unrestricted.
+ *
+ * NB: this means the next shift cannot check in a guest booked by the
+ * previous one; that is the intended policy — each admin owns their bookings.
  */
-function canManage(req: any, existing: { branchId: string }) {
-  return hasBranchAccess(req.user!, existing.branchId);
+function canManage(req: any, existing: { branchId: string; adminId: string }) {
+  if (req.user!.role !== "ADMIN") return true;
+  if (!hasBranchAccess(req.user!, existing.branchId)) return false;
+  return existing.adminId === req.user!.adminId;
 }
 
 router.patch("/:id/status", async (req, res, next) => {
   try {
     const existing = await prisma.monthlyReport.findUnique({ where: { id: req.params.id }, include: { room: true } });
     if (!existing) return res.status(404).json({ message: "Запись не найдена" });
-    if (!canManage(req, existing)) return res.status(403).json({ message: "Недостаточно прав" });
+    if (!canManage(req, existing)) {
+      return res.status(403).json({ message: "Это бронь другого администратора — менять её может только её автор" });
+    }
 
     const status = String(req.body.status);
     if (!STATUS_LABELS[status]) return res.status(400).json({ message: "Неизвестный статус" });
@@ -243,8 +250,13 @@ router.post("/bulk", async (req, res, next) => {
 
     const existing = await prisma.monthlyReport.findMany({ where: { id: { in: ids } }, include: { room: true } });
     const allowed = existing.filter((r) => canManage(req, r));
-    if (allowed.length === 0) return res.status(403).json({ message: "Недостаточно прав" });
+    if (allowed.length === 0) {
+      return res.status(403).json({ message: "Это брони других администраторов — их может менять только автор" });
+    }
     const allowedIds = allowed.map((r) => r.id);
+    // Чужие брони молча отфильтрованы — сообщаем клиенту, сколько пропущено,
+    // чтобы он не показывал «готово» там, где часть выбранного не тронута.
+    const skipped = existing.length - allowed.length;
 
     if (action === "DELETE") {
       await prisma.monthlyReport.deleteMany({ where: { id: { in: allowedIds } } });
@@ -254,7 +266,7 @@ router.post("/bulk", async (req, res, next) => {
         entityId: null,
         summary: `Массовое удаление: ${allowed.length} бронирований`,
       });
-      return res.json({ count: allowed.length });
+      return res.json({ count: allowed.length, skipped });
     }
 
     if (action === "MOVE_ROOM") {
@@ -304,7 +316,7 @@ router.post("/bulk", async (req, res, next) => {
         entityId: null,
         summary: `Массовый перенос ${allowed.length} бронирований в номер ${room.roomNumber}`,
       });
-      return res.json({ count: allowed.length });
+      return res.json({ count: allowed.length, skipped });
     }
 
     const statusByAction: Record<string, string> = {
@@ -323,7 +335,7 @@ router.post("/bulk", async (req, res, next) => {
       entityId: null,
       summary: `Массовое изменение статуса (${STATUS_LABELS[status]}): ${allowed.length} бронирований`,
     });
-    res.json({ count: allowed.length });
+    res.json({ count: allowed.length, skipped });
   } catch (err) {
     next(err);
   }
@@ -429,7 +441,7 @@ router.put("/:id", async (req, res, next) => {
       return res.status(404).json({ message: "Запись не найдена" });
     }
     if (!canManage(req, existing)) {
-      return res.status(403).json({ message: "Недостаточно прав для изменения этого отчёта" });
+      return res.status(403).json({ message: "Это бронь другого администратора — изменить её может только её автор" });
     }
 
     const body = { ...req.body };
@@ -496,7 +508,7 @@ router.delete("/:id", async (req, res, next) => {
       return res.status(404).json({ message: "Запись не найдена" });
     }
     if (!canManage(req, existing)) {
-      return res.status(403).json({ message: "Недостаточно прав для удаления этого отчёта" });
+      return res.status(403).json({ message: "Это бронь другого администратора — удалить её может только её автор" });
     }
 
     await prisma.monthlyReport.delete({ where: { id: req.params.id } });

@@ -108,7 +108,7 @@ export function useBulkReportAction() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: { ids: string[]; action: BulkBookingAction; roomId?: string }) =>
-      (await api.post<{ count: number }>("/reports/bulk", payload)).data,
+      (await api.post<{ count: number; skipped: number }>("/reports/bulk", payload)).data,
     onSuccess: () => invalidateReportQueries(qc),
   });
 }

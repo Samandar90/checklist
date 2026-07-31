@@ -418,9 +418,18 @@ export default function CalendarPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cursor.year, cursor.month, monthStartMs]);
 
+  /** Бронь ведёт только её автор — чужие админ не двигает и не растягивает. */
+  const canManageBooking = (b: MonthlyReport) => !isAdmin || b.adminId === user?.adminId;
+
   function startMove(e: React.PointerEvent, booking: MonthlyReport, mode: "move" | "resize") {
     e.stopPropagation();
     e.preventDefault();
+    // Чужую бронь не перетаскиваем: сервер всё равно откажет — открываем детали,
+    // где показано, чья это бронь.
+    if (!canManageBooking(booking)) {
+      setSelected(booking);
+      return;
+    }
     const gridEl = (e.currentTarget as HTMLElement).closest("[data-grid-row]") as HTMLElement | null;
     if (!gridEl) return;
     const gridLeft = gridEl.getBoundingClientRect().left;

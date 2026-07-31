@@ -1,9 +1,10 @@
-import { LogIn, LogOut, Pencil, Trash2, Ban, UserX, RotateCcw, CheckCircle2 } from "lucide-react";
+import { LogIn, LogOut, Pencil, Trash2, Ban, UserX, RotateCcw, CheckCircle2, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { useUpdateReportStatus } from "@/hooks/useReports";
 import { useSettleDebt } from "@/hooks/useDebtors";
+import { useAuth } from "@/contexts/AuthContext";
 import { getErrorMessage } from "@/lib/api";
 import { reportDebt } from "@/lib/utils";
 import { MonthlyReport } from "@/types";
@@ -34,7 +35,12 @@ export default function ReservationActions({
 }) {
   const updateStatus = useUpdateReportStatus();
   const settle = useSettleDebt();
+  const { user } = useAuth();
   const debt = reportDebt(report);
+
+  // Бронь ведёт только её автор: администратор не трогает чужие брони
+  // (сервер это тоже проверяет — здесь просто не показываем недоступное).
+  const isOwn = user?.role !== "ADMIN" || report.adminId === user?.adminId;
 
   async function changeStatus(status: MonthlyReport["status"]) {
     try {
@@ -55,6 +61,17 @@ export default function ReservationActions({
   }
 
   const busy = updateStatus.isPending || settle.isPending;
+
+  if (!isOwn) {
+    return (
+      <div className="flex w-full items-start gap-2.5 rounded-lg border border-border bg-secondary/60 px-3.5 py-3">
+        <Lock className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+        <p className="text-[13px] leading-snug text-muted-foreground">
+          Бронь оформил {report.admin?.fullName ?? "другой администратор"} — менять её может только автор.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex w-full flex-col gap-2">
