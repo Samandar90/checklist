@@ -27,18 +27,27 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
   // Tokens live for 7 days, so branchIds baked into the token go stale the
   // moment the super admin re-assigns branches — this is what made
   // multi-branch admins "not work" until re-login.
-  if (req.user.role === "ADMIN" && req.user.adminId) {
+  //
+  // The same lookup revokes the token when the admin is gone: deleting an
+  // admin cascades their User row away, so /auth/me already failed — but every
+  // other route trusted the 7-day token, leaving a dismissed employee able to
+  // create bookings, expenses and shifts until it expired. Fail closed.
+  if (req.user.role === "ADMIN") {
+    if (!req.user.adminId) {
+      return res.status(401).json({ message: "Учётная запись больше не активна" });
+    }
     try {
       const admin = await prisma.admin.findUnique({
         where: { id: req.user.adminId },
         select: { branchId: true, branches: { select: { id: true } } },
       });
-      if (admin) {
-        const ids = admin.branches.map((b) => b.id);
-        if (!ids.includes(admin.branchId)) ids.unshift(admin.branchId);
-        req.user.branchId = admin.branchId;
-        req.user.branchIds = ids;
+      if (!admin) {
+        return res.status(401).json({ message: "Учётная запись больше не активна" });
       }
+      const ids = admin.branches.map((b) => b.id);
+      if (!ids.includes(admin.branchId)) ids.unshift(admin.branchId);
+      req.user.branchId = admin.branchId;
+      req.user.branchIds = ids;
     } catch (err) {
       return next(err);
     }
