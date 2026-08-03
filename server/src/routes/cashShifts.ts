@@ -3,6 +3,8 @@ import { prisma } from "../prisma";
 import { cashShiftOpenSchema, cashShiftCloseSchema } from "../validation";
 import { recordAudit, summarize } from "../audit";
 import { resolveBranchId } from "../branchScope";
+import { ROOM_HOLDING_STATUSES } from "../statuses";
+import { cashInFromBookings } from "../lib/cash";
 
 const router = Router();
 const money = (n: number) => n.toLocaleString("ru-RU");
@@ -11,18 +13,25 @@ const money = (n: number) => n.toLocaleString("ru-RU");
 async function cashFlow(branchId: string, adminId: string, currency: string, from: Date, to: Date) {
   const [reports, expenses] = await Promise.all([
     prisma.monthlyReport.findMany({
-      where: { branchId, adminId, currency, paymentMethod: "Наличные", createdAt: { gte: from, lt: to } },
+      where: {
+        branchId,
+        adminId,
+        currency,
+        paymentMethod: "Наличные",
+        // A cancelled / no-show booking holds no money — the same rule revenue
+        // and debt already follow. Counting them here charged the admin for
+        // cash that never entered the drawer and showed a phantom shortage at
+        // close (the "разница" the shift is judged on).
+        status: { in: ROOM_HOLDING_STATUSES },
+        createdAt: { gte: from, lt: to },
+      },
     }),
     prisma.expense.findMany({
       where: { branchId, adminId, currency, createdAt: { gte: from, lt: to } },
     }),
   ]);
 
-  const cashIn = reports.reduce((sum, r) => {
-    if (r.paymentStatus === "Долг") return sum;
-    if (r.paymentStatus === "Частично") return sum + (r.paidAmount ?? 0);
-    return sum + r.price;
-  }, 0);
+  const cashIn = cashInFromBookings(reports);
   const cashOut = expenses.reduce((sum, e) => sum + e.amount, 0);
 
   return { cashIn, cashOut };
