@@ -1,5 +1,15 @@
 import { describe, it, expect } from "vitest";
-import { nightsBetween, reportDebt, pluralRu, addDaysIso, isoDay, todayIso, currentMonthKey } from "./utils";
+import {
+  nightsBetween,
+  reportDebt,
+  pluralRu,
+  addDaysIso,
+  isoDay,
+  todayIso,
+  currentMonthKey,
+  chartDateLabel,
+  formatDate,
+} from "./utils";
 
 describe("nightsBetween", () => {
   it("counts nights between two ISO dates", () => {
@@ -72,6 +82,31 @@ describe("isoDay / todayIso (local calendar, not UTC)", () => {
 
   it("currentMonthKey is the local YYYY-MM", () => {
     expect(currentMonthKey()).toBe(todayIso().slice(0, 7));
+  });
+});
+
+describe("chartDateLabel (подсказка графика)", () => {
+  const point = (date: string) => [{ payload: { date } }];
+
+  it("берёт дату из точки данных, даже если Recharts прислал индекс", () => {
+    // Ровно тот случай, из-за которого в подсказке был «01 янв. 1970 г.»:
+    // без dataKey у оси label — это номер точки (0), а не дата.
+    expect(chartDateLabel(0, point("2026-08-10"))).toBe(formatDate("2026-08-10"));
+    expect(chartDateLabel(0, point("2026-08-10"))).not.toContain("1970");
+  });
+
+  it("использует подпись оси, когда точка её не несёт", () => {
+    expect(chartDateLabel("2026-08-10", undefined)).toBe(formatDate("2026-08-10"));
+  });
+
+  it("никогда не выдаёт дату из голого числа", () => {
+    expect(chartDateLabel(0, undefined)).toBe("");
+    expect(chartDateLabel(5, [])).toBe("");
+  });
+
+  it("пустое значение не превращает в дату", () => {
+    expect(chartDateLabel("", undefined)).toBe("");
+    expect(chartDateLabel(undefined, undefined)).toBe("");
   });
 });
 

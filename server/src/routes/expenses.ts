@@ -110,7 +110,15 @@ router.put("/:id", async (req, res, next) => {
         errors: [{ path: "branchId", message: "Филиал обязателен" }],
       });
     }
-    const branchId = isAdmin ? resolveBranchId(req.user!, data.branchId ?? existing.branchId) : data.branchId!;
+    // Филиал расхода меняем только на тот, который админу действительно назначен.
+    // resolveBranchId здесь молча увёл бы расход в «домашний» филиал, а расходы
+    // участвуют в сверке смены (cashFlow фильтрует по branchId) — незаметный
+    // перенос исказил бы ожидаемую кассу сразу в двух филиалах.
+    const requestedBranchId = data.branchId || existing.branchId;
+    if (isAdmin && !hasBranchAccess(req.user!, requestedBranchId)) {
+      return res.status(403).json({ message: "Этот филиал вам не назначен" });
+    }
+    const branchId = isAdmin ? requestedBranchId : data.branchId!;
 
     const expense = await prisma.expense.update({
       where: { id: req.params.id },

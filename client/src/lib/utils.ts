@@ -37,6 +37,21 @@ export function nightsBetween(date: string, checkOut?: string | null) {
   return diff > 0 ? diff : 1;
 }
 
+/**
+ * Подпись даты в подсказке графика.
+ *
+ * Recharts отдаёт в labelFormatter значение категории — но только если у оси
+ * задан dataKey. Без него приходит порядковый номер точки, и formatDate(0)
+ * превращался в «01 янв. 1970 г.». Поэтому берём дату из самой точки данных,
+ * а подпись оси используем лишь как запасной вариант; число датой не считаем.
+ */
+export function chartDateLabel(label: unknown, payload?: { payload?: { date?: string } }[]): string {
+  const fromPoint = payload?.[0]?.payload?.date;
+  const value = typeof fromPoint === "string" && fromPoint ? fromPoint : label;
+  if (typeof value !== "string" || !value) return "";
+  return formatDate(value);
+}
+
 /** Russian plural form: pluralRu(3, "ночь", "ночи", "ночей") → "ночи". */
 export function pluralRu(n: number, one: string, few: string, many: string) {
   const abs = Math.abs(n) % 100;

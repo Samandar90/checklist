@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ResponsiveContainer, AreaChart, Area, Tooltip } from "recharts";
+import { ResponsiveContainer, AreaChart, Area, XAxis, Tooltip } from "recharts";
 import {
   Wallet,
   ClipboardList,
@@ -29,7 +29,7 @@ import { useExpenses } from "@/hooks/useExpenses";
 import { useActiveCashShift } from "@/hooks/useCashShifts";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/api";
-import { formatDate, formatDateTime, formatMoney, isoDay, reportDebt } from "@/lib/utils";
+import { chartDateLabel, formatDate, formatDateTime, formatMoney, isoDay, reportDebt } from "@/lib/utils";
 import { holdsRoom } from "@/lib/bookingStatus";
 
 export default function StaffWorkspacePage() {
@@ -221,10 +221,20 @@ export default function StaffWorkspacePage() {
                       <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
+                  {/* Ось скрыта, но обязана быть: без dataKey Recharts подставляет
+                      в подсказку порядковый номер точки, и дата превращалась в
+                      «01 янв. 1970 г.» (formatDate от нуля). */}
+                  <XAxis dataKey="date" hide />
                   <Tooltip
-                    formatter={(v: number) => v.toLocaleString("ru-RU")}
-                    labelFormatter={(l: string) => formatDate(l)}
-                    contentStyle={{ borderRadius: 12, fontSize: 12 }}
+                    formatter={(v: number) => [`${v.toLocaleString("ru-RU")} UZS`, "Выручка"]}
+                    labelFormatter={(l, payload) => chartDateLabel(l, payload as { payload?: { date?: string } }[])}
+                    contentStyle={{
+                      borderRadius: 10,
+                      fontSize: 12,
+                      background: "var(--color-card)",
+                      border: "1px solid var(--color-border)",
+                      color: "var(--color-foreground)",
+                    }}
                   />
                   <Area type="monotone" dataKey="total" stroke="var(--color-primary)" strokeWidth={2} fill="url(#staffRevenue)" />
                 </AreaChart>
