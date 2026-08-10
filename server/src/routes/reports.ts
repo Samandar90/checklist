@@ -5,7 +5,7 @@ import { requireSuperAdmin } from "../middleware/auth";
 import { recordAudit, buildChanges, summarize } from "../audit";
 import { resolveBranchId, hasBranchAccess } from "../branchScope";
 import { ROOM_HOLDING_STATUSES } from "../statuses";
-import { DAY_MS, nightRange, normalizePaid } from "../lib/bookings";
+import { DAY_MS, nightRange, normalizePaid, stayOverlapsWindow } from "../lib/bookings";
 
 const REPORT_AUDIT_FIELDS = ["date", "checkOut", "guestName", "price", "currency", "paymentMethod", "paymentStatus", "status", "paidAmount", "notes", "roomId"];
 
@@ -360,23 +360,32 @@ router.get("/calendar", async (req, res, next) => {
     from.setHours(0, 0, 0, 0);
     to.setHours(0, 0, 0, 0);
     const toExclusive = new Date(to.getTime() + DAY_MS);
-    // Bookings can start up to ~31 days before the window and still overlap it.
-    const windowStart = new Date(from.getTime() - 31 * DAY_MS);
+
+    // Select every stay that overlaps [from, toExclusive) — the same half-open
+    // rule the dashboard's occupancy uses. The previous version looked back a
+    // fixed 31 days, which silently dropped any longer stay that had started
+    // before the window: the room then showed up FREE on the calendar even
+    // though it was occupied. A null checkOut is one night, i.e. [date, date+1).
+    const overlapsWindow = {
+      date: { lt: toExclusive },
+      OR: [
+        { checkOut: { gt: from } },
+        { checkOut: null, date: { gt: new Date(from.getTime() - DAY_MS) } },
+      ],
+    };
 
     const [rooms, candidates] = await Promise.all([
       prisma.room.findMany({ where: { branchId }, orderBy: { createdAt: "asc" } }),
       prisma.monthlyReport.findMany({
-        where: { branchId, date: { gte: windowStart, lt: toExclusive } },
+        where: { branchId, ...overlapsWindow },
         include: { room: true, admin: true, source: true, branch: true },
         orderBy: { date: "asc" },
       }),
     ]);
 
-    const bookings = candidates.filter((r) => {
-      const start = new Date(r.date);
-      const end = r.checkOut ? new Date(r.checkOut) : new Date(start.getTime() + DAY_MS);
-      return start < toExclusive && end > from;
-    });
+    const bookings = candidates.filter((r) =>
+      stayOverlapsWindow(new Date(r.date), r.checkOut ? new Date(r.checkOut) : null, from, toExclusive)
+    );
 
     res.json({ rooms, bookings });
   } catch (err) {

@@ -66,6 +66,25 @@ export function nightsWithinWindow(
 }
 
 /**
+ * Does this stay overlap the half-open window [windowStart, windowEnd)?
+ *
+ * Timestamps are compared as stored (no day flooring), which is what the
+ * calendar needs: it mirrors, one-for-one, the Prisma filter that selects the
+ * candidates, so no occupied room can be missing from the grid. A null
+ * checkOut is one night, i.e. [date, date + 1 day).
+ */
+export function stayOverlapsWindow(
+  date: Date,
+  checkOut: Date | null,
+  windowStart: Date,
+  windowEnd: Date
+): boolean {
+  const start = date.getTime();
+  const end = checkOut ? checkOut.getTime() : start + DAY_MS;
+  return start < windowEnd.getTime() && end > windowStart.getTime();
+}
+
+/**
  * Normalize the stored paid amount so debt is always `price - (paidAmount ?? price)`:
  * "Оплачено" → null (fully paid), "Долг" → 0, "Частично" → the entered amount.
  */

@@ -7,6 +7,7 @@ import {
   nightsWithinWindow,
   normalizePaid,
   outstandingDebt,
+  stayOverlapsWindow,
 } from "./bookings";
 
 const d = (iso: string) => new Date(iso);
@@ -113,6 +114,44 @@ describe("nightsWithinWindow (dashboard occupancy)", () => {
   it("counts a checkout-less stay as its single night", () => {
     expect(nightsWithinWindow(d("2026-07-15"), null, wStart, wEnd)).toBe(1);
     expect(nightsWithinWindow(d("2026-06-30"), null, wStart, wEnd)).toBe(0);
+  });
+});
+
+describe("stayOverlapsWindow", () => {
+  // The calendar asks for one week: 10–16 July (half-open, so 17 July excluded).
+  const from = d("2026-07-10");
+  const toExclusive = d("2026-07-17");
+
+  it("includes a stay contained in the window", () => {
+    expect(stayOverlapsWindow(d("2026-07-12"), d("2026-07-14"), from, toExclusive)).toBe(true);
+  });
+
+  it("includes a long stay that began long before the window", () => {
+    // Regression: the calendar used to look back only 31 days, so this
+    // three-month guest vanished from the grid and the room read as free.
+    expect(stayOverlapsWindow(d("2026-04-01"), d("2026-09-01"), from, toExclusive)).toBe(true);
+    expect(stayOverlapsWindow(d("2026-05-20"), d("2026-07-11"), from, toExclusive)).toBe(true);
+  });
+
+  it("excludes stays that end exactly when the window opens", () => {
+    // Half-open: a checkout on the 10th shares no night with the 10th onwards.
+    expect(stayOverlapsWindow(d("2026-06-01"), d("2026-07-10"), from, toExclusive)).toBe(false);
+  });
+
+  it("excludes stays that start exactly when the window closes", () => {
+    expect(stayOverlapsWindow(d("2026-07-17"), d("2026-07-20"), from, toExclusive)).toBe(false);
+  });
+
+  it("treats a missing checkout as one night", () => {
+    expect(stayOverlapsWindow(d("2026-07-16"), null, from, toExclusive)).toBe(true);
+    expect(stayOverlapsWindow(d("2026-07-09"), null, from, toExclusive)).toBe(false);
+    // The night of the 9th runs into the 10th only if check-in is after 00:00.
+    expect(stayOverlapsWindow(d("2026-07-09T18:00:00"), null, from, toExclusive)).toBe(true);
+  });
+
+  it("is false for stays entirely outside the window", () => {
+    expect(stayOverlapsWindow(d("2026-05-01"), d("2026-05-05"), from, toExclusive)).toBe(false);
+    expect(stayOverlapsWindow(d("2026-09-01"), d("2026-09-05"), from, toExclusive)).toBe(false);
   });
 });
 
