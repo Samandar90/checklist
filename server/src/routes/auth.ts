@@ -2,7 +2,8 @@ import { Router } from "express";
 import { prisma } from "../prisma";
 import { comparePassword, hashPassword, signToken } from "../auth";
 import { changePasswordSchema, loginSchema } from "../validation";
-import { authenticate, requireSuperAdmin } from "../middleware/auth";
+import { authenticate } from "../middleware/auth";
+import { recordAudit } from "../audit";
 
 const router = Router();
 
@@ -78,7 +79,16 @@ router.get("/me", authenticate, async (req, res, next) => {
   }
 });
 
-router.post("/change-password", authenticate, requireSuperAdmin, async (req, res, next) => {
+/**
+ * Смена СОБСТВЕННОГО пароля — доступна любому вошедшему пользователю.
+ *
+ * Раньше маршрут был закрыт requireSuperAdmin, хотя пункт «Сменить пароль» есть
+ * в меню у всех: администратор филиала получал 403 «Недостаточно прав» и мог
+ * поменять пароль только через главный аккаунт (то есть сообщив ему свой новый
+ * пароль). Право здесь не нужно: меняется исключительно пароль вызывающего
+ * (req.user.sub), и только после проверки текущего пароля.
+ */
+router.post("/change-password", authenticate, async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = changePasswordSchema.parse(req.body);
 
@@ -95,6 +105,15 @@ router.post("/change-password", authenticate, requireSuperAdmin, async (req, res
     await prisma.user.update({
       where: { id: user.id },
       data: { passwordHash: await hashPassword(newPassword) },
+    });
+
+    // Смена пароля — событие безопасности: в журнале должен остаться след,
+    // кто и когда сменил себе пароль (сам пароль, разумеется, не пишем).
+    await recordAudit(req, {
+      action: "UPDATE",
+      entity: "user",
+      entityId: user.id,
+      summary: `Сменил пароль своей учётной записи (${user.username})`,
     });
 
     res.json({ message: "Пароль успешно изменён" });
