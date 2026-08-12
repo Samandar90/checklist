@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../prisma";
 import { cashShiftOpenSchema, cashShiftCloseSchema } from "../validation";
-import { recordAudit, summarize } from "../audit";
+import { recordAudit } from "../audit";
 import { resolveBranchId } from "../branchScope";
 import { ROOM_HOLDING_STATUSES } from "../statuses";
 import { cashInFromBookings } from "../lib/cash";
@@ -115,7 +115,9 @@ router.post("/", async (req, res, next) => {
       action: "CREATE",
       entity: "cashShift",
       entityId: shift.id,
-      summary: summarize("CREATE", "cashShift", [], `смена открыта, остаток ${money(shift.openingAmount)} ${shift.currency}`),
+      // Явный текст вместо summarize(): у смены нет русской подписи сущности,
+      // и обобщённый шаблон давал в журнале «Добавил cashShift — …».
+      summary: `Открыл смену — остаток в кассе ${money(shift.openingAmount)} ${shift.currency}`,
     });
     res.status(201).json(shift);
   } catch (err) {
@@ -156,12 +158,7 @@ router.put("/:id/close", async (req, res, next) => {
       action: "UPDATE",
       entity: "cashShift",
       entityId: updated.id,
-      summary: summarize(
-        "UPDATE",
-        "cashShift",
-        [],
-        `смена закрыта, факт ${money(data.closingAmount)} / расчёт ${money(expectedAmount)} ${updated.currency} (разница ${money(diff)})`
-      ),
+      summary: `Закрыл смену — факт ${money(data.closingAmount)} / расчёт ${money(expectedAmount)} ${updated.currency} (разница ${money(diff)})`,
     });
     res.json({ ...updated, ...flow });
   } catch (err) {

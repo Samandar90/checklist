@@ -60,10 +60,12 @@ export function exportReportsToCsv(reports: MonthlyReport[], filename = "еже�
 const ENTITY_LABELS: Record<string, string> = {
   report: "Отчёт",
   expense: "Расход",
+  cashShift: "Смена",
   branch: "Филиал",
   admin: "Администратор",
   room: "Номер",
   source: "Источник",
+  user: "Учётная запись",
 };
 
 const ACTION_LABELS: Record<string, string> = {

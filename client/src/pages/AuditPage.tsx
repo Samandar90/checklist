@@ -16,6 +16,8 @@ import {
   Users,
   BedDouble,
   Megaphone,
+  Banknote,
+  KeyRound,
 } from "lucide-react";
 
 import PageHeader from "@/components/PageHeader";
@@ -35,16 +37,22 @@ import { exportAuditToCsv } from "@/lib/csv";
 type Grouping = "day" | "actor";
 
 // ── Entity meta ──────────────────────────────────────────────────────────────
-const ENTITY_ORDER = ["report", "expense", "branch", "admin", "room", "source"] as const;
+// Порядок задаёт и набор фильтров, и то, какие записи вообще видны: строки с
+// сущностью не из этого списка отсеиваются фильтром ниже. Поэтому список обязан
+// перечислять ВСЕ сущности, которые пишет сервер (см. recordAudit в server/src):
+// открытие/закрытие смены писалось в базу, но в журнале не показывалось.
+const ENTITY_ORDER = ["report", "expense", "cashShift", "branch", "admin", "room", "source", "user"] as const;
 type EntityKey = (typeof ENTITY_ORDER)[number];
 
 const ENTITY_META: Record<EntityKey, { label: string; icon: typeof ClipboardList; tint: string }> = {
-  report:  { label: "Отчёт",          icon: ClipboardList, tint: "tint-sky" },
-  expense: { label: "Расход",          icon: Wallet,        tint: "tint-amber" },
-  branch:  { label: "Филиал",          icon: Building2,     tint: "tint-violet" },
-  admin:   { label: "Администратор",   icon: Users,         tint: "tint-indigo" },
-  room:    { label: "Номер",           icon: BedDouble,     tint: "tint-emerald" },
-  source:  { label: "Источник",        icon: Megaphone,     tint: "tint-rose" },
+  report:    { label: "Отчёт",          icon: ClipboardList, tint: "tint-sky" },
+  expense:   { label: "Расход",          icon: Wallet,        tint: "tint-amber" },
+  cashShift: { label: "Смена",           icon: Banknote,      tint: "tint-emerald" },
+  branch:    { label: "Филиал",          icon: Building2,     tint: "tint-violet" },
+  admin:     { label: "Администратор",   icon: Users,         tint: "tint-indigo" },
+  room:      { label: "Номер",           icon: BedDouble,     tint: "tint-emerald" },
+  source:    { label: "Источник",        icon: Megaphone,     tint: "tint-rose" },
+  user:      { label: "Учётная запись",  icon: KeyRound,      tint: "tint-slate" },
 };
 
 // ── Action meta ───────────────────────────────────────────────────────────────
