@@ -2,7 +2,7 @@ import { Router } from "express";
 import { prisma } from "../prisma";
 import { requireSuperAdmin } from "../middleware/auth";
 import { ROOM_HOLDING_STATUSES } from "../statuses";
-import { nightsWithinWindow } from "../lib/bookings";
+import { nightsWithinWindow, outstandingDebt } from "../lib/bookings";
 
 const router = Router();
 router.use(requireSuperAdmin);
@@ -114,8 +114,8 @@ router.get("/", async (req, res, next) => {
     const count = reports.length;
     const avgCheck = count > 0 ? revenue / count : 0;
 
-    // Debt: paidAmount === null means fully paid.
-    const totalDebt = reports.reduce((sum, r) => sum + (r.price - (r.paidAmount ?? r.price)), 0);
+    // Debt: paidAmount === null means fully paid (same rule as /reports/debtors).
+    const totalDebt = reports.reduce((sum, r) => sum + outstandingDebt(r.price, r.paidAmount), 0);
 
     const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
     const netProfit = revenue - totalExpenses;

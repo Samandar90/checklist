@@ -5,7 +5,7 @@ import { requireSuperAdmin } from "../middleware/auth";
 import { recordAudit, buildChanges, summarize } from "../audit";
 import { resolveBranchId, hasBranchAccess } from "../branchScope";
 import { ROOM_HOLDING_STATUSES } from "../statuses";
-import { DAY_MS, nightRange, normalizePaid, stayOverlapsWindow } from "../lib/bookings";
+import { DAY_MS, nightRange, normalizePaid, outstandingDebt, stayOverlapsWindow } from "../lib/bookings";
 
 const REPORT_AUDIT_FIELDS = ["date", "checkOut", "guestName", "price", "currency", "paymentMethod", "paymentStatus", "status", "paidAmount", "notes", "roomId"];
 
@@ -149,7 +149,7 @@ router.get("/debtors", requireSuperAdmin, async (req, res, next) => {
     });
 
     const items = reports
-      .map((r) => ({ ...r, debt: r.price - (r.paidAmount ?? r.price) }))
+      .map((r) => ({ ...r, debt: outstandingDebt(r.price, r.paidAmount) }))
       .filter((r) => r.debt > 0);
 
     const totalDebt = items.reduce((sum, r) => sum + r.debt, 0);
@@ -183,11 +183,15 @@ router.post("/:id/settle", requireSuperAdmin, async (req, res, next) => {
       include: { branch: true, admin: true, room: true, source: true },
     });
 
+    // В журнал пишем именно погашенную сумму, а не цену брони: по частично
+    // оплаченной броне (цена 500 000, внесено 300 000) запись «погасил
+    // 500 000» завышала приход и не сходилась ни с должниками, ни с кассой.
+    const settled = outstandingDebt(existing.price, existing.paidAmount);
     await recordAudit(req, {
       action: "UPDATE",
       entity: "report",
       entityId: report.id,
-      summary: `Погасил долг по отчёту — ${money(existing.price)} ${existing.currency}, номер ${existing.room.roomNumber}`,
+      summary: `Погасил долг по отчёту — ${money(settled)} ${existing.currency}, номер ${existing.room.roomNumber}`,
       changes: [{ field: "paymentStatus", label: "Статус оплаты", from: existing.paymentStatus, to: "Оплачено" }],
     });
 
