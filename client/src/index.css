@@ -515,6 +515,81 @@ label[for] {
   background: conic-gradient(from 90deg, transparent 0deg, transparent 90deg, #f5f5f7 340deg, #f5f5f7);
 }
 
+/*
+ * Chessboard. Hairlines are literal rgba (theme-aware by .dark, and immune to
+ * the color-mix(var()) build-time inlining). Day-column states stack in
+ * priority: selected > today > weekend.
+ */
+.board-cell {
+  border-left: 1px solid rgba(0, 0, 0, 0.05);
+}
+.dark .board-cell {
+  border-left-color: rgba(255, 255, 255, 0.06);
+}
+.board-row {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+.dark .board-row {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+.board-label {
+  background-color: var(--color-card);
+}
+.board-row:hover,
+.board-row:hover .board-label {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+.dark .board-row:hover,
+.dark .board-row:hover .board-label {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+/* .board-label must stay opaque over scrolled bars, so the hover tint is
+   composited on top of the card colour rather than replacing it. */
+.board-row:hover .board-label {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.02));
+  background-color: var(--color-card);
+}
+.dark .board-row:hover .board-label {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.03));
+  background-color: var(--color-card);
+}
+.day-weekend {
+  background-color: rgba(0, 0, 0, 0.022);
+}
+.dark .day-weekend {
+  background-color: rgba(255, 255, 255, 0.025);
+}
+.day-today {
+  background-color: rgba(0, 113, 227, 0.045);
+}
+.dark .day-today {
+  background-color: rgba(10, 132, 255, 0.08);
+}
+/* The clicked day: a tinted band with crisp edges running the full board height. */
+.day-selected {
+  background-color: rgba(0, 113, 227, 0.075);
+  box-shadow: inset 1px 0 0 rgba(0, 113, 227, 0.55), inset -1px 0 0 rgba(0, 113, 227, 0.55);
+}
+.dark .day-selected {
+  background-color: rgba(10, 132, 255, 0.13);
+  box-shadow: inset 1px 0 0 rgba(41, 151, 255, 0.65), inset -1px 0 0 rgba(41, 151, 255, 0.65);
+}
+
+/*
+ * Reservation bar palettes — Apple system colours. --bar paints the slanted
+ * check-in stripe (and legend dots), --bar-tint the body, --bar-text the label.
+ */
+.bar-reserved { --bar: #0a7aff; --bar-tint: rgba(10, 122, 255, 0.14); --bar-text: #0a52b8; }
+.bar-checked-in { --bar: #34c759; --bar-tint: rgba(52, 199, 89, 0.17); --bar-text: #1a7a37; }
+.bar-checked-out { --bar: #8e8e93; --bar-tint: rgba(142, 142, 147, 0.18); --bar-text: #48484a; }
+.bar-cancelled { --bar: #ff3b30; --bar-tint: rgba(255, 59, 48, 0.13); --bar-text: #b02a22; }
+.bar-no-show { --bar: #ff9500; --bar-tint: rgba(255, 149, 0, 0.17); --bar-text: #9a5a00; }
+.dark .bar-reserved { --bar: #409cff; --bar-tint: rgba(64, 156, 255, 0.24); --bar-text: #9dcbff; }
+.dark .bar-checked-in { --bar: #30d158; --bar-tint: rgba(48, 209, 88, 0.24); --bar-text: #8ee8a4; }
+.dark .bar-checked-out { --bar: #98989d; --bar-tint: rgba(152, 152, 157, 0.24); --bar-text: #d1d1d6; }
+.dark .bar-cancelled { --bar: #ff453a; --bar-tint: rgba(255, 69, 58, 0.22); --bar-text: #ffb1ab; }
+.dark .bar-no-show { --bar: #ff9f0a; --bar-tint: rgba(255, 159, 10, 0.24); --bar-text: #ffd28a; }
+
 /* Scroll container with a hidden scrollbar (chessboard pans by dragging). */
 .no-scrollbar {
   scrollbar-width: none;

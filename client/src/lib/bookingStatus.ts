@@ -21,35 +21,35 @@ export const STATUS_OPTIONS: { value: BookingStatus; label: string }[] = (
 ).map((value) => ({ value, label: STATUS_META[value].label }));
 
 /**
- * Solid fill classes for the calendar chessboard bars — the single source of truth
- * for reservation-status color so it's never re-guessed per component.
- * Muted PMS palette (steel blue / green / slate gray like the reference board):
- * RESERVED = blue, CHECKED_IN = green, CHECKED_OUT = gray (the three states staff
- * scan for); CANCELLED / NO_SHOW keep the same hue family as their STATUS_META tint
- * so they read as distinct terminal states rather than being mistaken for CHECKED_OUT.
+ * Chessboard bar palette — Apple Calendar treatment: a pastel tint body with
+ * the saturated colour kept for a slanted accent stripe and the label text.
+ * Each class only sets CSS variables (see .bar-* in index.css, light + dark);
+ * ReservationCard paints with var(--bar) / var(--bar-tint) / var(--bar-text).
+ * RESERVED = blue, CHECKED_IN = green, CHECKED_OUT = grey — the three states
+ * staff scan for; CANCELLED / NO_SHOW are red / orange terminal states.
  */
 export const STATUS_BAR_CLASS: Record<BookingStatus, string> = {
-  RESERVED: "bg-[#4f96d8] text-white",
-  CHECKED_IN: "bg-[#43a563] text-white",
-  CHECKED_OUT: "bg-[#808a96] text-white",
-  CANCELLED: "bg-[#c0576b] text-white",
-  NO_SHOW: "bg-[#d79a3f] text-white",
+  RESERVED: "bar-reserved",
+  CHECKED_IN: "bar-checked-in",
+  CHECKED_OUT: "bar-checked-out",
+  CANCELLED: "bar-cancelled",
+  NO_SHOW: "bar-no-show",
 };
 
-/** Flat solid fill colours for the chessboard bars (clean, no gradient). */
+/** Solid (light-theme) status colours — Apple system palette. */
 export const STATUS_BAR_COLOR: Record<BookingStatus, string> = {
-  RESERVED: "#4f96d8",
-  CHECKED_IN: "#43a563",
-  CHECKED_OUT: "#808a96",
-  CANCELLED: "#c0576b",
-  NO_SHOW: "#d79a3f",
+  RESERVED: "#0a7aff",
+  CHECKED_IN: "#34c759",
+  CHECKED_OUT: "#8e8e93",
+  CANCELLED: "#ff3b30",
+  NO_SHOW: "#ff9500",
 };
 
-/** Plain solid-dot classes matching STATUS_BAR_CLASS, for small legend/filter swatches. */
+/** Solid-dot classes matching STATUS_BAR_COLOR, for legend / filter swatches. */
 export const STATUS_DOT_CLASS: Record<BookingStatus, string> = {
-  RESERVED: "bg-[#4f96d8]",
-  CHECKED_IN: "bg-[#43a563]",
-  CHECKED_OUT: "bg-[#808a96]",
-  CANCELLED: "bg-[#c0576b]",
-  NO_SHOW: "bg-[#d79a3f]",
+  RESERVED: "bg-[#0a7aff]",
+  CHECKED_IN: "bg-[#34c759]",
+  CHECKED_OUT: "bg-[#8e8e93]",
+  CANCELLED: "bg-[#ff3b30]",
+  NO_SHOW: "bg-[#ff9500]",
 };

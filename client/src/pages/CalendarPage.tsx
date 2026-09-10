@@ -132,21 +132,34 @@ export default function CalendarPage() {
     targetRoomId: string;
   } | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  // Клик по дате в шапке выделяет всю колонку — вертикальный ориентир, когда
+  // броней много. Повторный клик или Esc снимает выделение.
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const updateReport = useUpdateReport();
 
   // Drag-to-pan: grab the day strips / group rows and drag to scroll the board.
   const scrollRef = useRef<HTMLDivElement>(null);
   const panRef = useRef<{ startX: number; startLeft: number } | null>(null);
+  // Клик по дате и протяжка начинаются одинаково; если указатель сдвинулся —
+  // это была прокрутка, и выделять день не нужно.
+  const panMovedRef = useRef(false);
 
   function startPan(e: React.PointerEvent) {
     if (e.button !== 0 || !scrollRef.current) return;
+    panMovedRef.current = false;
     panRef.current = { startX: e.clientX, startLeft: scrollRef.current.scrollLeft };
+  }
+
+  function toggleSelectedDay(i: number) {
+    if (panMovedRef.current) return;
+    setSelectedDay((cur) => (cur === i ? null : i));
   }
 
   useEffect(() => {
     function onMove(e: PointerEvent) {
       const p = panRef.current;
       if (!p || !scrollRef.current) return;
+      if (Math.abs(e.clientX - p.startX) > 4) panMovedRef.current = true;
       scrollRef.current.scrollLeft = p.startLeft - (e.clientX - p.startX);
     }
     function onUp() {
@@ -192,6 +205,15 @@ export default function CalendarPage() {
   }, [cursor.year, cursor.month]);
 
   const dayIndex = (d: string | Date) => Math.round((dayStartMs(d) - monthStartMs) / DAY_MS);
+
+  // Выделенный день принадлежит месяцу — при смене месяца снимаем.
+  useEffect(() => {
+    setSelectedDay(null);
+  }, [cursor.year, cursor.month]);
+
+  // Фон колонки по приоритету: выделенный день > сегодня > выходной.
+  const dayCellClass = (i: number, weekend: boolean) =>
+    i === selectedDay ? "day-selected" : i === todayIndex ? "day-today" : weekend ? "day-weekend" : "";
 
   // Keep a ref of the live drag so the global mouseup handler always sees it.
   const dragRef = useRef(drag);
@@ -267,6 +289,7 @@ export default function CalendarPage() {
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key !== "Escape") return;
+      setSelectedDay(null);
       if (dragRef.current) {
         dragRef.current = null;
         setDrag(null);
@@ -544,7 +567,7 @@ export default function CalendarPage() {
       <PageHeader title="Шахматка" description="Загрузка номеров по датам заезда и выезда." />
 
       {/* Тулбар */}
-      <div className="glass-bar sticky top-0 z-30 -mx-4 mb-4 border-b border-border px-4 py-3 md:-mx-8 md:px-8">
+      <div className="glass-bar sticky top-0 z-30 -mx-4 mb-4 px-4 py-3 md:-mx-8 md:px-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="flex flex-wrap items-end gap-3">
             {(!isAdmin || isMultiBranchAdmin) && (
@@ -571,7 +594,7 @@ export default function CalendarPage() {
                 <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Гость, номер, источник…" className="pl-8" />
               </div>
             </div>
-            <div className="flex items-center gap-1 rounded-full border border-border bg-secondary/60 p-1">
+            <div className="flex items-center gap-1 rounded-full bg-secondary/70 p-1">
               <button onClick={() => shiftMonth(-1)} aria-label="Предыдущий месяц" className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-card hover:text-foreground">
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -618,7 +641,7 @@ export default function CalendarPage() {
       )}
 
       {/* Фильтр по статусу брони — matches the exact colors used on the chessboard */}
-      <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-border bg-card px-3 py-2.5">
+      <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl bg-card px-3 py-2.5">
         <div className="flex flex-wrap items-center gap-1.5">
           {STATUS_FILTERS.map((s) => {
             const active = statusFilter === s.status;
@@ -627,8 +650,8 @@ export default function CalendarPage() {
                 key={s.status}
                 onClick={() => setStatusFilter(active ? null : s.status)}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                  active ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground hover:text-foreground"
+                  "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12.5px] font-medium transition-colors",
+                  active ? "bg-foreground text-background" : "bg-secondary/70 text-muted-foreground hover:bg-secondary hover:text-foreground"
                 )}
               >
                 <span className={cn("h-2.5 w-2.5 rounded-full", STATUS_DOT_CLASS[s.status])} />
@@ -646,6 +669,17 @@ export default function CalendarPage() {
             className="flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
           >
             <X className="h-3.5 w-3.5" /> Сбросить
+          </button>
+        )}
+        {selectedDay !== null && days[selectedDay] && (
+          <button
+            onClick={() => setSelectedDay(null)}
+            className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[12px] font-medium text-primary transition-colors hover:bg-primary/15"
+            title="Снять выделение (Esc)"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+            {WEEKDAYS[days[selectedDay].getDay()]} {days[selectedDay].getDate()} {MONTHS[cursor.month].toLowerCase().slice(0, 3)}. · выделен день
+            <X className="h-3 w-3" />
           </button>
         )}
         <span className="ml-auto hidden items-center gap-1.5 text-xs text-muted-foreground md:flex">
@@ -666,10 +700,10 @@ export default function CalendarPage() {
               {/* Маркер текущего времени */}
               {todayIndex >= 0 && (
                 <div
-                  className="pointer-events-none absolute top-0 z-20 h-full w-px bg-primary/70"
+                  className="pointer-events-none absolute top-0 z-20 h-full w-px bg-[#ff3b30]/80"
                   style={{ left: LABEL_W + todayIndex * CELL_W + (new Date().getHours() / 24) * CELL_W }}
                 >
-                  <span className="absolute -left-[3px] -top-1 h-1.5 w-1.5 rounded-full bg-primary" />
+                  <span className="absolute -left-[3.5px] -top-1 h-2 w-2 rounded-full bg-[#ff3b30]" />
                 </div>
               )}
               {/* Заголовок: синяя полоса дней + свободно + загрузка % (sticky).
@@ -683,43 +717,56 @@ export default function CalendarPage() {
                   className="sticky left-0 z-40 flex flex-col justify-center gap-0.5 border-r border-border bg-card px-3"
                   style={{ width: LABEL_W, minWidth: LABEL_W }}
                 >
-                  <span className="text-xs font-bold text-primary">
-                    {MONTHS[cursor.month].slice(0, 3)}. {cursor.year}
+                  <span className="text-[13px] font-semibold tracking-[-0.01em] text-foreground">
+                    {MONTHS[cursor.month]} {cursor.year}
                   </span>
-                  <span className="text-[9px] uppercase tracking-wide text-muted-foreground">
-                    свободно · загрузка
-                  </span>
+                  <span className="text-[10.5px] text-muted-foreground">свободно · загрузка</span>
                 </div>
                 {days.map((d, i) => {
                   const weekend = d.getDay() === 0 || d.getDay() === 6;
                   const occ = totalRooms ? Math.round((occupiedByDay[i].size / totalRooms) * 100) : 0;
                   const free = totalRooms - occupiedByDay[i].size;
                   return (
-                    <div key={i} style={{ width: CELL_W, minWidth: CELL_W }} className="border-l border-border/50">
-                      <div
-                        className={cn(
-                          "py-1.5 text-center text-[11px] font-semibold leading-none text-primary-foreground",
-                          i === todayIndex ? "bg-sky-500 text-white" : weekend ? "bg-primary/85" : "bg-primary"
-                        )}
+                    <div key={i} style={{ width: CELL_W, minWidth: CELL_W }} className={cn("board-cell", dayCellClass(i, weekend))}>
+                      {/* Дата как в Apple Calendar: день недели над числом; сегодня — синим,
+                          выделенный день — залитый кружок. Клик выделяет всю колонку. */}
+                      <button
+                        type="button"
+                        onClick={() => toggleSelectedDay(i)}
+                        aria-pressed={i === selectedDay}
+                        aria-label={`Выделить ${WEEKDAYS[d.getDay()]} ${d.getDate()}`}
+                        className="flex w-full cursor-pointer flex-col items-center gap-0.5 pb-1 pt-1.5"
                       >
-                        {WEEKDAYS[d.getDay()]} {d.getDate()}
-                      </div>
-                      <div
-                        className={cn(
-                          "flex flex-col items-center gap-1 py-1.5",
-                          i === todayIndex && "bg-primary/10",
-                          weekend && i !== todayIndex && "bg-muted/40"
-                        )}
-                      >
+                        <span className={cn("text-[10px] font-medium leading-none", weekend ? "text-muted-foreground/70" : "text-muted-foreground")}>
+                          {WEEKDAYS[d.getDay()]}
+                        </span>
                         <span
                           className={cn(
-                            "min-w-[24px] rounded border border-border/70 bg-card px-1 text-center text-[10px] font-semibold leading-4",
-                            free === 0 ? "text-rose-500" : "text-foreground"
+                            "flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-[13px] font-semibold leading-none tabular-nums transition-colors",
+                            i === selectedDay
+                              ? i === todayIndex
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-foreground text-background"
+                              : i === todayIndex
+                                ? "text-primary"
+                                : weekend
+                                  ? "text-muted-foreground"
+                                  : "text-foreground"
+                          )}
+                        >
+                          {d.getDate()}
+                        </span>
+                      </button>
+                      <div className="flex flex-col items-center gap-1 pb-1.5">
+                        <span
+                          className={cn(
+                            "min-w-[24px] rounded-full bg-secondary px-1.5 text-center text-[10px] font-semibold leading-4",
+                            free === 0 ? "text-destructive" : "text-foreground"
                           )}
                         >
                           {free}
                         </span>
-                        <span className={cn("rounded px-1 text-[9px] font-semibold leading-4", heat(occ))}>{occ}%</span>
+                        <span className={cn("rounded-full px-1.5 text-[9px] font-semibold leading-4", heat(occ))}>{occ}%</span>
                       </div>
                     </div>
                   );
@@ -729,7 +776,7 @@ export default function CalendarPage() {
               {/* Группы по типам */}
               {groups.map((g) => (
                 <div key={g.type}>
-                  <div className="flex border-b border-border bg-secondary/50">
+                  <div className="board-row flex bg-background">
                     <button
                       type="button"
                       onClick={() =>
@@ -739,7 +786,7 @@ export default function CalendarPage() {
                           return next;
                         })
                       }
-                      className="sticky left-0 z-20 flex items-center gap-1.5 bg-secondary/50 px-3 py-1 font-semibold text-foreground transition-colors hover:bg-secondary"
+                      className="sticky left-0 z-20 flex items-center gap-1.5 bg-background px-3 py-1 text-[12px] font-semibold text-foreground transition-colors hover:bg-secondary/60"
                       style={{ width: LABEL_W, minWidth: LABEL_W }}
                     >
                       <ChevronRight
@@ -760,9 +807,9 @@ export default function CalendarPage() {
                             key={i}
                             style={{ width: CELL_W, minWidth: CELL_W }}
                             className={cn(
-                              "border-l border-border/70 py-1 text-center text-[11px] font-medium",
-                              i === todayIndex && "bg-primary/10",
-                              free === 0 ? "text-rose-500" : "text-muted-foreground"
+                              "board-cell py-1 text-center text-[11px] font-medium tabular-nums",
+                              dayCellClass(i, d.getDay() === 0 || d.getDay() === 6),
+                              free === 0 ? "text-destructive" : "text-muted-foreground"
                             )}
                           >
                             {free}
@@ -772,20 +819,19 @@ export default function CalendarPage() {
                     </div>
                   </div>
 
-                  {!collapsed.has(g.type) && g.rooms.map((room, ri) => (
+                  {!collapsed.has(g.type) && g.rooms.map((room) => (
                     <div
                       key={room.id}
                       data-room-row
                       data-room-id={room.id}
                       className={cn(
-                        "group flex border-b border-border transition-colors hover:bg-primary/[0.03]",
-                        ri % 2 === 1 && "bg-muted/20",
+                        "board-row group flex transition-colors",
                         move && move.targetRoomId === room.id && move.targetRoomId !== move.booking.roomId && "bg-primary/10"
                       )}
                       style={{ height: ROW_H }}
                     >
                       <div
-                        className="sticky left-0 z-20 flex items-center bg-card px-3 font-medium text-foreground transition-colors group-hover:bg-primary/[0.03]"
+                        className="board-label sticky left-0 z-20 flex items-center px-3 text-[13px] font-semibold text-foreground transition-colors"
                         style={{ width: LABEL_W, minWidth: LABEL_W }}
                       >
                         {room.roomNumber}
@@ -830,9 +876,8 @@ export default function CalendarPage() {
                                 }}
                                 onPointerLeave={() => setFreeHover(null)}
                                 className={cn(
-                                  "cursor-pointer border-l border-border/40 transition-colors hover:bg-primary/10",
-                                  i === todayIndex && "bg-primary/[0.07]",
-                                  weekend && i !== todayIndex && "bg-muted/25"
+                                  "board-cell cursor-pointer transition-colors hover:bg-primary/10",
+                                  dayCellClass(i, weekend)
                                 )}
                               />
                             );
@@ -841,7 +886,7 @@ export default function CalendarPage() {
                         {/* подсветка выделения при протяжке + живой счётчик ночей */}
                         {drag && drag.roomId === room.id && (
                           <div
-                            className="pointer-events-none absolute z-30 flex items-center justify-center rounded-md border-2 border-dashed border-primary bg-primary/15"
+                            className="pointer-events-none absolute z-30 flex items-center justify-center rounded-lg border-2 border-dashed border-primary/70 bg-primary/10"
                             style={{
                               left: Math.min(drag.a, drag.b) * CELL_W + 1,
                               width: (Math.abs(drag.b - drag.a) + 1) * CELL_W - 2,
@@ -911,25 +956,35 @@ export default function CalendarPage() {
               <div
                 onPointerDown={startPan}
                 style={{ touchAction: "pan-y" }}
-                className="flex cursor-grab select-none border-t border-border active:cursor-grabbing"
+                className="flex cursor-grab select-none border-t border-border/70 bg-card active:cursor-grabbing"
               >
                 <div
-                  className="sticky left-0 z-20 border-r border-border bg-card"
+                  className="sticky left-0 z-20 border-r border-border/70 bg-card"
                   style={{ width: LABEL_W, minWidth: LABEL_W }}
                 />
                 {days.map((d, i) => {
                   const weekend = d.getDay() === 0 || d.getDay() === 6;
                   return (
-                    <div
+                    <button
                       key={i}
+                      type="button"
+                      onClick={() => toggleSelectedDay(i)}
+                      aria-pressed={i === selectedDay}
                       style={{ width: CELL_W, minWidth: CELL_W }}
                       className={cn(
-                        "border-l border-border/40 py-1.5 text-center text-[11px] font-semibold leading-none text-primary-foreground",
-                        i === todayIndex ? "bg-sky-500 text-white" : weekend ? "bg-primary/85" : "bg-primary"
+                        "board-cell flex cursor-pointer items-center justify-center gap-1 py-2 text-[11px] leading-none tabular-nums",
+                        dayCellClass(i, weekend),
+                        i === selectedDay
+                          ? "font-semibold text-foreground"
+                          : i === todayIndex
+                            ? "font-semibold text-primary"
+                            : weekend
+                              ? "text-muted-foreground/80"
+                              : "text-muted-foreground"
                       )}
                     >
-                      {WEEKDAYS[d.getDay()]} {d.getDate()}
-                    </div>
+                      <span className="font-medium">{WEEKDAYS[d.getDay()]}</span> {d.getDate()}
+                    </button>
                   );
                 })}
               </div>

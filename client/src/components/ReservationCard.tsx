@@ -1,16 +1,24 @@
-import { STATUS_META, STATUS_BAR_COLOR } from "@/lib/bookingStatus";
+import { STATUS_META, STATUS_BAR_CLASS } from "@/lib/bookingStatus";
 import { MonthlyReport } from "@/types";
 import { cn, formatMoney, reportDebt } from "@/lib/utils";
 
 const ROW_H = 40;
 /** Horizontal size of the slanted check-in / check-out edge, px. */
 const SLANT = 12;
+/** Width of the solid accent stripe along the check-in edge, px. */
+const STRIPE = 3;
 
 /**
  * A single reservation block on the chessboard, drawn as a parallelogram:
  * the check-in edge rises "/" out of the middle of the arrival cell and the
  * check-out edge falls "/" through the middle of the departure cell, so two
  * adjacent stays (checkout + same-day check-in) tessellate along one diagonal.
+ *
+ * Painted the way Apple Calendar paints events: a pastel tint body with the
+ * saturated status colour kept for a slanted stripe on the check-in edge and
+ * for the label. On a dense board that reads far calmer than solid bars, and
+ * the stripe still marks every arrival at a glance. Colours come from the
+ * .bar-* classes (CSS variables, light + dark) — see index.css.
  *
  * Deliberately dumb: no action buttons, no dropdown, no inline edit affordance.
  * The only interactions are drag-to-move / drag-to-resize (mouse) and "open the
@@ -66,17 +74,13 @@ export default function ReservationCard({
 
   const lt = slantLeft ? SLANT : 0;
   const rb = slantRight ? SLANT : 0;
-  const clip = `polygon(${lt}px 0%, 100% 0%, calc(100% - ${rb}px) 100%, 0% 100%)`;
+  // Whole block; the stripe alone (a 3px band parallel to the check-in edge);
+  // and the body — the block with its left edge pushed right by the stripe.
+  const clipStripe = `polygon(${lt}px 0%, ${lt + STRIPE}px 0%, ${STRIPE}px 100%, 0% 100%)`;
+  const clipBody = `polygon(${lt + STRIPE}px 0%, 100% 0%, calc(100% - ${rb}px) 100%, ${STRIPE}px 100%)`;
 
   const debt = reportDebt(booking);
-  // Border encodes payment state, like the reference board: red = debt,
-  // amber = deposit/partial, otherwise a neutral hairline.
-  const borderColor =
-    booking.paymentStatus === "Долг"
-      ? "#e11d48"
-      : booking.paymentStatus === "Частично"
-        ? "#f59e0b"
-        : "rgba(15, 23, 42, 0.25)";
+  const partial = booking.paymentStatus === "Частично";
 
   const label = booking.guestName || booking.source.name;
   const showPrice = width > 110;
@@ -102,36 +106,37 @@ export default function ReservationCard({
       onContextMenu={onContextMenu}
       title={`${label} · ${formatMoney(booking.price, booking.currency)} · ${statusInfo.label}`}
       className={cn(
-        "group/bar absolute cursor-pointer transition-[filter,transform] duration-150 hover:z-30 hover:brightness-105 focus-visible:z-30 focus-visible:outline-none active:cursor-grabbing",
+        "group/bar absolute cursor-pointer transition-[filter,transform,opacity] duration-150 hover:z-30 hover:saturate-[1.15] focus-visible:z-30 focus-visible:outline-none active:cursor-grabbing",
+        STATUS_BAR_CLASS[booking.status],
         dimmed && "opacity-20 grayscale",
-        dragging && "z-40 opacity-90 drop-shadow-[0_6px_14px_rgba(16,24,40,0.28)]"
+        dragging && "z-40 opacity-95 drop-shadow-[0_8px_18px_rgba(0,0,0,0.22)]"
       )}
       style={{ left, width, top: 4, height: ROW_H - 8, touchAction: "none" }}
     >
-      {/* контур (окантовка по статусу оплаты) */}
-      <span className="absolute inset-0" style={{ clipPath: clip, background: borderColor }} />
-      {/* плоская заливка статуса + содержимое */}
+      {/* скошенная кромка заезда — насыщенный цвет статуса */}
+      <span className="absolute inset-0" style={{ clipPath: clipStripe, background: "var(--bar)" }} />
+      {/* тело — пастельная заливка, цветной текст */}
       <span
-        className="absolute flex items-center gap-1.5 overflow-hidden whitespace-nowrap text-xs font-medium text-white"
+        className="absolute inset-0 flex items-center gap-1.5 overflow-hidden whitespace-nowrap text-[12px] font-semibold"
         style={{
-          inset: 1.5,
-          clipPath: clip,
-          background: STATUS_BAR_COLOR[booking.status],
-          paddingLeft: lt ? lt * 0.8 + 3 : 6,
+          clipPath: clipBody,
+          background: "var(--bar-tint)",
+          color: "var(--bar-text)",
+          paddingLeft: (lt ? lt * 0.8 : 0) + STRIPE + 5,
           paddingRight: rb ? rb * 0.8 + 3 : 6,
         }}
       >
         <span className="truncate">{label}</span>
         {showPrice && (
-          <span className="ml-auto shrink-0 text-[11px] font-normal opacity-85">
+          <span className="ml-auto shrink-0 text-[11px] font-medium opacity-70">
             {Math.round(booking.price / 1000)}к
           </span>
         )}
       </span>
-      {/* индикатор долга — красная точка на правом верхнем углу, как в референсе */}
-      {debt > 0 && (
+      {/* оплата: красная точка — долг, оранжевая — частичная */}
+      {(debt > 0 || partial) && (
         <span
-          className="absolute z-10 h-2 w-2 rounded-full bg-red-500 ring-1 ring-white"
+          className={cn("absolute z-10 h-2 w-2 rounded-full ring-2 ring-card", debt > 0 ? "bg-[#ff3b30]" : "bg-[#ff9500]")}
           style={{ top: -2, right: rb ? rb / 2 - 2 : 0 }}
         />
       )}
@@ -142,7 +147,7 @@ export default function ReservationCard({
           className="absolute inset-y-0 right-0 z-10 w-2.5 cursor-ew-resize opacity-0 transition-opacity group-hover/bar:opacity-100"
           title="Потяните, чтобы изменить срок"
         >
-          <span className="absolute inset-y-1.5 right-1 w-0.5 rounded-full bg-white/60" />
+          <span className="absolute inset-y-1.5 right-1 w-0.5 rounded-full opacity-70" style={{ background: "var(--bar)" }} />
         </span>
       )}
     </div>
