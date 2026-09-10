@@ -13,6 +13,7 @@ import {
   DatabaseBackup,
   Banknote,
   Sparkles,
+  Brush,
   BarChart3,
   Wand2,
   GanttChartSquare,
@@ -37,6 +38,7 @@ export const superAdminSections: NavSection[] = [
       { to: "/", label: "Дашборд", icon: LayoutDashboard },
       { to: "/workspace", label: "Воркспейс", icon: LayoutGrid },
       { to: "/analytics", label: "Аналитика", icon: BarChart3 },
+      { to: "/ai-analytics", label: "AI-аналитика", icon: Sparkles },
     ],
   },
   {
@@ -50,7 +52,7 @@ export const superAdminSections: NavSection[] = [
       { to: "/expenses", label: "Расходы", icon: Wallet },
       { to: "/debtors", label: "Должники", icon: AlertTriangle },
       { to: "/guests", label: "Гости", icon: User2 },
-      { to: "/housekeeping", label: "Уборка номеров", icon: Sparkles },
+      { to: "/housekeeping", label: "Уборка номеров", icon: Brush },
     ],
   },
   {

@@ -18,6 +18,7 @@ const DebtorsPage = lazy(() => import("@/pages/DebtorsPage"));
 const GuestsPage = lazy(() => import("@/pages/GuestsPage"));
 const HousekeepingPage = lazy(() => import("@/pages/HousekeepingPage"));
 const AnalyticsPage = lazy(() => import("@/pages/AnalyticsPage"));
+const AiAnalyticsPage = lazy(() => import("@/pages/AiAnalyticsPage"));
 const FinanceCenterPage = lazy(() => import("@/pages/FinanceCenterPage"));
 const CalendarPage = lazy(() => import("@/pages/CalendarPage"));
 const AuditPage = lazy(() => import("@/pages/AuditPage"));
@@ -62,6 +63,7 @@ export default function App() {
                 <Route path="/guests" element={<GuestsPage />} />
                 <Route path="/housekeeping" element={<HousekeepingPage />} />
                 <Route path="/analytics" element={<AnalyticsPage />} />
+                <Route path="/ai-analytics" element={<AiAnalyticsPage />} />
                 <Route path="/finance" element={<FinanceCenterPage />} />
                 <Route path="/audit" element={<AuditPage />} />
                 <Route path="/timeline" element={<TimelinePage />} />

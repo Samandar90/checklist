@@ -241,3 +241,83 @@ export interface ReportFilters {
   adminId?: string;
   sourceId?: string;
 }
+
+// ---------- AI analytics ----------
+
+export interface AiDayPoint {
+  date: string;
+  revenue: number;
+  bookings: number;
+  occupied: number;
+  occupancy: number;
+}
+export interface AiForecastPoint {
+  date: string;
+  revenue: number;
+  confirmed: number;
+  low: number;
+  high: number;
+  occupancy: number;
+}
+export interface AiAnomaly {
+  date: string;
+  revenue: number;
+  expected: number;
+  zscore: number;
+}
+export type AiInsightKind = "risk" | "opportunity" | "anomaly" | "trend" | "info";
+export type AiInsightSeverity = "critical" | "warning" | "good" | "neutral";
+export interface AiInsight {
+  id: string;
+  kind: AiInsightKind;
+  severity: AiInsightSeverity;
+  title: string;
+  detail: string;
+  metric?: string;
+  link?: string;
+}
+export interface AiKpis {
+  revenue: number;
+  prevRevenue: number;
+  revenueDeltaPct: number | null;
+  occupancy: number;
+  prevOccupancy: number;
+  adr: number;
+  prevAdr: number;
+  revpar: number;
+  prevRevpar: number;
+  bookings: number;
+  prevBookings: number;
+  cancellationRate: number;
+  debt: number;
+  expenses: number;
+  netProfit: number;
+  roomNights: number;
+  capacity: number;
+  rangeDays: number;
+}
+export interface AiOverview {
+  range: { from: string; to: string };
+  kpis: AiKpis;
+  series: AiDayPoint[];
+  recent: AiDayPoint[];
+  forecast: AiForecastPoint[];
+  anomalies: AiAnomaly[];
+  insights: AiInsight[];
+  sources: { name: string; total: number; count: number; share: number }[];
+  weekdays: { weekday: number; label: string; avgRevenue: number; avgOccupancy: number }[];
+  idleRooms: { id: string; roomNumber: string; type?: string | null }[];
+  summary: string;
+  aiAvailable: boolean;
+  model: string | null;
+}
+export interface AiNarrative {
+  available: boolean;
+  text: string;
+  model?: string;
+  cached?: boolean;
+}
+export interface AiAskResponse {
+  answer: string;
+  model: string;
+}

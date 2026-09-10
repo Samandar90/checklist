@@ -21,6 +21,7 @@ import backupRouter from "./routes/backup";
 import dashboardRouter from "./routes/dashboard";
 import cashShiftsRouter from "./routes/cashShifts";
 import integrationsRouter from "./routes/integrations";
+import aiAnalyticsRouter from "./routes/aiAnalytics";
 import webhooksRouter from "./routes/webhooks";
 import { seedIntegrationProviders } from "./integrations/seed";
 import { scheduleBackups } from "./backup";
@@ -128,6 +129,7 @@ app.use("/api/backup", authenticate, backupRouter);
 app.use("/api/dashboard", authenticate, dashboardRouter);
 app.use("/api/cash-shifts", authenticate, cashShiftsRouter);
 app.use("/api/integrations", authenticate, integrationsRouter);
+app.use("/api/ai-analytics", authenticate, aiAnalyticsRouter);
 // Webhooks are provider-to-server callbacks — unauthenticated by design, but
 // rate-limited and provider-gated inside the router.
 app.use("/api/webhooks", webhooksRouter);

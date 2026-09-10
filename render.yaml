@@ -22,6 +22,10 @@ services:
         value: admin
       - key: SUPER_ADMIN_PASSWORD
         sync: false
+      # AI analytics: paste the Anthropic key in the Render dashboard; the app
+      # runs without it (rule-based insights only).
+      - key: ANTHROPIC_API_KEY
+        sync: false
     disk:
       name: data
       mountPath: /data
