@@ -2,54 +2,78 @@
 
 @theme {
   /*
-   * Clean minimal — inspired by Linear / Stripe. Flat solid surfaces, crisp
-   * hairline borders, one restrained accent, calm neutral greys, generous
-   * whitespace. No glass, no gradients, no aurora. One typeface (Inter).
+   * Apple (España) — "a cathedral of white space with whispered headlines".
+   * Borderless white tiles on a #f5f5f7 canvas, ink text, ONE accent
+   * (#0071e3, filled buttons only), pill buttons, generous 22–28px radii,
+   * no shadows or strokes on cards — sections are separated by colour, not
+   * lines. SF Pro where the OS has it, Inter everywhere else.
    */
-  --font-sans: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
-  --font-display: "Inter", system-ui, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", system-ui, "Segoe UI", sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", system-ui, sans-serif;
 
-  --color-border: #e8e8ec;
-  --color-input: #e8e8ec;
-  --color-ring: #3b5bdb;
-  --color-background: #fbfbfc;
-  --color-foreground: #1a1a1f;
+  /* Hairline — the only stroke colour in the system. */
+  --color-border: #d6d6d6;
+  --color-input: #d6d6d6;
+  --color-ring: #0071e3;
 
-  --color-primary: #3b5bdb;
+  /* Canvas + ink. */
+  --color-background: #f5f5f7;
+  --color-foreground: #1d1d1f;
+
+  /* Electric blue: reserved for filled buttons. Link blue: inline text links. */
+  --color-primary: #0071e3;
+  --color-primary-hover: #0077ed;
   --color-primary-foreground: #ffffff;
+  --color-link: #0066cc;
 
-  --color-secondary: #f3f3f5;
-  --color-secondary-foreground: #1a1a1f;
+  /* Cool wash — hover states, segmented tracks, quiet fills. */
+  --color-secondary: #e8e8ed;
+  --color-secondary-hover: #dcdce1;
+  --color-secondary-foreground: #1d1d1f;
 
-  --color-muted: #f7f7f8;
-  --color-muted-foreground: #71717a;
+  /* Faded surface + mid grey. */
+  --color-muted: #fafafc;
+  --color-muted-foreground: #6e6e73;
 
-  --color-accent: #f3f3f5;
-  --color-accent-foreground: #1a1a1f;
+  --color-accent: #e8e8ed;
+  --color-accent-foreground: #1d1d1f;
 
-  --color-destructive: #dc2626;
+  --color-destructive: #e30000;
   --color-destructive-foreground: #ffffff;
 
-  --color-success: #16a34a;
+  --color-success: #248a3d;
   --color-success-foreground: #ffffff;
 
-  --color-warning: #d97706;
+  /* Ember — badges and validation surfaces. */
+  --color-warning: #b64400;
   --color-warning-foreground: #ffffff;
 
-  --color-info: #2563eb;
+  --color-info: #0071e3;
   --color-info-foreground: #ffffff;
 
+  /* Paper. */
   --color-card: #ffffff;
-  --color-card-foreground: #1a1a1f;
+  --color-card-foreground: #1d1d1f;
 
-  /* Sidebar is a flat, very light neutral — flush with the app, not a dark panel. */
-  --color-sidebar: #f7f7f8;
-  --color-sidebar-foreground: #52525b;
-  --color-sidebar-active: #1a1a1f;
+  /* Sidebar is a white band beside the canvas — separated by colour, no rule. */
+  --color-sidebar: #ffffff;
+  --color-sidebar-foreground: #474747;
+  --color-sidebar-active: #1d1d1f;
 
-  --radius: 0.625rem;
+  /*
+   * Radius scale — nothing interactive below 10px, cards at 22px, sheets at
+   * 28px, buttons are pills. Overriding Tailwind's own scale here re-skins
+   * every rounded-* in the app without touching a single component.
+   */
+  --radius: 0.75rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.375rem;
+  --radius-3xl: 1.75rem;
 
-  /* Spring-tuned motion (back-out easing = natural overshoot, Framer-like). */
+  /* Apple-feel motion: quick ease-out, a whisper of overshoot on pop-ins. */
   --animate-fade-in: fade-in 0.3s ease-out;
   --animate-scale-in: scale-in 0.34s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   --animate-scale-out: scale-out 0.18s cubic-bezier(0.4, 0, 1, 1) forwards;
@@ -140,44 +164,50 @@
   }
 }
 
-/* Class-based dark mode: override theme tokens when .dark is on <html>. */
+/*
+ * Dark — Apple's own dark palette: true black canvas, #1d1d1f tiles,
+ * #f5f5f7 ink, #86868b secondary, system blue for the accent.
+ */
 .dark {
-  --color-border: #26262b;
-  --color-input: #2a2a30;
-  --color-ring: #7c8cff;
-  --color-background: #0c0c0e;
-  --color-foreground: #ededf0;
+  --color-border: #424245;
+  --color-input: #424245;
+  --color-ring: #2997ff;
+  --color-background: #000000;
+  --color-foreground: #f5f5f7;
 
-  --color-primary: #7c8cff;
-  --color-primary-foreground: #0c0c0e;
+  --color-primary: #0a84ff;
+  --color-primary-hover: #3395ff;
+  --color-primary-foreground: #ffffff;
+  --color-link: #2997ff;
 
-  --color-secondary: #1a1a1e;
-  --color-secondary-foreground: #ededf0;
+  --color-secondary: #2c2c2e;
+  --color-secondary-hover: #3a3a3c;
+  --color-secondary-foreground: #f5f5f7;
 
-  --color-muted: #161619;
-  --color-muted-foreground: #8f8f99;
+  --color-muted: #161617;
+  --color-muted-foreground: #86868b;
 
-  --color-accent: #1a1a1e;
-  --color-accent-foreground: #ededf0;
+  --color-accent: #2c2c2e;
+  --color-accent-foreground: #f5f5f7;
 
-  --color-destructive: #f04444;
+  --color-destructive: #ff453a;
   --color-destructive-foreground: #ffffff;
 
-  --color-success: #22c55e;
+  --color-success: #30d158;
   --color-success-foreground: #06150f;
 
-  --color-warning: #f59e0b;
+  --color-warning: #ff9f0a;
   --color-warning-foreground: #1a1203;
 
-  --color-info: #3b82f6;
+  --color-info: #0a84ff;
   --color-info-foreground: #ffffff;
 
-  --color-card: #141416;
-  --color-card-foreground: #ededf0;
+  --color-card: #1d1d1f;
+  --color-card-foreground: #f5f5f7;
 
-  --color-sidebar: #0f0f11;
-  --color-sidebar-foreground: #8f8f99;
-  --color-sidebar-active: #ffffff;
+  --color-sidebar: #161617;
+  --color-sidebar-foreground: #a1a1a6;
+  --color-sidebar-active: #f5f5f7;
 }
 
 * {
@@ -187,6 +217,7 @@
 html {
   color-scheme: light;
   scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
 }
 html.dark {
   color-scheme: dark;
@@ -199,13 +230,18 @@ body {
   font-family: var(--font-sans);
   font-feature-settings: "tnum" 1, "cv11" 1;
   -webkit-font-smoothing: antialiased;
-  letter-spacing: -0.011em;
+  -moz-osx-font-smoothing: grayscale;
+  /* SF Pro Text body tracking. */
+  letter-spacing: -0.022em;
+  line-height: 1.47;
 }
 
-/* Headings: same Inter, tight tracking, medium-heavy weight — no separate display face. */
+/* Headlines: display face, weight 600+, tight tracking, tight leading. */
 h1, h2, h3, .font-display {
   font-family: var(--font-display);
+  font-weight: 600;
   letter-spacing: -0.02em;
+  line-height: 1.1;
 }
 
 .tabular-nums {
@@ -222,20 +258,19 @@ h1, h2, h3, .font-display {
 }
 
 /*
- * Tint chips: theme-aware accent backgrounds for icons/badges.
- * Plain Tailwind palette classes (bg-emerald-50 etc.) don't react to the
- * .dark class — they're invisible pale swatches on a dark card. These
- * classes use the same hue at higher opacity for dark mode instead.
+ * Tint chips — the only colour the UI itself carries, and only where the
+ * meaning needs it (booking / payment status). Muted, pastel, theme-aware.
+ * Literal hex on purpose: color-mix(var(--x)) gets inlined at build time.
  */
-.tint-indigo { background: color-mix(in srgb, #3b5bdb 12%, transparent); color: #3b5bdb; }
-.tint-violet { background: color-mix(in srgb, #8b5cf6 12%, transparent); color: #7c3aed; }
-.tint-sky { background: color-mix(in srgb, #0ea5e9 12%, transparent); color: #0284c7; }
-.tint-emerald { background: color-mix(in srgb, #10b981 12%, transparent); color: #059669; }
-.tint-amber { background: color-mix(in srgb, #f59e0b 14%, transparent); color: #b45309; }
-.tint-rose { background: color-mix(in srgb, #f43f5e 12%, transparent); color: #be123c; }
-.tint-slate { background: color-mix(in srgb, #64748b 14%, transparent); color: #475569; }
+.tint-indigo { background: color-mix(in srgb, #0071e3 11%, transparent); color: #0066cc; }
+.tint-violet { background: color-mix(in srgb, #8b5cf6 11%, transparent); color: #6d3fd9; }
+.tint-sky { background: color-mix(in srgb, #0ea5e9 11%, transparent); color: #0a7bb3; }
+.tint-emerald { background: color-mix(in srgb, #10b981 11%, transparent); color: #1b8a4b; }
+.tint-amber { background: color-mix(in srgb, #f59e0b 13%, transparent); color: #b64400; }
+.tint-rose { background: color-mix(in srgb, #f43f5e 11%, transparent); color: #c41e3a; }
+.tint-slate { background: color-mix(in srgb, #64748b 12%, transparent); color: #4b5563; }
 
-.dark .tint-indigo { background: color-mix(in srgb, #7c8cff 18%, transparent); color: #aeb8ff; }
+.dark .tint-indigo { background: color-mix(in srgb, #2997ff 18%, transparent); color: #6cb6ff; }
 .dark .tint-violet { background: color-mix(in srgb, #a78bfa 18%, transparent); color: #c4b5fd; }
 .dark .tint-sky { background: color-mix(in srgb, #38bdf8 18%, transparent); color: #7dd3fc; }
 .dark .tint-emerald { background: color-mix(in srgb, #34d399 18%, transparent); color: #6ee7b7; }
@@ -243,88 +278,88 @@ h1, h2, h3, .font-display {
 .dark .tint-rose { background: color-mix(in srgb, #fb7185 18%, transparent); color: #fda4af; }
 .dark .tint-slate { background: color-mix(in srgb, #94a3b8 18%, transparent); color: #cbd5e1; }
 
-/*
- * Solid status classes: high-contrast bg + white/dark text for selected
- * states (payment status pickers, active toggles) where a tint would be
- * indistinguishable from the unselected state.
- */
+/* Solid status fills for selected states where a tint wouldn't read. */
 .status-success { background: var(--color-success); color: var(--color-success-foreground); }
 .status-warning { background: var(--color-warning); color: var(--color-warning-foreground); }
 .status-danger  { background: var(--color-destructive); color: var(--color-destructive-foreground); }
 .status-info    { background: var(--color-info); color: var(--color-info-foreground); }
 
 /*
- * Surfaces — flat, solid, clean. The old glass-* utility names are kept so the
- * whole app re-skins from here, but they now render as Linear/Stripe-style
- * cards: solid fill, 1px hairline border, whisper of shadow. No blur, no glow.
+ * Surfaces. The glass-* names are kept so the whole app re-skins from here.
+ *
+ * Card = a borderless white tile resting on the canvas. No stroke, no
+ * shadow — the colour step from #f5f5f7 to #ffffff IS the edge.
  */
 .glass-card {
   background-color: var(--color-card);
-  border: 1px solid var(--color-border);
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
-}
-.dark .glass-card {
+  border: 0;
   box-shadow: none;
 }
 
-/* Floating layers (dialogs, drawers, popovers, menus) — solid + a real shadow. */
+/* Floating layers (dialogs, sheets, menus) are the one place elevation lives. */
 .glass-strong {
   background-color: var(--color-card);
-  border: 1px solid var(--color-border);
-  box-shadow: 0 16px 48px -12px rgba(16, 24, 40, 0.18), 0 4px 12px rgba(16, 24, 40, 0.06);
+  border: 0;
+  box-shadow: 0 24px 64px -16px rgba(0, 0, 0, 0.28), 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 .dark .glass-strong {
-  border-color: #2a2a30;
-  box-shadow: 0 16px 48px -12px rgba(0, 0, 0, 0.65);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 24px 64px -16px rgba(0, 0, 0, 0.85);
 }
 
-/* Inputs & selects — solid, hairline border, crisp accent focus ring (no glow). */
+/* Fields — paper fill, hairline, blue focus halo. */
 .glass-field {
   background-color: var(--color-card);
   border: 1px solid var(--color-border);
+}
+.glass-field:hover:not(:focus):not([data-state="open"]) {
+  border-color: #b8b8bd;
+}
+.dark .glass-field:hover:not(:focus):not([data-state="open"]) {
+  border-color: #5a5a5e;
 }
 .glass-field:focus,
 .glass-field:focus-visible,
 .glass-field[data-state="open"] {
   outline: none;
   border-color: var(--color-ring);
-  box-shadow: 0 0 0 3px rgba(59, 91, 219, 0.16);
+  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.18);
 }
 .dark .glass-field:focus,
 .dark .glass-field:focus-visible,
 .dark .glass-field[data-state="open"] {
-  box-shadow: 0 0 0 3px rgba(124, 140, 255, 0.22);
+  box-shadow: 0 0 0 4px rgba(41, 151, 255, 0.28);
 }
 
-/* Secondary / outline button — solid, bordered, subtle grey hover. */
+/* Ghost pill — hairline, transparent, fills with cool wash on hover. */
 .glass-btn {
-  background-color: var(--color-card);
+  background-color: transparent;
   border: 1px solid var(--color-border);
   color: var(--color-foreground);
 }
 .glass-btn:hover {
   background-color: var(--color-secondary);
+  border-color: transparent;
 }
 
 /*
- * Data tables — rows behave like floating layers: soft hairline separators,
- * a lift + soft shadow + tinted rounded highlight on hover.
+ * Data tables — hairline rows, sentence-case grey headers, a whisper of
+ * canvas on hover. No zebra, no boxes.
  */
 .data-table {
   border-collapse: separate;
   border-spacing: 0;
 }
 .data-table thead th {
-  border-bottom: 1px solid rgba(96, 120, 150, 0.16);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 .dark .data-table thead th {
-  border-bottom-color: rgba(255, 255, 255, 0.08);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 .data-table tbody td {
-  border-bottom: 1px solid rgba(96, 120, 150, 0.12);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 .dark .data-table tbody td {
-  border-bottom-color: rgba(255, 255, 255, 0.05);
+  border-bottom-color: rgba(255, 255, 255, 0.06);
 }
 .data-table tbody tr:last-child td {
   border-bottom-color: transparent;
@@ -333,54 +368,64 @@ h1, h2, h3, .font-display {
   transition: background-color 0.12s ease;
 }
 .data-table tbody tr:hover td {
-  background-color: var(--color-secondary);
+  background-color: rgba(0, 0, 0, 0.03);
   border-bottom-color: transparent;
 }
+.dark .data-table tbody tr:hover td {
+  background-color: rgba(255, 255, 255, 0.04);
+}
 .data-table tbody tr td:first-child {
-  border-top-left-radius: 8px;
-  border-bottom-left-radius: 8px;
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
 }
 .data-table tbody tr td:last-child {
-  border-top-right-radius: 8px;
-  border-bottom-right-radius: 8px;
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
 }
 
-/* Sticky bars (top bar, toolbars) — solid, theme-aware, no blur. */
+/* Sticky bars — apple.com's nav treatment: translucent canvas, saturated blur, no rule. */
 .glass-bar {
-  background-color: var(--color-background);
+  background-color: rgba(245, 245, 247, 0.82);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+.dark .glass-bar {
+  background-color: rgba(0, 0, 0, 0.8);
 }
 
-/* Sidebar — flat, very light neutral, hairline border. Flush with the app. */
+/* Sidebar — a white band next to the canvas. Colour, not a border, separates it. */
 .glass-sidebar {
   background-color: var(--color-sidebar);
-  border-right: 1px solid var(--color-border);
-}
-.dark .glass-sidebar {
-  border-color: #26262b;
+  border-right: 0;
 }
 
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #dcdce0;
+  background: #c7c7cc;
   border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #c4c4ca;
+  background: #aeaeb2;
+  background-clip: padding-box;
 }
 .dark ::-webkit-scrollbar-thumb {
-  background: #2c2c32;
+  background: #48484a;
+  background-clip: padding-box;
 }
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #3a3a42;
+  background: #636366;
+  background-clip: padding-box;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 
-/* Respect OS-level reduced-motion preference (Chapter 10.23). */
+/* Respect OS-level reduced-motion preference. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -392,24 +437,20 @@ h1, h2, h3, .font-display {
   }
 }
 
-/*
- * Premium skeletons — translucent base with a sweeping specular highlight
- * (Apple-style shimmer) instead of a flat opacity pulse. The global
- * reduced-motion rule freezes the sweep automatically.
- */
+/* Skeletons — cool-wash base with a soft specular sweep. */
 .skeleton-shimmer {
   position: relative;
   overflow: hidden;
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(0, 0, 0, 0.06);
 }
 .dark .skeleton-shimmer {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgba(255, 255, 255, 0.06);
 }
 .skeleton-shimmer::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.5) 50%, transparent 70%);
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.55) 50%, transparent 70%);
   transform: translateX(-100%);
   animation: skeleton-sweep 1.5s ease-in-out infinite;
 }
@@ -422,18 +463,14 @@ h1, h2, h3, .font-display {
   }
 }
 
-/*
- * Soft, consistent motion for interactive elements — smooth colour/shadow
- * transitions and a gentle press. Kept subtle (150ms ease-out), the way
- * premium tools feel: responsive but never bouncy.
- */
+/* Soft, consistent motion on everything interactive. */
 button:not(:disabled),
 a,
 [role="button"],
 summary,
 label[for] {
   transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease,
-    box-shadow 0.15s ease, transform 0.12s ease;
+    box-shadow 0.15s ease, transform 0.12s ease, opacity 0.15s ease;
 }
 
 /* Content rises softly into place on mount / route change. */
@@ -451,7 +488,7 @@ label[for] {
   animation: rise-in 0.34s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* Branded loader — a thin accent ring sweeping around the logo mark. */
+/* Branded loader — a thin ink ring sweeping around the logo mark. */
 @keyframes loader-spin {
   to {
     transform: rotate(1turn);
@@ -469,13 +506,16 @@ label[for] {
 }
 .loader-ring {
   border-radius: 9999px;
-  background: conic-gradient(from 90deg, transparent 0deg, transparent 90deg, var(--color-primary) 340deg, var(--color-primary));
+  background: conic-gradient(from 90deg, transparent 0deg, transparent 90deg, #1d1d1f 340deg, #1d1d1f);
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
   mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
   animation: loader-spin 0.85s linear infinite;
 }
+.dark .loader-ring {
+  background: conic-gradient(from 90deg, transparent 0deg, transparent 90deg, #f5f5f7 340deg, #f5f5f7);
+}
 
-/* Scroll container with a hidden scrollbar (chessboard pans by dragging the day strips). */
+/* Scroll container with a hidden scrollbar (chessboard pans by dragging). */
 .no-scrollbar {
   scrollbar-width: none;
   -ms-overflow-style: none;

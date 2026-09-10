@@ -63,9 +63,9 @@ export default function LoginPage() {
   return (
     <div className="relative grid min-h-screen w-full bg-background text-foreground lg:grid-cols-2">
         {/* ЛЕВАЯ ПАНЕЛЬ — брендовый hero (скрыта на мобильных) */}
-        <div className="relative hidden flex-col justify-between bg-[#141416] p-12 text-white lg:flex xl:p-16">
+        <div className="relative hidden flex-col justify-between bg-black p-12 text-white lg:flex xl:p-16">
           <div className="flex items-center gap-3 animate-fade-in">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-black">
               <Hotel className="h-5 w-5" />
             </div>
             <div>
@@ -95,7 +95,7 @@ export default function LoginPage() {
                   className="flex items-start gap-4 animate-fade-in"
                   style={{ animationDelay: `${180 + i * 80}ms` }}
                 >
-                  <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04]">
+                  <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/[0.08]">
                     <f.icon className="h-[18px] w-[18px] text-white/70" />
                   </div>
                   <div>
@@ -117,7 +117,7 @@ export default function LoginPage() {
           <div className="w-full max-w-sm animate-fade-in" style={{ animationDelay: "80ms" }}>
             {/* компактный логотип для мобильных */}
             <div className="mb-8 flex flex-col items-center gap-3 text-center lg:hidden">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-foreground text-background">
                 <Hotel className="h-5 w-5" />
               </div>
               <div>
@@ -126,9 +126,9 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="glass-strong rounded-xl p-7 sm:p-8">
-              <h2 className="text-[19px] font-semibold text-foreground">С возвращением 👋</h2>
-              <p className="mt-1 text-[13px] text-muted-foreground">
+            <div className="glass-card rounded-3xl p-8 sm:p-9">
+              <h2 className="text-[24px] font-semibold tracking-[-0.02em] text-foreground">С возвращением 👋</h2>
+              <p className="mt-1.5 text-[14px] text-muted-foreground">
                 Войдите в систему, чтобы продолжить работу.
               </p>
 

@@ -274,17 +274,17 @@ export default function DashboardPage() {
         <CardContent className="p-6">
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div className="min-w-[240px]">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">Выручка за период</p>
+              <p className="text-[14px] font-medium text-muted-foreground">Выручка за период</p>
               {isLoading ? (
                 <Skeleton className="mt-3 h-9 w-48" />
               ) : (
                 <div className="mt-1.5 flex flex-wrap items-baseline gap-3">
-                  <CountUp value={data?.revenue ?? 0} className="text-[34px] font-semibold leading-none tracking-tight text-foreground" />
+                  <CountUp value={data?.revenue ?? 0} className="text-[44px] font-semibold leading-none tracking-[-0.03em] text-foreground" />
                   <span className="text-sm font-medium text-muted-foreground">UZS</span>
                   {delta !== null && (
                     <span
                       className={cn(
-                        "flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-semibold",
+                        "flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-semibold",
                         delta >= 0 ? "text-emerald-600 bg-emerald-500/10" : "text-destructive bg-destructive/10"
                       )}
                     >
@@ -356,7 +356,7 @@ export default function DashboardPage() {
                         <CountUp
                           value={c.value}
                           className={cn(
-                            "block text-[24px] font-semibold leading-tight tabular-nums tracking-tight",
+                            "block text-[26px] font-semibold leading-tight tabular-nums tracking-[-0.02em]",
                             c.negative ? "text-destructive" : "text-foreground"
                           )}
                         />

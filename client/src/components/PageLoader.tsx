@@ -10,7 +10,7 @@ export default function PageLoader() {
       <div className="relative flex h-14 w-14 items-center justify-center">
         <div className="loader-ring absolute inset-0" />
         <div
-          className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-primary text-primary-foreground"
+          className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-foreground text-background"
           style={{ animation: "loader-breathe 1.6s ease-in-out infinite" }}
         >
           <Hotel className="h-4.5 w-4.5" />

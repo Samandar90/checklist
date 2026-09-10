@@ -65,7 +65,7 @@ export default function GuestAutocomplete({
                 onChange(g.name);
                 setOpen(false);
               }}
-              className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors hover:bg-primary/10"
+              className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left transition-colors hover:bg-secondary"
             >
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">
                 {guestInitials(g.name)}

@@ -14,7 +14,7 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "glass-field group flex h-9 w-full items-center justify-between rounded-lg px-3 py-1 text-sm transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+      "glass-field group flex h-9 w-full items-center justify-between rounded-lg px-3.5 py-1 text-[14px] transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
       className
     )}
     {...props}
@@ -36,13 +36,13 @@ const SelectContent = React.forwardRef<
       ref={ref}
       position={position}
       className={cn(
-        "glass-strong relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-lg data-[state=open]:animate-pop-in",
+        "glass-strong relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-xl data-[state=open]:animate-pop-in",
         position === "popper" && "translate-y-1",
         className
       )}
       {...props}
     >
-      <SelectPrimitive.Viewport className="p-1">{children}</SelectPrimitive.Viewport>
+      <SelectPrimitive.Viewport className="p-1.5">{children}</SelectPrimitive.Viewport>
     </SelectPrimitive.Content>
   </SelectPrimitive.Portal>
 ));
@@ -55,7 +55,7 @@ const SelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex w-full cursor-pointer select-none items-center rounded-md py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-secondary data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex w-full cursor-pointer select-none items-center rounded-lg py-2 pl-8 pr-2.5 text-[13.5px] outline-none transition-colors focus:bg-secondary data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       className
     )}
     {...props}

@@ -15,7 +15,7 @@ const DrawerOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-[#0b1220]/45 backdrop-blur-xl data-[state=open]:animate-overlay-in data-[state=closed]:animate-overlay-out",
+      "fixed inset-0 z-50 bg-black/40 backdrop-blur-md data-[state=open]:animate-overlay-in data-[state=closed]:animate-overlay-out",
       className
     )}
     {...props}
@@ -51,7 +51,7 @@ const DrawerTitle = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
 >(({ className, ...props }, ref) => (
-  <DialogPrimitive.Title ref={ref} className={cn("text-base font-semibold text-foreground", className)} {...props} />
+  <DialogPrimitive.Title ref={ref} className={cn("text-[19px] font-semibold tracking-[-0.02em] text-foreground", className)} {...props} />
 ));
 DrawerTitle.displayName = DialogPrimitive.Title.displayName;
 
@@ -73,13 +73,13 @@ const DrawerSection = ({
   children: React.ReactNode;
 }) => (
   <div className={cn("border-b border-border py-5 first:pt-0 last:border-0", className)}>
-    <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground/80">{title}</h3>
+    <h3 className="mb-3 text-[12px] font-semibold text-muted-foreground/80">{title}</h3>
     {children}
   </div>
 );
 
 const DrawerCloseButton = () => (
-  <DialogPrimitive.Close className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
+  <DialogPrimitive.Close className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary/70 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50">
     <X className="h-4 w-4" />
     <span className="sr-only">Закрыть</span>
   </DialogPrimitive.Close>

@@ -75,7 +75,7 @@ export default function NotificationCenter() {
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label="Уведомления"
-        className="relative flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+        className="relative flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
       >
         <Bell className="h-[16px] w-[16px]" />
         {unreadCount > 0 && (

@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (
-    <div className="glass-card w-full animate-fade-in overflow-auto rounded-2xl p-1.5">
+    <div className="glass-card w-full animate-fade-in overflow-auto rounded-2xl p-2">
       <table ref={ref} className={cn("data-table w-full caption-bottom text-sm", className)} {...props} />
     </div>
   )
@@ -31,12 +31,13 @@ const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTML
 );
 TableRow.displayName = "TableRow";
 
+/* Sentence-case grey headers — Apple never shouts in small caps. */
 const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<HTMLTableCellElement>>(
   ({ className, ...props }, ref) => (
     <th
       ref={ref}
       className={cn(
-        "h-10 px-4 text-left align-middle text-[11px] font-semibold uppercase tracking-wide text-muted-foreground/80 whitespace-nowrap",
+        "h-11 px-4 text-left align-middle text-[12.5px] font-medium text-muted-foreground whitespace-nowrap",
         className
       )}
       {...props}

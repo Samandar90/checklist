@@ -57,7 +57,7 @@ export function ContextMenu({
                   setPos(null);
                 }}
                 className={cn(
-                  "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-[13px] transition-colors hover:bg-primary/10",
+                  "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-[13px] transition-colors hover:bg-secondary",
                   item.destructive ? "text-destructive" : "text-foreground"
                 )}
               >

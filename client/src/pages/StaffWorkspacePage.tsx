@@ -113,24 +113,24 @@ export default function StaffWorkspacePage() {
     <div>
       {/* Приветствие, смена и показатели дня — чистая карточка */}
       <Card className="mb-6">
-        <CardContent className="p-6">
+        <CardContent className="p-7">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex min-w-0 items-center gap-3.5">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-secondary text-base font-semibold text-foreground">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-foreground text-[17px] font-semibold text-background">
                 {(user?.fullName ?? user?.username ?? "?").slice(0, 1).toUpperCase()}
               </div>
               <div className="min-w-0">
-                <h1 className="truncate text-[20px] font-semibold leading-tight tracking-tight text-foreground">
+                <h1 className="truncate text-[26px] font-semibold leading-tight tracking-[-0.02em] text-foreground">
                   {greeting}, {user?.fullName ?? user?.username}
                 </h1>
-                <p className="text-[13px] text-muted-foreground">{user?.branchName} · показатели и задачи на сегодня</p>
+                <p className="mt-0.5 text-[14px] text-muted-foreground">{user?.branchName} · показатели и задачи на сегодня</p>
               </div>
             </div>
 
             {shiftLoading ? (
               <Skeleton className="h-9 w-40" />
             ) : shift ? (
-              <span className="flex items-center gap-1.5 rounded-md bg-emerald-500/10 px-2.5 py-1.5 text-[12.5px] font-semibold text-emerald-600">
+              <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3.5 py-2 text-[13px] font-medium text-emerald-600">
                 <LockOpen className="h-3.5 w-3.5" /> Смена открыта · {formatDateTime(shift.openedAt)}
               </span>
             ) : (
@@ -142,7 +142,7 @@ export default function StaffWorkspacePage() {
             )}
           </div>
 
-          <div className="mt-6 grid grid-cols-2 gap-3 border-t border-border pt-5 lg:grid-cols-4">
+          <div className="mt-7 grid grid-cols-2 gap-4 border-t border-border/50 pt-6 lg:grid-cols-4">
             {[
               { icon: ClipboardList, label: "Бронирований сегодня", value: todayReports.length, money: false },
               { icon: Wallet, label: "Выручка сегодня", value: todayRevenue, money: true },
@@ -152,9 +152,9 @@ export default function StaffWorkspacePage() {
               <div key={c.label}>
                 <div className="flex items-center gap-1.5 text-muted-foreground">
                   <c.icon className="h-3.5 w-3.5" />
-                  <span className="truncate text-[11px] font-medium">{c.label}</span>
+                  <span className="truncate text-[12.5px] font-medium">{c.label}</span>
                 </div>
-                <div className="mt-1 text-lg font-semibold tabular-nums leading-tight text-foreground">
+                <div className="mt-1.5 text-[24px] font-semibold tabular-nums leading-tight tracking-[-0.02em] text-foreground">
                   {isLoading ? "—" : c.value.toLocaleString("ru-RU")}
                   {c.money && <span className="ml-1 text-[11px] font-medium text-muted-foreground">UZS</span>}
                 </div>

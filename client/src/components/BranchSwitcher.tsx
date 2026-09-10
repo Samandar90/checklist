@@ -35,7 +35,7 @@ export default function BranchSwitcher({ forAdmin = false }: { forAdmin?: boolea
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 rounded-lg border border-border px-2.5 py-1.5 text-[12.5px] font-medium text-foreground transition-colors hover:bg-secondary"
+        className="flex items-center gap-2 rounded-full bg-secondary/70 px-3 py-1.5 text-[12.5px] font-medium text-foreground transition-colors hover:bg-secondary"
       >
         <Building2 className="h-[13px] w-[13px] text-muted-foreground" />
         <span className="max-w-[140px] truncate">{activeName ?? "Все отели"}</span>
@@ -49,7 +49,7 @@ export default function BranchSwitcher({ forAdmin = false }: { forAdmin?: boolea
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-[calc(100%+6px)] z-30 w-64 overflow-hidden rounded-xl border border-border bg-card py-1 text-sm shadow-xl"
+            className="glass-strong absolute right-0 top-[calc(100%+6px)] z-30 w-64 overflow-hidden rounded-2xl p-1.5 text-sm animate-pop-in"
           >
             {!forAdmin && (
               <>

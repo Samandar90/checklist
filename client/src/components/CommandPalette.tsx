@@ -194,7 +194,7 @@ export default function CommandPalette({
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[#0b1220]/45 backdrop-blur-xl data-[state=open]:animate-overlay-in data-[state=closed]:animate-overlay-out" />
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md data-[state=open]:animate-overlay-in data-[state=closed]:animate-overlay-out" />
         <DialogPrimitive.Content
           onKeyDown={onKeyDown}
           className="glass-strong fixed left-1/2 top-[12%] z-50 w-full max-w-[560px] -translate-x-1/2 overflow-hidden rounded-2xl focus:outline-none data-[state=open]:animate-scale-in data-[state=closed]:animate-scale-out"
@@ -269,7 +269,7 @@ export default function CommandPalette({
                       onClick={() => entry.action()}
                       className={cn(
                         "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13.5px] transition-colors",
-                        idx === activeIndex ? "bg-primary/[0.09] text-primary" : "text-foreground hover:bg-secondary"
+                        idx === activeIndex ? "bg-secondary text-foreground" : "text-foreground hover:bg-secondary/60"
                       )}
                     >
                       <GroupIcon className={cn("h-[15px] w-[15px] shrink-0", idx === activeIndex ? "text-primary" : "text-muted-foreground/80")} />

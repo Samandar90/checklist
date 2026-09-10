@@ -52,24 +52,20 @@ function NavItemLink({
       title={collapsed ? item.label : undefined}
       className={({ isActive }) =>
         cn(
-          "group relative flex items-center gap-2.5 rounded-xl px-2.5 py-[7px] text-[13.5px] font-medium transition-all",
+          "group relative flex items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13.5px] font-medium transition-all",
           collapsed && "justify-center px-0",
           isActive
-            ? "bg-primary/[0.1] text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]"
-            : "text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground"
+            ? "bg-secondary text-foreground"
+            : "text-sidebar-foreground hover:bg-secondary/60 hover:text-foreground"
         )
       }
     >
       {({ isActive }) => (
         <>
-          {/* активный пункт помечен коротким брендовым штрихом слева */}
-          {isActive && !collapsed && (
-            <span className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-full bg-primary" />
-          )}
           <item.icon
             className={cn(
-              "h-[15px] w-[15px] shrink-0 transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-110",
-              isActive ? "text-primary" : "text-muted-foreground/70 group-hover:text-foreground"
+              "h-[15px] w-[15px] shrink-0 transition-colors",
+              isActive ? "text-foreground" : "text-sidebar-foreground/80 group-hover:text-foreground"
             )}
           />
           {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
@@ -151,7 +147,7 @@ export default function Layout() {
         className="glass-sidebar fixed inset-y-0 left-0 z-30 hidden flex-col overflow-hidden md:flex"
       >
         <div className={cn("flex items-center gap-2.5 px-4 py-4", collapsed && "justify-center px-0")}>
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-foreground text-background">
             <Hotel className="h-4 w-4" />
           </div>
           {!collapsed && (
@@ -166,7 +162,7 @@ export default function Layout() {
           {pinnedItems.length > 0 && (
             <div>
               {!collapsed && (
-                <p className="mb-1 px-2.5 text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                <p className="mb-1 px-2.5 text-[11px] font-semibold text-muted-foreground/70">
                   Избранное
                 </p>
               )}
@@ -180,7 +176,7 @@ export default function Layout() {
           {sections.map((section, si) => (
             <div key={si}>
               {section.label && !collapsed && (
-                <p className="mb-1 px-2.5 text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                <p className="mb-1 px-2.5 text-[11px] font-semibold text-muted-foreground/70">
                   {section.label}
                 </p>
               )}
@@ -200,11 +196,11 @@ export default function Layout() {
           ))}
         </nav>
 
-        <div className="border-t border-border/60 p-2.5">
+        <div className="border-t border-border/40 p-2.5">
           {/* мини-профиль — кто сейчас за стойкой */}
           {!collapsed && (
-            <div className="mb-1.5 flex items-center gap-2.5 rounded-xl bg-foreground/[0.03] px-2.5 py-2">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
+            <div className="mb-1.5 flex items-center gap-2.5 rounded-xl bg-secondary/50 px-2.5 py-2">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-foreground text-[11px] font-semibold text-background">
                 {(user?.fullName ?? user?.username ?? "?").slice(0, 1).toUpperCase()}
               </span>
               <span className="flex min-w-0 flex-col leading-tight">
@@ -218,7 +214,7 @@ export default function Layout() {
           <button
             onClick={() => setCollapsed((c) => !c)}
             className={cn(
-              "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-[7px] text-[13px] text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground",
+              "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13px] text-sidebar-foreground transition-colors hover:bg-secondary/60 hover:text-foreground",
               collapsed && "justify-center px-0"
             )}
           >
@@ -233,7 +229,7 @@ export default function Layout() {
         style={{ "--sidebar-pad": `${sidebarWidth}px` } as React.CSSProperties}
       >
         {/* Верхний бар: хлебная крошка + профиль (только десктоп) */}
-        <header className="glass-bar sticky top-0 z-20 hidden h-16 items-center justify-between border-b border-border/60 px-2 md:flex">
+        <header className="glass-bar sticky top-0 z-20 hidden h-16 items-center justify-between px-3 md:flex">
           <div className="flex items-center gap-1.5 text-sm">
             <span className="text-muted-foreground">Hotel Reports</span>
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
@@ -245,11 +241,11 @@ export default function Layout() {
 
             <button
               onClick={() => setPaletteOpen(true)}
-              className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-[12.5px] text-muted-foreground shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition-all hover:border-primary/30 hover:text-foreground"
+              className="flex items-center gap-2 rounded-full bg-secondary/70 px-3.5 py-1.5 text-[12.5px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
             >
               <Command className="h-[13px] w-[13px]" />
               Поиск
-              <kbd className="rounded border border-border bg-secondary px-1 text-[10px]">Ctrl K</kbd>
+              <kbd className="rounded-md bg-card px-1.5 text-[10px] text-muted-foreground">Ctrl K</kbd>
             </button>
 
             <NotificationCenter />
@@ -257,7 +253,7 @@ export default function Layout() {
             <button
               onClick={toggle}
               aria-label="Переключить тему"
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
             >
               {theme === "dark" ? <Sun className="h-[16px] w-[16px]" /> : <Moon className="h-[16px] w-[16px]" />}
             </button>
@@ -265,7 +261,7 @@ export default function Layout() {
             <div className="relative" ref={profileRef}>
               <button
                 onClick={() => setProfileOpen((o) => !o)}
-                className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-secondary"
+                className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2.5 transition-colors hover:bg-secondary"
                 aria-haspopup="menu"
                 aria-expanded={profileOpen}
               >
@@ -288,13 +284,13 @@ export default function Layout() {
               </button>
 
               {profileOpen && (
-                <div className="glass-strong absolute right-0 top-[calc(100%+6px)] w-52 overflow-hidden rounded-2xl py-1 text-sm animate-pop-in">
+                <div className="glass-strong absolute right-0 top-[calc(100%+6px)] w-56 overflow-hidden rounded-2xl p-1.5 text-sm animate-pop-in">
                   <button
                     onClick={() => {
                       setPreferencesOpen(true);
                       setProfileOpen(false);
                     }}
-                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-foreground transition-colors hover:bg-secondary"
+                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-foreground transition-colors hover:bg-secondary"
                   >
                     <SlidersHorizontal className="h-[15px] w-[15px] text-muted-foreground" />
                     Настройки интерфейса
@@ -304,7 +300,7 @@ export default function Layout() {
                       setShortcutsOpen(true);
                       setProfileOpen(false);
                     }}
-                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-foreground transition-colors hover:bg-secondary"
+                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-foreground transition-colors hover:bg-secondary"
                   >
                     <Command className="h-[15px] w-[15px] text-muted-foreground" />
                     Клавиатурные сочетания
@@ -314,14 +310,14 @@ export default function Layout() {
                       setPasswordDialogOpen(true);
                       setProfileOpen(false);
                     }}
-                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-foreground transition-colors hover:bg-secondary"
+                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-foreground transition-colors hover:bg-secondary"
                   >
                     <KeyRound className="h-[15px] w-[15px] text-muted-foreground" />
                     Сменить пароль
                   </button>
                   <button
                     onClick={logout}
-                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-foreground transition-colors hover:bg-secondary"
+                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-foreground transition-colors hover:bg-secondary"
                   >
                     <LogOut className="h-[15px] w-[15px] text-muted-foreground" />
                     Выйти
@@ -333,9 +329,9 @@ export default function Layout() {
         </header>
 
         {/* Мобильный хедер */}
-        <header className="glass-bar sticky top-0 z-20 flex items-center justify-between border-b border-border px-4 py-3 md:hidden">
+        <header className="glass-bar sticky top-0 z-20 flex items-center justify-between px-4 py-3 md:hidden">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <div className="flex h-7 w-7 items-center justify-center rounded-[9px] bg-foreground text-background">
               <Hotel className="h-4 w-4" />
             </div>
             <span className="text-sm font-semibold">Hotel Reports</span>
@@ -368,7 +364,7 @@ export default function Layout() {
         <Drawer open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
           <DrawerContent className="max-w-[300px]">
             <div className="flex items-center gap-2.5 border-b border-border px-4 py-4">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-primary text-primary-foreground">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-foreground text-background">
                 <Hotel className="h-4 w-4" />
               </div>
               <span className="text-[13px] font-semibold text-foreground">Hotel Reports</span>
@@ -377,7 +373,7 @@ export default function Layout() {
               {sections.map((section, si) => (
                 <div key={si}>
                   {section.label && (
-                    <p className="mb-1 px-2.5 text-[10.5px] font-semibold uppercase tracking-wide text-muted-foreground/70">
+                    <p className="mb-1 px-2.5 text-[11px] font-semibold text-muted-foreground/70">
                       {section.label}
                     </p>
                   )}
@@ -391,7 +387,7 @@ export default function Layout() {
                         className={({ isActive }) =>
                           cn(
                             "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13.5px] font-medium",
-                            isActive ? "bg-primary/[0.09] text-primary" : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                            isActive ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
                           )
                         }
                       >
@@ -425,7 +421,7 @@ export default function Layout() {
           </DrawerContent>
         </Drawer>
 
-        <main className="flex-1 p-4 md:p-8">
+        <main className="flex-1 p-4 md:p-8 xl:px-10">
           <PageTransition path={location.pathname}>
             <Outlet />
           </PageTransition>
