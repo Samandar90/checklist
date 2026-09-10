@@ -579,16 +579,16 @@ label[for] {
  * Reservation bar palettes — Apple system colours. --bar paints the slanted
  * check-in stripe (and legend dots), --bar-tint the body, --bar-text the label.
  */
-.bar-reserved { --bar: #0a7aff; --bar-tint: rgba(10, 122, 255, 0.14); --bar-text: #0a52b8; }
-.bar-checked-in { --bar: #34c759; --bar-tint: rgba(52, 199, 89, 0.17); --bar-text: #1a7a37; }
-.bar-checked-out { --bar: #8e8e93; --bar-tint: rgba(142, 142, 147, 0.18); --bar-text: #48484a; }
-.bar-cancelled { --bar: #ff3b30; --bar-tint: rgba(255, 59, 48, 0.13); --bar-text: #b02a22; }
-.bar-no-show { --bar: #ff9500; --bar-tint: rgba(255, 149, 0, 0.17); --bar-text: #9a5a00; }
-.dark .bar-reserved { --bar: #409cff; --bar-tint: rgba(64, 156, 255, 0.24); --bar-text: #9dcbff; }
-.dark .bar-checked-in { --bar: #30d158; --bar-tint: rgba(48, 209, 88, 0.24); --bar-text: #8ee8a4; }
-.dark .bar-checked-out { --bar: #98989d; --bar-tint: rgba(152, 152, 157, 0.24); --bar-text: #d1d1d6; }
-.dark .bar-cancelled { --bar: #ff453a; --bar-tint: rgba(255, 69, 58, 0.22); --bar-text: #ffb1ab; }
-.dark .bar-no-show { --bar: #ff9f0a; --bar-tint: rgba(255, 159, 10, 0.24); --bar-text: #ffd28a; }
+.bar-reserved { --bar: #0a7aff; --bar-tint: rgba(10, 122, 255, 0.3); --bar-text: #063f8f; }
+.bar-checked-in { --bar: #34c759; --bar-tint: rgba(52, 199, 89, 0.36); --bar-text: #125a2c; }
+.bar-checked-out { --bar: #8e8e93; --bar-tint: rgba(142, 142, 147, 0.36); --bar-text: #3a3a3c; }
+.bar-cancelled { --bar: #ff3b30; --bar-tint: rgba(255, 59, 48, 0.28); --bar-text: #8f1f19; }
+.bar-no-show { --bar: #ff9500; --bar-tint: rgba(255, 149, 0, 0.34); --bar-text: #7a4600; }
+.dark .bar-reserved { --bar: #409cff; --bar-tint: rgba(64, 156, 255, 0.42); --bar-text: #d6e9ff; }
+.dark .bar-checked-in { --bar: #30d158; --bar-tint: rgba(48, 209, 88, 0.42); --bar-text: #d3f7dc; }
+.dark .bar-checked-out { --bar: #98989d; --bar-tint: rgba(152, 152, 157, 0.42); --bar-text: #ececf0; }
+.dark .bar-cancelled { --bar: #ff453a; --bar-tint: rgba(255, 69, 58, 0.4); --bar-text: #ffd9d6; }
+.dark .bar-no-show { --bar: #ff9f0a; --bar-tint: rgba(255, 159, 10, 0.42); --bar-text: #ffe9c2; }
 
 /* Scroll container with a hidden scrollbar (chessboard pans by dragging). */
 .no-scrollbar {
