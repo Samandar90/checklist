@@ -1,4 +1,5 @@
 import { dayStart, nightRange, nightsBetween, outstandingDebt } from "./bookings";
+import { stats as S } from "../analyst";
 
 /*
  * AI analytics — the deterministic half. Everything here is pure and unit
@@ -209,20 +210,16 @@ export interface WeekdayStat {
   meanOcc: number;
 }
 
+// The maths lives in ../analyst/core/stats (shared with the local analyst, so
+// the page and the chat can never disagree); these wrappers keep the hotel
+// shapes (revenue + occupancy side by side).
+const revSeries = (h: DayPoint[]) => h.map((p) => ({ date: p.date, value: p.revenue }));
+const occSeries = (h: DayPoint[]) => h.map((p) => ({ date: p.date, value: p.occupancy }));
+
 export function weekdayStats(history: DayPoint[]): WeekdayStat[] {
-  const rev: number[][] = Array.from({ length: 7 }, () => []);
-  const occ: number[][] = Array.from({ length: 7 }, () => []);
-  for (const p of history) {
-    const wd = weekdayOf(p.date);
-    rev[wd].push(p.revenue);
-    occ[wd].push(p.occupancy);
-  }
-  return rev.map((xs, wd) => {
-    const n = xs.length;
-    const meanRev = avg(xs);
-    const variance = n > 1 ? xs.reduce((s, x) => s + (x - meanRev) ** 2, 0) / (n - 1) : 0;
-    return { n, meanRev, stdRev: Math.sqrt(variance), meanOcc: avg(occ[wd]) };
-  });
+  const rev = S.weekdayStats(revSeries(history));
+  const occ = S.weekdayStats(occSeries(history));
+  return rev.map((r, i) => ({ n: r.n, meanRev: r.mean, stdRev: r.std, meanOcc: occ[i].mean }));
 }
 
 /**
@@ -230,13 +227,7 @@ export function weekdayStats(history: DayPoint[]): WeekdayStat[] {
  * clamped so one freak week cannot double the forecast.
  */
 export function trendFactor(history: DayPoint[]): number {
-  if (history.length < 42) return 1;
-  const last = history.slice(-28);
-  const prev = history.slice(-56, -28);
-  if (prev.length < 14) return 1;
-  const b = avg(prev.map((p) => p.revenue));
-  if (b <= 0) return 1;
-  return clamp(avg(last.map((p) => p.revenue)) / b, 0.6, 1.6);
+  return S.trendFactor(revSeries(history));
 }
 
 /**
@@ -245,40 +236,27 @@ export function trendFactor(history: DayPoint[]): number {
  * the insight feed quotes these numbers, so they must be defensible.
  */
 export function buildForecast(history: DayPoint[], confirmed: DayPoint[]): ForecastPoint[] {
-  const wd = weekdayStats(history);
   const trend = trendFactor(history);
-  return confirmed.map((p) => {
-    const s = wd[weekdayOf(p.date)];
-    const stat = s.n ? s.meanRev * trend : 0;
-    const spread = s.n > 1 ? s.stdRev * trend : stat * 0.3;
-    const revenue = Math.max(stat, p.revenue);
-    const low = Math.max(p.revenue, stat - spread, 0);
-    const high = Math.max(revenue, stat + spread);
-    const occupancy = clamp(Math.round(Math.max(s.meanOcc * trend, p.occupancy)), 0, 100);
-    return {
-      date: p.date,
-      revenue: Math.round(revenue),
-      confirmed: Math.round(p.revenue),
-      low: Math.round(low),
-      high: Math.round(high),
-      occupancy,
-    };
-  });
+  const rev = S.forecastSeries(revSeries(history), revSeries(confirmed), { trend });
+  const occ = S.forecastSeries(occSeries(history), occSeries(confirmed), { trend, max: 100 });
+  return confirmed.map((p, i) => ({
+    date: p.date,
+    revenue: Math.round(rev[i].value),
+    confirmed: Math.round(p.revenue),
+    low: Math.round(rev[i].low),
+    high: Math.round(rev[i].high),
+    occupancy: clamp(Math.round(occ[i].value), 0, 100),
+  }));
 }
 
 /** Days whose revenue sits ≥ 2σ away from the same-weekday mean. */
 export function detectAnomalies(history: DayPoint[], limit = 5): Anomaly[] {
-  const wd = weekdayStats(history);
-  const out: Anomaly[] = [];
-  for (const p of history) {
-    const s = wd[weekdayOf(p.date)];
-    if (s.n < 3 || s.stdRev <= 0) continue;
-    const z = (p.revenue - s.meanRev) / s.stdRev;
-    if (Math.abs(z) >= 2) {
-      out.push({ date: p.date, revenue: p.revenue, expected: Math.round(s.meanRev), zscore: Math.round(z * 10) / 10 });
-    }
-  }
-  return out.sort((a, b) => Math.abs(b.zscore) - Math.abs(a.zscore)).slice(0, limit);
+  return S.detectAnomalies(revSeries(history), { limit }).map((a) => ({
+    date: a.date,
+    revenue: a.value,
+    expected: Math.round(a.expected),
+    zscore: a.zscore,
+  }));
 }
 
 export function weekdayProfile(history: DayPoint[]): WeekdayPoint[] {

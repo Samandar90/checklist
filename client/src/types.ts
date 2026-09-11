@@ -310,14 +310,22 @@ export interface AiOverview {
   summary: string;
   aiAvailable: boolean;
   model: string | null;
+  engine: "local" | "claude+local";
 }
+export type AiEngine = "local" | "claude";
 export interface AiNarrative {
   available: boolean;
+  engine: AiEngine;
   text: string;
   model?: string;
   cached?: boolean;
+  note?: string;
 }
 export interface AiAskResponse {
   answer: string;
-  model: string;
+  engine: AiEngine;
+  confidence: number;
+  intent?: string;
+  followUps: string[];
+  model?: string;
 }

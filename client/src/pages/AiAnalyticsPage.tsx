@@ -1,6 +1,5 @@
 import { useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -30,7 +29,7 @@ import {
   RefreshCw,
   ArrowRight,
   Loader2,
-  KeyRound,
+  Bot,
 } from "lucide-react";
 
 import PageHeader from "@/components/PageHeader";
@@ -54,8 +53,8 @@ import { AiInsight, AiInsightKind, AiInsightSeverity, DashboardFilters } from "@
  * Cloudbeds Signals): a narrated summary on top, the four revenue KPIs with
  * deltas, a forecast with a confidence band, a feed of prioritised
  * opportunities / risks / anomalies, and "ask your data" in plain Russian.
- * The numbers are computed server-side and are always shown; Claude narrates
- * and answers when ANTHROPIC_API_KEY is configured.
+ * Answers come from the app's own local analyst (rules + statistics, no
+ * external API); Claude joins in only when ANTHROPIC_API_KEY is configured.
  */
 
 type PresetKey = "7d" | "30d" | "month" | "90d";
@@ -85,9 +84,11 @@ function shortDay(iso: string) {
 const SUGGESTIONS = [
   "Почему выручка изменилась по сравнению с прошлым периодом?",
   "Какие дни в ближайшие две недели самые слабые и что с ними делать?",
-  "Какой канал бронирования растёт, а какой падает?",
+  "Какой канал приносит больше всего выручки?",
   "Где мы теряем деньги: долги, отмены или расходы?",
   "Что сделать, чтобы поднять загрузку в выходные?",
+  "Выручка по филиалам за прошлый месяц",
+  "Были ли необычные дни?",
 ];
 
 const KIND_ICON: Record<AiInsightKind, typeof Info> = {
@@ -163,7 +164,7 @@ function InsightCard({ insight }: { insight: AiInsight }) {
   );
 }
 
-type ChatMessage = { role: "user" | "assistant"; text: string; model?: string };
+type ChatMessage = { role: "user" | "assistant"; text: string; engine?: "local" | "claude"; model?: string; followUps?: string[] };
 type KpiCard = { label: string; value: number; suffix: string; delta: number | null; unit?: string; icon: typeof Wallet; tint: string };
 
 export default function AiAnalyticsPage() {
@@ -180,7 +181,7 @@ export default function AiAnalyticsPage() {
 
   const [question, setQuestion] = useState("");
   const [chat, setChat] = useState<ChatMessage[]>([]);
-  const [askError, setAskError] = useState<{ message: string; notConfigured: boolean } | null>(null);
+  const [askError, setAskError] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const gridStroke = theme === "dark" ? "#2c2c2e" : "#e8e8ed";
@@ -214,10 +215,9 @@ export default function AiAnalyticsPage() {
     setChat((c) => [...c, { role: "user", text }]);
     try {
       const res = await ask.mutateAsync({ ...filters, question: text });
-      setChat((c) => [...c, { role: "assistant", text: res.answer, model: res.model }]);
+      setChat((c) => [...c, { role: "assistant", text: res.answer, engine: res.engine, model: res.model, followUps: res.followUps }]);
     } catch (err) {
-      const notConfigured = axios.isAxiosError(err) && (err.response?.data as { code?: string } | undefined)?.code === "AI_NOT_CONFIGURED";
-      setAskError({ message: getErrorMessage(err), notConfigured });
+      setAskError(getErrorMessage(err));
       setChat((c) => c.slice(0, -1));
       setQuestion(text);
     } finally {
@@ -277,9 +277,9 @@ export default function AiAnalyticsPage() {
             </Select>
           </div>
         </div>
-        <span className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12.5px] font-medium", aiOn ? "tint-indigo" : "bg-secondary text-muted-foreground")}>
-          <Sparkles className="h-3.5 w-3.5" />
-          {aiOn ? `AI · ${data?.model ?? "Claude"}` : "AI не подключён · работают правила"}
+        <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12.5px] font-medium tint-indigo">
+          <Bot className="h-3.5 w-3.5" />
+          {aiOn ? `Локальный аналитик + ${data?.model ?? "Claude"}` : "Локальный аналитик · без внешних API"}
         </span>
       </div>
 
@@ -315,12 +315,12 @@ export default function AiAnalyticsPage() {
                 </p>
               )}
               {narrative.isError && (
-                <p className="mt-2 text-[12.5px] text-muted-foreground">AI-сводка недоступна ({getErrorMessage(narrative.error)}) — показана сводка по правилам.</p>
+                <p className="mt-2 text-[12.5px] text-muted-foreground">Сводка недоступна ({getErrorMessage(narrative.error)}).</p>
               )}
-              {!isLoading && !aiOn && (
-                <p className="mt-3 flex items-start gap-2 text-[12.5px] text-muted-foreground">
-                  <KeyRound className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                  Чтобы сводку и ответы писал Claude, добавьте переменную окружения <code className="rounded-md bg-secondary px-1.5 py-0.5 text-[11.5px]">ANTHROPIC_API_KEY</code> на сервере. Цифры, прогноз и инсайты работают и без неё.
+              {narrative.data && (
+                <p className="mt-2.5 text-[11.5px] text-muted-foreground">
+                  {narrative.data.engine === "claude" ? `Написано ${narrative.data.model ?? "Claude"} по вашим цифрам` : "Собрано локальным аналитиком по вашим цифрам — без внешних сервисов"}
+                  {narrative.data.note ? ` · ${narrative.data.note}` : ""}
                 </p>
               )}
             </div>
@@ -403,7 +403,7 @@ export default function AiAnalyticsPage() {
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="h-4 w-4" /> Спросить AI
             </CardTitle>
-            <p className="text-[12.5px] text-muted-foreground">Вопрос простыми словами — ответ по цифрам выбранного периода и филиала.</p>
+            <p className="text-[12.5px] text-muted-foreground">Вопрос простыми словами — ответ по цифрам выбранного периода и филиала. Работает без интернета и API.</p>
           </CardHeader>
           <CardContent className="flex flex-1 flex-col gap-3">
             <div className="flex-1 space-y-3 overflow-y-auto" style={{ maxHeight: 320 }}>
@@ -430,32 +430,31 @@ export default function AiAnalyticsPage() {
                     )}
                   >
                     {m.text}
-                    {m.model && <div className="mt-1.5 text-[10.5px] text-muted-foreground">{m.model}</div>}
+                    {m.role === "assistant" && (
+                      <div className="mt-1.5 text-[10.5px] text-muted-foreground">{m.engine === "claude" ? m.model ?? "Claude" : "локальный аналитик"}</div>
+                    )}
                   </div>
                 </div>
               ))}
+              {chat.length > 0 && chat[chat.length - 1].role === "assistant" && (chat[chat.length - 1].followUps?.length ?? 0) > 0 && !ask.isPending && (
+                <div className="flex flex-wrap gap-1.5">
+                  {chat[chat.length - 1].followUps!.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => submit(s)}
+                      className="rounded-full bg-secondary/70 px-3 py-1.5 text-left text-[12.5px] text-foreground transition-colors hover:bg-secondary"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
               {ask.isPending && (
                 <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" /> Считаю по данным…
                 </div>
               )}
-              {askError && (
-                <div className={cn("rounded-2xl px-3.5 py-3 text-[13px]", askError.notConfigured ? "bg-secondary/70 text-foreground" : "tint-rose")}>
-                  {askError.notConfigured ? (
-                    <div className="flex items-start gap-2">
-                      <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-                      <div>
-                        <p className="font-semibold">AI ещё не подключён</p>
-                        <p className="mt-1 text-muted-foreground">
-                          Добавьте переменную <code className="rounded-md bg-card px-1.5 py-0.5 text-[11.5px]">ANTHROPIC_API_KEY</code> в настройках сервиса (Render → Environment) и перезапустите деплой. Прогноз и инсайты слева работают уже сейчас.
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    askError.message
-                  )}
-                </div>
-              )}
+              {askError && <div className="tint-rose rounded-2xl px-3.5 py-3 text-[13px]">{askError}</div>}
               <div ref={chatEndRef} />
             </div>
             <form
