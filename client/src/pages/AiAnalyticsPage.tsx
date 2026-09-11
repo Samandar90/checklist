@@ -192,7 +192,7 @@ export default function AiAnalyticsPage() {
     background: theme === "dark" ? "#1d1d1f" : "#ffffff",
     color: theme === "dark" ? "#f5f5f7" : "#1d1d1f",
     fontSize: 13,
-    boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+    boxShadow: theme === "dark" ? "0 0 0 1px rgba(255,255,255,0.08), 0 24px 64px -16px rgba(0,0,0,0.85)" : "0 8px 24px rgba(0,0,0,0.08)",
   };
 
   const today = isoDay(new Date());
@@ -253,7 +253,7 @@ export default function AiAnalyticsPage() {
                 onClick={() => setPreset(p.key)}
                 className={cn(
                   "shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-all",
-                  preset === p.key ? "bg-card text-foreground shadow-[0_3px_8px_rgba(0,0,0,0.12),0_1px_1px_rgba(0,0,0,0.04)]" : "text-muted-foreground hover:text-foreground"
+                  preset === p.key ? "bg-card text-foreground shadow-[0_3px_8px_rgba(0,0,0,0.12),0_1px_1px_rgba(0,0,0,0.04)] dark:bg-secondary-hover dark:shadow-none" : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 {p.label}
@@ -388,8 +388,8 @@ export default function AiAnalyticsPage() {
                   />
                   <ReferenceLine x={today} stroke="#ff3b30" strokeDasharray="3 3" label={{ value: "сегодня", position: "insideTopRight", fontSize: 11, fill: "#ff3b30" }} />
                   <Area type="monotone" dataKey="band" stroke="none" fill="var(--color-primary)" fillOpacity={0.12} isAnimationActive={false} />
-                  <Line type="monotone" dataKey="actual" stroke="var(--color-primary)" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 2, stroke: "#fff" }} />
-                  <Line type="monotone" dataKey="forecast" stroke="var(--color-primary)" strokeWidth={2} strokeDasharray="5 4" dot={false} activeDot={{ r: 4, strokeWidth: 2, stroke: "#fff" }} />
+                  <Line type="monotone" dataKey="actual" stroke="var(--color-primary)" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--color-card)" }} />
+                  <Line type="monotone" dataKey="forecast" stroke="var(--color-primary)" strokeWidth={2} strokeDasharray="5 4" dot={false} activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--color-card)" }} />
                   <Line type="monotone" dataKey="confirmed" stroke="transparent" dot={false} activeDot={false} />
                 </ComposedChart>
               </ResponsiveContainer>
@@ -528,7 +528,7 @@ export default function AiAnalyticsPage() {
                   />
                   <Bar dataKey="avgOccupancy" radius={[6, 6, 0, 0]} barSize={28}>
                     {(data?.weekdays ?? []).map((w) => (
-                      <Cell key={w.weekday} fill={w.weekday === 5 || w.weekday === 6 ? "#0a52b8" : "var(--color-primary)"} fillOpacity={w.weekday === 5 || w.weekday === 6 ? 1 : 0.75} />
+                      <Cell key={w.weekday} fill={w.weekday === 5 || w.weekday === 6 ? (theme === "dark" ? "#409cff" : "#0a52b8") : "var(--color-primary)"} fillOpacity={w.weekday === 5 || w.weekday === 6 ? 1 : 0.75} />
                     ))}
                   </Bar>
                 </BarChart>

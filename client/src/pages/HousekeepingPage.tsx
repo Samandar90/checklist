@@ -29,7 +29,7 @@ const statusMeta: Record<HKStatus, { label: string; tint: string }> = {
 };
 const priorityMeta: Record<HKPriority, { label: string; cls: string }> = {
   Low: { label: "Низкий", cls: "text-muted-foreground" },
-  Medium: { label: "Средний", cls: "text-amber-600" },
+  Medium: { label: "Средний", cls: "text-amber-600 dark:text-amber-400" },
   High: { label: "Высокий", cls: "text-destructive" },
 };
 const kanbanCols: HKStatus[] = ["Dirty", "Cleaning", "Inspection", "Clean"];
@@ -129,10 +129,10 @@ export default function HousekeepingPage() {
         </div>
 
         <div className="flex items-center gap-1 rounded-full border border-border bg-secondary/60 p-1">
-          <button onClick={() => setMode("kanban")} className={cn("flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-all", mode === "kanban" ? "bg-card text-foreground shadow-[0_1px_2px_rgba(16,24,40,0.08)]" : "text-muted-foreground")}>
+          <button onClick={() => setMode("kanban")} className={cn("flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-all", mode === "kanban" ? "bg-card text-foreground shadow-[0_1px_2px_rgba(16,24,40,0.08)] dark:bg-secondary-hover dark:shadow-none" : "text-muted-foreground")}>
             <LayoutGrid className="h-3.5 w-3.5" /> Канбан
           </button>
-          <button onClick={() => setMode("list")} className={cn("flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-all", mode === "list" ? "bg-card text-foreground shadow-[0_1px_2px_rgba(16,24,40,0.08)]" : "text-muted-foreground")}>
+          <button onClick={() => setMode("list")} className={cn("flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-all", mode === "list" ? "bg-card text-foreground shadow-[0_1px_2px_rgba(16,24,40,0.08)] dark:bg-secondary-hover dark:shadow-none" : "text-muted-foreground")}>
             <ListIcon className="h-3.5 w-3.5" /> Список
           </button>
         </div>

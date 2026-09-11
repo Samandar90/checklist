@@ -67,10 +67,10 @@ function dayStartMs(d: string | Date) {
 /** Heatmap classes for the occupancy % cell. */
 function heat(pct: number): string {
   if (pct === 0) return "text-muted-foreground/60";
-  if (pct < 40) return "bg-emerald-500/10 text-emerald-600";
-  if (pct < 70) return "bg-amber-500/15 text-amber-600";
-  if (pct < 90) return "bg-orange-500/20 text-orange-600";
-  return "bg-rose-500/25 text-rose-600";
+  if (pct < 40) return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
+  if (pct < 70) return "bg-amber-500/15 text-amber-600 dark:text-amber-400";
+  if (pct < 90) return "bg-orange-500/20 text-orange-600 dark:text-orange-400";
+  return "bg-rose-500/25 text-rose-600 dark:text-rose-400";
 }
 
 interface Group {

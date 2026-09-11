@@ -199,7 +199,7 @@ export default function SmartAssignPage() {
           {result.upgrades.length > 0 && (
             <section>
               <h3 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                <TrendingUp className="h-4 w-4 text-amber-600" /> Предложения для повышения категории
+                <TrendingUp className="h-4 w-4 text-amber-600 dark:text-amber-400" /> Предложения для повышения категории
               </h3>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {result.upgrades.map((r, i) => (
@@ -207,7 +207,7 @@ export default function SmartAssignPage() {
                     key={r.room.id}
                     room={r}
                     baseline={result.best}
-                    badge={{ label: "Повышение категории", tint: "text-amber-600" }}
+                    badge={{ label: "Повышение категории", tint: "text-amber-600 dark:text-amber-400" }}
                     onSelect={handleSelect}
                     delay={(i + 1) * 0.05}
                   />

@@ -109,7 +109,7 @@ export default function ReservationCard({
         "group/bar absolute cursor-pointer transition-[filter,transform,opacity] duration-150 hover:z-30 hover:saturate-[1.15] focus-visible:z-30 focus-visible:outline-none active:cursor-grabbing",
         STATUS_BAR_CLASS[booking.status],
         dimmed && "opacity-20 grayscale",
-        dragging && "z-40 opacity-95 drop-shadow-[0_8px_18px_rgba(0,0,0,0.22)]"
+        dragging && "z-40 opacity-95 drop-shadow-[0_8px_18px_rgba(0,0,0,0.22)] dark:drop-shadow-[0_8px_18px_rgba(0,0,0,0.65)]"
       )}
       style={{ left, width, top: 4, height: ROW_H - 8, touchAction: "none" }}
     >

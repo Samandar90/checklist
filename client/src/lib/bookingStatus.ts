@@ -47,9 +47,9 @@ export const STATUS_BAR_COLOR: Record<BookingStatus, string> = {
 
 /** Solid-dot classes matching STATUS_BAR_COLOR, for legend / filter swatches. */
 export const STATUS_DOT_CLASS: Record<BookingStatus, string> = {
-  RESERVED: "bg-[#0a7aff]",
-  CHECKED_IN: "bg-[#34c759]",
-  CHECKED_OUT: "bg-[#8e8e93]",
-  CANCELLED: "bg-[#ff3b30]",
-  NO_SHOW: "bg-[#ff9500]",
+  RESERVED: "bar-reserved bg-(--bar)",
+  CHECKED_IN: "bar-checked-in bg-(--bar)",
+  CHECKED_OUT: "bar-checked-out bg-(--bar)",
+  CANCELLED: "bar-cancelled bg-(--bar)",
+  NO_SHOW: "bar-no-show bg-(--bar)",
 };

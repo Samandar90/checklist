@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { cn, isoDay } from "@/lib/utils";
+import { cn, isoDay, compactNumber } from "@/lib/utils";
 import { holdsRoom } from "@/lib/bookingStatus";
 import { escapeCsv } from "@/lib/csv";
 import { useDashboard } from "@/hooks/useDashboard";
@@ -92,15 +92,15 @@ export default function AnalyticsPage() {
   const { data: allReports } = useReports({ branchId });
   const { theme } = useTheme();
 
-  const gridStroke = theme === "dark" ? "#23232b" : "#ececf0";
+  const gridStroke = theme === "dark" ? "var(--color-secondary)" : "#ececf0";
   const tickColor = theme === "dark" ? "#8e8e99" : "#9a9aa5";
   const tooltipStyle = {
     borderRadius: 12,
-    border: `1px solid ${theme === "dark" ? "#24242c" : "#e6e6ea"}`,
-    background: theme === "dark" ? "#111114" : "#ffffff",
-    color: theme === "dark" ? "#ededf0" : "inherit",
+    border: `1px solid ${theme === "dark" ? "var(--color-border)" : "#e6e6ea"}`,
+    background: "var(--color-card)",
+    color: "var(--color-foreground)",
     fontSize: 13,
-    boxShadow: "0 8px 24px rgba(16,24,40,0.08)",
+    boxShadow: theme === "dark" ? "0 0 0 1px rgba(255,255,255,0.08), 0 24px 64px -16px rgba(0,0,0,0.85)" : "0 8px 24px rgba(16,24,40,0.08)",
   };
 
   const rangeDays = Math.max(1, Math.round((new Date(range.to).getTime() - new Date(range.from).getTime()) / 86400000) + 1);
@@ -177,7 +177,7 @@ export default function AnalyticsPage() {
                 onClick={() => setPreset(p.key)}
                 className={cn(
                   "shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-medium transition-all",
-                  preset === p.key ? "bg-card text-foreground shadow-[0_1px_2px_rgba(16,24,40,0.08)]" : "text-muted-foreground hover:text-foreground"
+                  preset === p.key ? "bg-card text-foreground shadow-[0_1px_2px_rgba(16,24,40,0.08)] dark:bg-secondary-hover dark:shadow-none" : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 {p.label}
@@ -264,9 +264,9 @@ export default function AnalyticsPage() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
                 <XAxis dataKey="date" tickFormatter={shortDay} tick={{ fontSize: 11, fill: tickColor }} tickLine={false} axisLine={false} minTickGap={24} />
-                <YAxis tickFormatter={(v) => (v >= 1000 ? `${Math.round(v / 1000)}к` : String(v))} tick={{ fontSize: 11, fill: tickColor }} tickLine={false} axisLine={false} width={44} />
+                <YAxis tickFormatter={compactNumber} tick={{ fontSize: 11, fill: tickColor }} tickLine={false} axisLine={false} width={60} />
                 <Tooltip formatter={(v: number) => [fmt(v), "Выручка"]} labelFormatter={(l) => shortDay(String(l))} contentStyle={tooltipStyle} />
-                <Area type="monotone" dataKey="total" stroke="var(--color-primary)" strokeWidth={2} fill="url(#rev)" activeDot={{ r: 4, strokeWidth: 2, stroke: "#fff" }} />
+                <Area type="monotone" dataKey="total" stroke="var(--color-primary)" strokeWidth={2} fill="url(#rev)" activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--color-card)" }} />
               </AreaChart>
             </ResponsiveContainer>
           )}
@@ -293,7 +293,7 @@ export default function AnalyticsPage() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
                 <XAxis dataKey="date" tickFormatter={shortDay} tick={{ fontSize: 11, fill: tickColor }} tickLine={false} axisLine={false} minTickGap={24} />
-                <YAxis tickFormatter={(v) => (v >= 1000 ? `${Math.round(v / 1000)}к` : String(v))} tick={{ fontSize: 11, fill: tickColor }} tickLine={false} axisLine={false} width={44} />
+                <YAxis tickFormatter={compactNumber} tick={{ fontSize: 11, fill: tickColor }} tickLine={false} axisLine={false} width={60} />
                 <Tooltip formatter={(v: number) => [fmt(v), "Бронь"]} labelFormatter={(l) => shortDay(String(l))} contentStyle={tooltipStyle} />
                 <Area type="monotone" dataKey="total" stroke="#10b981" strokeWidth={2} fill="url(#fc)" />
               </AreaChart>
@@ -369,10 +369,10 @@ export default function AnalyticsPage() {
                 <BarChart data={data?.bySource}>
                   <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 11, fill: tickColor }} tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: tickColor }} tickLine={false} axisLine={false} width={40} tickFormatter={(v) => (v >= 1000 ? `${Math.round(v / 1000)}к` : String(v))} />
+                  <YAxis tick={{ fontSize: 11, fill: tickColor }} tickLine={false} axisLine={false} width={60} tickFormatter={compactNumber} />
                   <Tooltip formatter={(v: number) => [fmt(v), "Выручка"]} contentStyle={tooltipStyle} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="total" name="Выручка" radius={[6, 6, 0, 0]}>
+                  <Bar dataKey="total" name="Выручка" fill="var(--color-foreground)" radius={[6, 6, 0, 0]}>
                     {(data?.bySource ?? []).map((_, i) => (
                       <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
                     ))}

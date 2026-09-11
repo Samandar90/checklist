@@ -117,3 +117,18 @@ export const PAYMENT_STATUS_OPTIONS = [
   { value: "Частично" as const, label: "Частично", activeCls: "status-warning shadow-sm" },
   { value: "Долг" as const, label: "Долг", activeCls: "status-danger shadow-sm" },
 ];
+
+/**
+ * Compact figure for chart axes: 140 000 000 → "140 млн", 35 000 → "35 тыс",
+ * 640 → "640". Long "140000к" labels used to be clipped by the axis width.
+ */
+export function compactNumber(v: number): string {
+  const abs = Math.abs(v);
+  const ru = (n: number, d: number) => n.toLocaleString("ru-RU", { maximumFractionDigits: d });
+  // Non-breaking space: Recharts wraps axis labels at ordinary spaces.
+  const nbsp = " ";
+  if (abs >= 1e9) return `${ru(v / 1e9, 1)}${nbsp}млрд`;
+  if (abs >= 1e6) return `${ru(v / 1e6, abs >= 1e7 ? 0 : 1)}${nbsp}млн`;
+  if (abs >= 1e3) return `${ru(v / 1e3, 0)}${nbsp}тыс`;
+  return ru(v, 0);
+}

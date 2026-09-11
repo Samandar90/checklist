@@ -118,7 +118,7 @@ export default function NotificationCenter() {
                     onClick={() => setTab(key)}
                     className={cn(
                       "flex-1 rounded-full px-2 py-1 text-[12px] font-medium transition-all",
-                      tab === key ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                      tab === key ? "bg-card text-foreground shadow-sm dark:bg-secondary-hover dark:shadow-none" : "text-muted-foreground hover:text-foreground"
                     )}
                   >
                     {label}

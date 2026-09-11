@@ -129,12 +129,12 @@ export default function CashRegisterPage() {
                 <Row
                   label="Приход (нал.)"
                   value={`+${formatMoney(active.cashIn ?? 0, active.currency)}`}
-                  valueClass="text-emerald-600"
+                  valueClass="text-emerald-600 dark:text-emerald-400"
                 />
                 <Row
                   label="Расход (нал.)"
                   value={`-${formatMoney(active.cashOut ?? 0, active.currency)}`}
-                  valueClass="text-rose-600"
+                  valueClass="text-rose-600 dark:text-rose-400"
                 />
                 <div className="border-t border-border pt-2.5">
                   <Row
@@ -208,7 +208,7 @@ export default function CashRegisterPage() {
                     <span
                       className={cn(
                         "font-semibold",
-                        diff === 0 ? "text-muted-foreground" : diff > 0 ? "text-emerald-600" : "text-rose-600"
+                        diff === 0 ? "text-muted-foreground" : diff > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
                       )}
                     >
                       {diff > 0 ? "+" : ""}

@@ -9,7 +9,7 @@ function Diff({ value, baseline, suffix = "" }: { value: number; baseline: numbe
   if (baseline === 0 || value === baseline) return null;
   const delta = value - baseline;
   return (
-    <span className={cn("ml-1 text-[10.5px] font-semibold", delta > 0 ? "text-emerald-600" : "text-rose-500")}>
+    <span className={cn("ml-1 text-[10.5px] font-semibold", delta > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-500 dark:text-rose-400")}>
       {delta > 0 ? "+" : ""}
       {Math.round(delta).toLocaleString("ru-RU")}
       {suffix}
@@ -87,7 +87,7 @@ export default function RoomComparisonCard({
             <ul className="space-y-1 border-t border-border pt-3">
               {room.reasons.slice(0, 2).map((r) => (
                 <li key={r} className="flex items-start gap-1.5 text-[11.5px] text-muted-foreground">
-                  <Check className="mt-0.5 h-3 w-3 shrink-0 text-emerald-600" /> {r}
+                  <Check className="mt-0.5 h-3 w-3 shrink-0 text-emerald-600 dark:text-emerald-400" /> {r}
                 </li>
               ))}
             </ul>

@@ -87,13 +87,13 @@ export default function FinanceCenterPage() {
   const { data: shifts } = useCashShifts({ branchId });
   const settle = useSettleDebt();
 
-  const gridStroke = theme === "dark" ? "#23232b" : "#ececf0";
+  const gridStroke = theme === "dark" ? "var(--color-secondary)" : "#ececf0";
   const tickColor = theme === "dark" ? "#8e8e99" : "#9a9aa5";
   const tooltipStyle = {
     borderRadius: 12,
-    border: `1px solid ${theme === "dark" ? "#24242c" : "#e6e6ea"}`,
-    background: theme === "dark" ? "#111114" : "#ffffff",
-    color: theme === "dark" ? "#ededf0" : "inherit",
+    border: `1px solid ${theme === "dark" ? "var(--color-border)" : "#e6e6ea"}`,
+    background: "var(--color-card)",
+    color: "var(--color-foreground)",
     fontSize: 13,
   };
 
@@ -297,7 +297,7 @@ export default function FinanceCenterPage() {
                 <button
                   key={t}
                   onClick={() => setTypeFilter(t)}
-                  className={cn("rounded-full px-3 py-1.5 text-[12.5px] font-medium transition-all", typeFilter === t ? "bg-card text-foreground shadow-[0_1px_2px_rgba(16,24,40,0.08)]" : "text-muted-foreground")}
+                  className={cn("rounded-full px-3 py-1.5 text-[12.5px] font-medium transition-all", typeFilter === t ? "bg-card text-foreground shadow-[0_1px_2px_rgba(16,24,40,0.08)] dark:bg-secondary-hover dark:shadow-none" : "text-muted-foreground")}
                 >
                   {t === "all" ? "Все" : t}
                 </button>
@@ -326,7 +326,7 @@ export default function FinanceCenterPage() {
                   <TableRow key={t.id}>
                     <TableCell className="text-muted-foreground">{formatDate(t.date)}</TableCell>
                     <TableCell>
-                      <span className={cn("flex items-center gap-1 text-xs font-medium", t.amount >= 0 ? "text-emerald-600" : "text-destructive")}>
+                      <span className={cn("flex items-center gap-1 text-xs font-medium", t.amount >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>
                         {t.amount >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                         {t.type}
                       </span>

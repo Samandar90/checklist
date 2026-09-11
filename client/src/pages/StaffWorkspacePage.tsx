@@ -130,7 +130,7 @@ export default function StaffWorkspacePage() {
             {shiftLoading ? (
               <Skeleton className="h-9 w-40" />
             ) : shift ? (
-              <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3.5 py-2 text-[13px] font-medium text-emerald-600">
+              <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3.5 py-2 text-[13px] font-medium text-emerald-600 dark:text-emerald-400">
                 <LockOpen className="h-3.5 w-3.5" /> Смена открыта · {formatDateTime(shift.openedAt)}
               </span>
             ) : (

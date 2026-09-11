@@ -35,7 +35,7 @@ export function Segmented<T extends string>({ options, value, onChange, classNam
             className={cn(
               "rounded-full px-2 py-1.5 text-[13px] font-medium transition-all",
               active
-                ? o.activeCls ?? "bg-card text-foreground shadow-[0_3px_8px_rgba(0,0,0,0.12),0_1px_1px_rgba(0,0,0,0.04)]"
+                ? o.activeCls ?? "bg-card text-foreground shadow-[0_3px_8px_rgba(0,0,0,0.12),0_1px_1px_rgba(0,0,0,0.04)] dark:bg-secondary-hover dark:shadow-none"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >

@@ -231,10 +231,10 @@ export default function RoomsPage() {
         </div>
 
         <div className="flex items-center gap-1 rounded-full border border-border bg-secondary/60 p-1">
-          <button onClick={() => setView("grid")} className={cn("flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-all", view === "grid" ? "bg-card text-foreground shadow-[0_1px_2px_rgba(16,24,40,0.08)]" : "text-muted-foreground")}>
+          <button onClick={() => setView("grid")} className={cn("flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-all", view === "grid" ? "bg-card text-foreground shadow-[0_1px_2px_rgba(16,24,40,0.08)] dark:bg-secondary-hover dark:shadow-none" : "text-muted-foreground")}>
             <LayoutGrid className="h-3.5 w-3.5" /> Сетка
           </button>
-          <button onClick={() => setView("table")} className={cn("flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-all", view === "table" ? "bg-card text-foreground shadow-[0_1px_2px_rgba(16,24,40,0.08)]" : "text-muted-foreground")}>
+          <button onClick={() => setView("table")} className={cn("flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-all", view === "table" ? "bg-card text-foreground shadow-[0_1px_2px_rgba(16,24,40,0.08)] dark:bg-secondary-hover dark:shadow-none" : "text-muted-foreground")}>
             <ListIcon className="h-3.5 w-3.5" /> Таблица
           </button>
         </div>

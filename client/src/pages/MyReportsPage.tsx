@@ -356,7 +356,7 @@ export default function MyReportsPage() {
                   </span>
                   {report.updatedAt && (
                     <span
-                      className="mt-0.5 block text-[10px] font-medium text-amber-600"
+                      className="mt-0.5 block text-[10px] font-medium text-amber-600 dark:text-amber-400"
                       title={`Изменён: ${formatDateTime(report.updatedAt)}`}
                     >
                       ред.
@@ -582,7 +582,7 @@ export default function MyReportsPage() {
                 {(() => {
                   const remaining = totalPrice - (form.watch("paidAmount") || 0);
                   return remaining > 0 ? (
-                    <p className="text-xs text-amber-600">Остаток долга: {remaining.toLocaleString("ru-RU")}</p>
+                    <p className="text-xs text-amber-600 dark:text-amber-400">Остаток долга: {remaining.toLocaleString("ru-RU")}</p>
                   ) : null;
                 })()}
                 {form.formState.errors.paidAmount && (

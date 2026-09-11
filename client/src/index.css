@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* dark:* follows the .dark class ThemeContext toggles on <html>, not the OS. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   /*
    * Apple (España) — "a cathedral of white space with whispered headlines".
@@ -589,6 +592,41 @@ label[for] {
 .dark .bar-checked-out { --bar: #98989d; --bar-tint: rgba(152, 152, 157, 0.42); --bar-text: #ececf0; }
 .dark .bar-cancelled { --bar: #ff453a; --bar-tint: rgba(255, 69, 58, 0.4); --bar-text: #ffd9d6; }
 .dark .bar-no-show { --bar: #ff9f0a; --bar-tint: rgba(255, 159, 10, 0.42); --bar-text: #ffe9c2; }
+
+/*
+ * Recharts chrome follows the theme. The library paints tooltip items in the
+ * series colour — or plain black when bars use per-cell fills — and its hover
+ * cursor in light grey, both invisible or glaring on a dark card. Inline
+ * styles win over ours unless !important.
+ */
+.recharts-default-tooltip {
+  color: var(--color-foreground) !important;
+}
+.recharts-tooltip-label {
+  color: var(--color-foreground) !important;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.recharts-tooltip-item {
+  color: var(--color-foreground) !important;
+}
+/* Bar charts: the hover band is a Rectangle (rendered as <path>). Line/area
+   charts: a Curve — a vertical hairline. Both default to #ccc. */
+.recharts-rectangle.recharts-tooltip-cursor {
+  fill: rgba(0, 0, 0, 0.05);
+}
+.dark .recharts-rectangle.recharts-tooltip-cursor {
+  fill: rgba(255, 255, 255, 0.07);
+}
+.recharts-curve.recharts-tooltip-cursor {
+  stroke: rgba(0, 0, 0, 0.18);
+}
+.dark .recharts-curve.recharts-tooltip-cursor {
+  stroke: rgba(255, 255, 255, 0.22);
+}
+.recharts-legend-item-text {
+  color: var(--color-muted-foreground) !important;
+}
 
 /* Scroll container with a hidden scrollbar (chessboard pans by dragging). */
 .no-scrollbar {
