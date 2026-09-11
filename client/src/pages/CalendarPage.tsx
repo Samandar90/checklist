@@ -567,7 +567,9 @@ export default function CalendarPage() {
       <PageHeader title="Шахматка" description="Загрузка номеров по датам заезда и выезда." />
 
       {/* Тулбар */}
-      <div className="glass-bar sticky top-0 z-30 -mx-4 mb-4 px-4 py-3 md:-mx-8 md:px-8">
+      {/* Липнет под шапкой сайта (h-16 на десктопе, ~52px на мобильном); в полноэкранном
+          режиме шапки нет. z-20 — ниже шапки (z-40), чтобы её меню не обрезалось. */}
+      <div className={cn("glass-bar sticky z-20 -mx-4 mb-4 px-4 py-3 md:-mx-8 md:px-8", isFullscreen ? "top-0" : "top-[52px] md:top-16")}>
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="flex flex-wrap items-end gap-3">
             {(!isAdmin || isMultiBranchAdmin) && (

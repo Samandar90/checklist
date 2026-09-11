@@ -229,7 +229,7 @@ export default function Layout() {
         style={{ "--sidebar-pad": `${sidebarWidth}px` } as React.CSSProperties}
       >
         {/* Верхний бар: хлебная крошка + профиль (только десктоп) */}
-        <header className="glass-bar sticky top-0 z-20 hidden h-16 items-center justify-between px-3 md:flex">
+        <header className="glass-bar sticky top-0 z-40 hidden h-16 items-center justify-between px-3 md:flex">
           <div className="flex items-center gap-1.5 text-sm">
             <span className="text-muted-foreground">Hotel Reports</span>
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
@@ -329,7 +329,7 @@ export default function Layout() {
         </header>
 
         {/* Мобильный хедер */}
-        <header className="glass-bar sticky top-0 z-20 flex items-center justify-between px-4 py-3 md:hidden">
+        <header className="glass-bar sticky top-0 z-40 flex items-center justify-between px-4 py-3 md:hidden">
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-[9px] bg-foreground text-background">
               <Hotel className="h-4 w-4" />
