@@ -39,6 +39,13 @@ export interface SnapshotInfo {
 /**
  * Create a consistent snapshot of the database using SQLite's `VACUUM INTO`,
  * which is safe to run while the database is in use.
+ *
+ * Pruning happens here, not only in the nightly job: snapshots are also created
+ * on demand by `POST /api/backup` and by every `GET /api/backup/download`.
+ * Before, those callers never pruned, so each download left another full copy
+ * of the database behind and the retention limit only applied once every 24h.
+ * On Render the snapshots share the 1 GB disk with the live database — filling
+ * it stops SQLite from writing, i.e. takes the hotel offline.
  */
 export async function createSnapshot(): Promise<SnapshotInfo> {
   const dir = getBackupsDir();
@@ -52,6 +59,8 @@ export async function createSnapshot(): Promise<SnapshotInfo> {
   await prisma.$executeRawUnsafe(`VACUUM INTO '${sqlitePath}'`);
 
   const stat = fs.statSync(target);
+  // The snapshot just written is the newest, so it always survives pruning.
+  prune();
   return { name, path: target, size: stat.size, createdAt: new Date().toISOString() };
 }
 
@@ -84,7 +93,6 @@ function prune(): void {
 async function runBackup(): Promise<void> {
   try {
     const snap = await createSnapshot();
-    prune();
     console.log(`Резервная копия создана: ${snap.name} (${Math.round(snap.size / 1024)} КБ)`);
   } catch (err) {
     console.error("Не удалось создать резервную копию:", err);
