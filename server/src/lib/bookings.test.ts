@@ -8,9 +8,28 @@ import {
   normalizePaid,
   outstandingDebt,
   stayOverlapsWindow,
+  revivesRoomHold,
 } from "./bookings";
 
 const d = (iso: string) => new Date(iso);
+
+describe("revivesRoomHold (status change must not double-book)", () => {
+  it("is true when a cancelled / no-show booking goes back on the room", () => {
+    expect(revivesRoomHold("CANCELLED", "RESERVED")).toBe(true);
+    expect(revivesRoomHold("CANCELLED", "CHECKED_IN")).toBe(true);
+    expect(revivesRoomHold("NO_SHOW", "CHECKED_OUT")).toBe(true);
+  });
+
+  it("is false when the booking already held the room", () => {
+    expect(revivesRoomHold("RESERVED", "CHECKED_IN")).toBe(false);
+    expect(revivesRoomHold("CHECKED_IN", "CHECKED_OUT")).toBe(false);
+  });
+
+  it("is false when the room is being freed or stays free", () => {
+    expect(revivesRoomHold("RESERVED", "CANCELLED")).toBe(false);
+    expect(revivesRoomHold("CANCELLED", "NO_SHOW")).toBe(false);
+  });
+});
 
 describe("nightRange", () => {
   it("spans check-in day to check-out day (half-open)", () => {

@@ -5,7 +5,7 @@ import { requireSuperAdmin } from "../middleware/auth";
 import { recordAudit, buildChanges, summarize } from "../audit";
 import { resolveBranchId, hasBranchAccess } from "../branchScope";
 import { ROOM_HOLDING_STATUSES } from "../statuses";
-import { DAY_MS, nightRange, normalizePaid, outstandingDebt, stayOverlapsWindow } from "../lib/bookings";
+import { DAY_MS, nightRange, normalizePaid, outstandingDebt, revivesRoomHold, stayOverlapsWindow } from "../lib/bookings";
 
 const REPORT_AUDIT_FIELDS = ["date", "checkOut", "guestName", "price", "currency", "paymentMethod", "paymentStatus", "status", "paidAmount", "notes", "roomId"];
 
@@ -50,6 +50,15 @@ async function findRoomConflict(roomId: string, start: Date, end: Date, excludeI
 }
 
 const dmy = (d: Date) => d.toLocaleDateString("ru-RU");
+
+type Conflict = NonNullable<Awaited<ReturnType<typeof findRoomConflict>>>;
+const busyMessage = (c: Conflict, tail: string) =>
+  `Номер ${c.room.roomNumber} уже занят на эти даты (${dmy(new Date(c.date))}${
+    c.checkOut ? `–${dmy(new Date(c.checkOut))}` : ""
+  }${c.guestName ? `, ${c.guestName}` : ""}). ${tail}`;
+
+const stayRange = (r: { date: Date; checkOut: Date | null }) =>
+  nightRange(new Date(r.date), r.checkOut ? new Date(r.checkOut) : null);
 
 function buildWhere(query: any, isAdmin: boolean, ownAdminId: string | null) {
   const where: any = {};
@@ -229,6 +238,16 @@ router.patch("/:id/status", async (req, res, next) => {
     const status = String(req.body.status);
     if (!STATUS_LABELS[status]) return res.status(400).json({ message: "Неизвестный статус" });
 
+    // Отмена/неявка освободила номер — его могли уже продать другому гостю.
+    // Возврат такой брони в работу проходит ту же проверку пересечений, что и создание.
+    if (revivesRoomHold(existing.status, status)) {
+      const { start, end } = stayRange(existing);
+      const conflict = await findRoomConflict(existing.roomId, start, end, existing.id);
+      if (conflict) {
+        return res.status(409).json({ message: busyMessage(conflict, "Вернуть бронь в работу нельзя.") });
+      }
+    }
+
     const report = await prisma.monthlyReport.update({
       where: { id: req.params.id },
       data: { status },
@@ -334,6 +353,27 @@ router.post("/bulk", async (req, res, next) => {
     };
     const status = statusByAction[action];
     if (!status) return res.status(400).json({ message: "Неизвестное действие" });
+
+    // Как и в PATCH /:id/status: отменённые/неявки, возвращаемые в номер, не должны
+    // пересечься ни с действующими бронями, ни друг с другом.
+    const reviving = allowed
+      .filter((r) => revivesRoomHold(r.status, status))
+      .map((r) => ({ id: r.id, roomId: r.roomId, ...stayRange(r) }));
+    for (const m of reviving) {
+      const conflict = await findRoomConflict(m.roomId, m.start, m.end, m.id);
+      if (conflict) {
+        return res.status(409).json({ message: busyMessage(conflict, "Изменение статуса отменено.") });
+      }
+    }
+    for (let i = 0; i < reviving.length; i++) {
+      for (let j = i + 1; j < reviving.length; j++) {
+        const a = reviving[i];
+        const b = reviving[j];
+        if (a.roomId === b.roomId && a.start < b.end && b.start < a.end) {
+          return res.status(409).json({ message: "Выбранные брони пересекаются по датам в одном номере — вернуть их все в работу нельзя." });
+        }
+      }
+    }
 
     await prisma.monthlyReport.updateMany({ where: { id: { in: allowedIds } }, data: { status } });
     await recordAudit(req, {

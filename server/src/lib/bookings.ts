@@ -4,7 +4,18 @@
  * Imported by routes/reports.ts; unit-tested in lib/bookings.test.ts.
  */
 
+import { ROOM_HOLDING_STATUSES } from "../statuses";
+
 export const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Does a status change put a room-freeing booking (cancelled / no-show) back on
+ * the room? Such a booking's nights may already belong to another guest, so the
+ * change must pass the same overlap check as creating a booking.
+ */
+export function revivesRoomHold(from: string, to: string): boolean {
+  return !ROOM_HOLDING_STATUSES.includes(from) && ROOM_HOLDING_STATUSES.includes(to);
+}
 
 /** Floor a date to the start of its local day so nights are counted in whole days. */
 export function dayStart(d: Date): Date {
