@@ -5,7 +5,15 @@ import { requireSuperAdmin } from "../middleware/auth";
 import { recordAudit, buildChanges, summarize } from "../audit";
 import { resolveBranchId, hasBranchAccess } from "../branchScope";
 import { ROOM_HOLDING_STATUSES } from "../statuses";
-import { DAY_MS, nightRange, normalizePaid, outstandingDebt, revivesRoomHold, stayOverlapsWindow } from "../lib/bookings";
+import {
+  DAY_MS,
+  isBookingStatus,
+  nightRange,
+  normalizePaid,
+  outstandingDebt,
+  revivesRoomHold,
+  stayOverlapsWindow,
+} from "../lib/bookings";
 
 const REPORT_AUDIT_FIELDS = ["date", "checkOut", "guestName", "price", "currency", "paymentMethod", "paymentStatus", "status", "paidAmount", "notes", "roomId"];
 
@@ -185,6 +193,12 @@ router.post("/:id/settle", requireSuperAdmin, async (req, res, next) => {
     if (!existing) {
       return res.status(404).json({ message: "Запись не найдена" });
     }
+    // Нечего гасить: бронь уже оплачена (повторный клик, вторая вкладка).
+    // Иначе журнал получал ложную запись «Погасил долг — 0».
+    const settled = outstandingDebt(existing.price, existing.paidAmount);
+    if (settled <= 0) {
+      return res.status(409).json({ message: "По этой брони нет долга для погашения" });
+    }
 
     const report = await prisma.monthlyReport.update({
       where: { id: req.params.id },
@@ -195,7 +209,6 @@ router.post("/:id/settle", requireSuperAdmin, async (req, res, next) => {
     // В журнал пишем именно погашенную сумму, а не цену брони: по частично
     // оплаченной броне (цена 500 000, внесено 300 000) запись «погасил
     // 500 000» завышала приход и не сходилась ни с должниками, ни с кассой.
-    const settled = outstandingDebt(existing.price, existing.paidAmount);
     await recordAudit(req, {
       action: "UPDATE",
       entity: "report",
@@ -235,8 +248,8 @@ router.patch("/:id/status", async (req, res, next) => {
       return res.status(403).json({ message: "Это бронь другого администратора — менять её может только её автор" });
     }
 
-    const status = String(req.body.status);
-    if (!STATUS_LABELS[status]) return res.status(400).json({ message: "Неизвестный статус" });
+    const status = req.body.status;
+    if (!isBookingStatus(status)) return res.status(400).json({ message: "Неизвестный статус" });
 
     // Отмена/неявка освободила номер — его могли уже продать другому гостю.
     // Возврат такой брони в работу проходит ту же проверку пересечений, что и создание.
@@ -351,7 +364,8 @@ router.post("/bulk", async (req, res, next) => {
       CANCEL: "CANCELLED",
       NO_SHOW: "NO_SHOW",
     };
-    const status = statusByAction[action];
+    // Own-key check: "constructor" & co. would otherwise resolve via the prototype.
+    const status = Object.prototype.hasOwnProperty.call(statusByAction, action) ? statusByAction[action] : undefined;
     if (!status) return res.status(400).json({ message: "Неизвестное действие" });
 
     // Как и в PATCH /:id/status: отменённые/неявки, возвращаемые в номер, не должны

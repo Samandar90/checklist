@@ -8,6 +8,18 @@ import { ROOM_HOLDING_STATUSES } from "../statuses";
 
 export const DAY_MS = 24 * 60 * 60 * 1000;
 
+export const BOOKING_STATUSES = ["RESERVED", "CHECKED_IN", "CHECKED_OUT", "CANCELLED", "NO_SHOW"];
+
+/**
+ * Is this a real booking status? A plain `LABELS[status]` lookup is not enough:
+ * "constructor" / "toString" / "__proto__" resolve through Object.prototype and
+ * would be stored as the status, silently dropping the booking out of revenue,
+ * debt, cash and the double-booking check.
+ */
+export function isBookingStatus(status: unknown): status is string {
+  return typeof status === "string" && BOOKING_STATUSES.includes(status);
+}
+
 /**
  * Does a status change put a room-freeing booking (cancelled / no-show) back on
  * the room? Such a booking's nights may already belong to another guest, so the

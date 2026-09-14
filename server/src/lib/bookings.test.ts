@@ -9,9 +9,24 @@ import {
   outstandingDebt,
   stayOverlapsWindow,
   revivesRoomHold,
+  isBookingStatus,
 } from "./bookings";
 
 const d = (iso: string) => new Date(iso);
+
+describe("isBookingStatus (status input validation)", () => {
+  it("accepts every real status", () => {
+    for (const s of ["RESERVED", "CHECKED_IN", "CHECKED_OUT", "CANCELLED", "NO_SHOW"]) {
+      expect(isBookingStatus(s)).toBe(true);
+    }
+  });
+
+  it("rejects Object.prototype keys, unknown and non-string values", () => {
+    for (const s of ["constructor", "toString", "__proto__", "hasOwnProperty", "reserved", "", undefined, null, 1]) {
+      expect(isBookingStatus(s)).toBe(false);
+    }
+  });
+});
 
 describe("revivesRoomHold (status change must not double-book)", () => {
   it("is true when a cancelled / no-show booking goes back on the room", () => {

@@ -784,7 +784,8 @@ export default function CalendarPage() {
                       onClick={() =>
                         setCollapsed((prev) => {
                           const next = new Set(prev);
-                          next.has(g.type) ? next.delete(g.type) : next.add(g.type);
+                          if (next.has(g.type)) next.delete(g.type);
+                          else next.add(g.type);
                           return next;
                         })
                       }
