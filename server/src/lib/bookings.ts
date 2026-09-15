@@ -29,6 +29,17 @@ export function revivesRoomHold(from: string, to: string): boolean {
   return !ROOM_HOLDING_STATUSES.includes(from) && ROOM_HOLDING_STATUSES.includes(to);
 }
 
+/**
+ * Status to validate on a full booking update (PUT). reportSchema defaults a
+ * missing status to RESERVED, and several editors (Мои отчёты, drag/resize on the
+ * calendar) send the booking without it — so a checked-in or checked-out guest
+ * was silently reset to "Забронировано" by an unrelated edit. An omitted status
+ * means "leave it as it is"; an explicit one is passed through for zod to check.
+ */
+export function statusForUpdate(requested: unknown, current: string): unknown {
+  return requested === undefined || requested === null || requested === "" ? current : requested;
+}
+
 /** Floor a date to the start of its local day so nights are counted in whole days. */
 export function dayStart(d: Date): Date {
   const x = new Date(d);

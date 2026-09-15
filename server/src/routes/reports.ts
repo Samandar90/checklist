@@ -12,6 +12,7 @@ import {
   normalizePaid,
   outstandingDebt,
   revivesRoomHold,
+  statusForUpdate,
   stayOverlapsWindow,
 } from "../lib/bookings";
 
@@ -536,6 +537,7 @@ router.put("/:id", async (req, res, next) => {
         ? resolveBranchId(req.user!, body.branchId ?? existing.branchId)
         : existing.branchId;
     }
+    body.status = statusForUpdate(body.status, existing.status);
 
     const data = reportSchema.parse(body);
 
@@ -544,8 +546,12 @@ router.put("/:id", async (req, res, next) => {
       return res.status(400).json({ message: "Номер не принадлежит выбранному филиалу" });
     }
 
+    // Отменённая бронь / неявка номер не держит (как и в MOVE_ROOM): правка её
+    // заметки или цены не должна упираться в гостя, которому номер уже продали.
     const { start, end } = nightRange(new Date(data.date), data.checkOut ? new Date(data.checkOut) : null);
-    const conflict = await findRoomConflict(data.roomId, start, end, req.params.id);
+    const conflict = ROOM_HOLDING_STATUSES.includes(data.status)
+      ? await findRoomConflict(data.roomId, start, end, req.params.id)
+      : null;
     if (conflict) {
       return res.status(409).json({
         message: `Номер ${conflict.room.roomNumber} уже занят на эти даты (${dmy(new Date(conflict.date))}${

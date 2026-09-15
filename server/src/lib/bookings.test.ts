@@ -10,9 +10,23 @@ import {
   stayOverlapsWindow,
   revivesRoomHold,
   isBookingStatus,
+  statusForUpdate,
 } from "./bookings";
 
 const d = (iso: string) => new Date(iso);
+
+describe("statusForUpdate (PUT must not reset the booking status)", () => {
+  it("keeps the current status when the editor omits it", () => {
+    expect(statusForUpdate(undefined, "CHECKED_IN")).toBe("CHECKED_IN");
+    expect(statusForUpdate(null, "CHECKED_OUT")).toBe("CHECKED_OUT");
+    expect(statusForUpdate("", "CANCELLED")).toBe("CANCELLED");
+  });
+
+  it("passes an explicit status through for validation", () => {
+    expect(statusForUpdate("CHECKED_OUT", "RESERVED")).toBe("CHECKED_OUT");
+    expect(statusForUpdate("bogus", "RESERVED")).toBe("bogus");
+  });
+});
 
 describe("isBookingStatus (status input validation)", () => {
   it("accepts every real status", () => {
