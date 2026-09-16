@@ -47,6 +47,9 @@ export const paymentMethods = ["Наличные", "Карта", "Термина
 export const paymentStatuses = ["Оплачено", "Частично", "Долг"] as const;
 export const bookingStatuses = ["RESERVED", "CHECKED_IN", "CHECKED_OUT", "CANCELLED", "NO_SHOW"] as const;
 
+// JSON.parse("1e400") даёт Infinity, а z.number() его пропускает — одна такая
+// сумма превращала выручку, долги и расчёт кассы в Infinity/NaN. Поэтому
+// у всех денежных полей .finite().
 export const reportSchema = z
   .object({
     date: z
@@ -65,7 +68,7 @@ export const reportSchema = z
     adminId: z.string().trim().min(1, "Администратор обязателен"),
     roomId: z.string().trim().min(1, "Номер обязателен"),
     sourceId: z.string().trim().min(1, "Источник бронирования обязателен"),
-    price: z.number({ invalid_type_error: "Цена должна быть числом" }).positive("Цена должна быть положительной"),
+    price: z.number({ invalid_type_error: "Цена должна быть числом" }).finite("Некорректная цена").positive("Цена должна быть положительной"),
     currency: z.string().trim().min(1, "Валюта обязательна"),
     paymentMethod: z.enum(paymentMethods, {
       errorMap: () => ({ message: "Выберите способ оплаты" }),
@@ -74,7 +77,7 @@ export const reportSchema = z
       errorMap: () => ({ message: "Выберите статус оплаты" }),
     }).default("Оплачено"),
     status: z.enum(bookingStatuses).default("RESERVED"),
-    paidAmount: z.number({ invalid_type_error: "Сумма должна быть числом" }).min(0).optional().nullable(),
+    paidAmount: z.number({ invalid_type_error: "Сумма должна быть числом" }).finite("Некорректная сумма").min(0).optional().nullable(),
     notes: z.string().trim().optional().nullable(),
   })
   .superRefine((data, ctx) => {
@@ -125,19 +128,19 @@ export const expenseSchema = z.object({
   category: z.enum(expenseCategories, {
     errorMap: () => ({ message: "Выберите категорию" }),
   }),
-  amount: z.number({ invalid_type_error: "Сумма должна быть числом" }).positive("Сумма должна быть положительной"),
+  amount: z.number({ invalid_type_error: "Сумма должна быть числом" }).finite("Некорректная сумма").positive("Сумма должна быть положительной"),
   currency: z.string().trim().min(1, "Валюта обязательна"),
   note: z.string().trim().optional().nullable(),
 });
 
 export const cashShiftOpenSchema = z.object({
-  openingAmount: z.number({ invalid_type_error: "Укажите сумму" }).min(0, "Сумма не может быть отрицательной"),
+  openingAmount: z.number({ invalid_type_error: "Укажите сумму" }).finite("Некорректная сумма").min(0, "Сумма не может быть отрицательной"),
   currency: z.string().trim().min(1, "Валюта обязательна"),
   branchId: z.string().trim().optional().nullable(), // филиал смены (для мульти-филиальных админов)
   notes: z.string().trim().optional().nullable(),
 });
 
 export const cashShiftCloseSchema = z.object({
-  closingAmount: z.number({ invalid_type_error: "Укажите сумму" }).min(0, "Сумма не может быть отрицательной"),
+  closingAmount: z.number({ invalid_type_error: "Укажите сумму" }).finite("Некорректная сумма").min(0, "Сумма не может быть отрицательной"),
   notes: z.string().trim().optional().nullable(),
 });

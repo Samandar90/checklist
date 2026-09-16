@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { expenseSchema, reportSchema } from "./validation";
+import { cashShiftCloseSchema, cashShiftOpenSchema, expenseSchema, reportSchema } from "./validation";
 
 /**
  * Schema-level guards for the money- and date-critical inputs. These run before
@@ -78,5 +78,27 @@ describe("reportSchema", () => {
 
   it("rejects a non-positive price", () => {
     expect(reportSchema.safeParse({ ...validReport, price: 0 }).success).toBe(false);
+  });
+});
+
+describe("money fields reject non-finite amounts", () => {
+  // JSON.parse("1e400") === Infinity, so this arrives from a plain JSON body.
+  const inf = JSON.parse('{"n": 1e400}').n as number;
+
+  it("rejects Infinity in report price and paid amount", () => {
+    expect(reportSchema.safeParse({ ...validReport, price: inf }).success).toBe(false);
+    expect(
+      reportSchema.safeParse({ ...validReport, paymentStatus: "Частично", paidAmount: inf }).success
+    ).toBe(false);
+  });
+
+  it("rejects Infinity in an expense amount", () => {
+    expect(expenseSchema.safeParse({ ...validExpense, amount: inf }).success).toBe(false);
+  });
+
+  it("rejects Infinity in cash shift opening and closing amounts", () => {
+    expect(cashShiftOpenSchema.safeParse({ openingAmount: inf, currency: "UZS" }).success).toBe(false);
+    expect(cashShiftCloseSchema.safeParse({ closingAmount: inf }).success).toBe(false);
+    expect(cashShiftOpenSchema.safeParse({ openingAmount: 0, currency: "UZS" }).success).toBe(true);
   });
 });
