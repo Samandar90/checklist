@@ -141,8 +141,12 @@ router.put("/:id/close", async (req, res, next) => {
     const flow = await cashFlow(shift.branchId, shift.adminId, shift.currency, shift.openedAt, closedAt);
     const expectedAmount = shift.openingAmount + flow.cashIn - flow.cashOut;
 
-    const updated = await prisma.cashShift.update({
-      where: { id: shift.id },
+    // Закрываем условно (status: "OPEN"): проверка выше не атомарна — две
+    // вкладки или повторная отправка формы проходили её обе, второй запрос
+    // перезаписывал посчитанный факт и время закрытия, а в журнал попадали
+    // два закрытия одной смены.
+    const { count } = await prisma.cashShift.updateMany({
+      where: { id: shift.id, status: "OPEN" },
       data: {
         status: "CLOSED",
         closedAt,
@@ -150,6 +154,12 @@ router.put("/:id/close", async (req, res, next) => {
         expectedAmount,
         notes: data.notes || shift.notes,
       },
+    });
+    if (count === 0) {
+      return res.status(409).json({ message: "Смена уже закрыта" });
+    }
+    const updated = await prisma.cashShift.findUniqueOrThrow({
+      where: { id: shift.id },
       include: { branch: true, admin: true },
     });
 
