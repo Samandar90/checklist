@@ -46,7 +46,7 @@ import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/api";
 
 const fmt = (n: number) => Math.round(n).toLocaleString("ru-RU");
-const BAR_COLORS = ["#2d6cb3", "#0ea5e9", "#f59e0b", "#10b981", "#8b5cf6", "#ec4899", "#ef4444"];
+const BAR_COLORS = ["#0e7c5b", "#1c86a8", "#c47a12", "#6c6cc4", "#9a4a9c", "#cf3b3b", "#7f8f87"];
 
 function CountUp({ value, className }: { value: number; className?: string }) {
   const animated = useCountUp(value);
@@ -87,11 +87,11 @@ export default function FinanceCenterPage() {
   const { data: shifts } = useCashShifts({ branchId });
   const settle = useSettleDebt();
 
-  const gridStroke = theme === "dark" ? "var(--color-secondary)" : "#ececf0";
-  const tickColor = theme === "dark" ? "#8e8e99" : "#9a9aa5";
+  const gridStroke = theme === "dark" ? "var(--color-secondary)" : "#dfe9e4";
+  const tickColor = theme === "dark" ? "#8fa59b" : "#7a8c83";
   const tooltipStyle = {
     borderRadius: 12,
-    border: `1px solid ${theme === "dark" ? "var(--color-border)" : "#e6e6ea"}`,
+    border: `1px solid ${theme === "dark" ? "var(--color-border)" : "#d5ded9"}`,
     background: "var(--color-card)",
     color: "var(--color-foreground)",
     fontSize: 13,
@@ -326,7 +326,7 @@ export default function FinanceCenterPage() {
                   <TableRow key={t.id}>
                     <TableCell className="text-muted-foreground">{formatDate(t.date)}</TableCell>
                     <TableCell>
-                      <span className={cn("flex items-center gap-1 text-xs font-medium", t.amount >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>
+                      <span className={cn("flex items-center gap-1 text-xs font-medium", t.amount >= 0 ? "text-success" : "text-destructive")}>
                         {t.amount >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                         {t.type}
                       </span>

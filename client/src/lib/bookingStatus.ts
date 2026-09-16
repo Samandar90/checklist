@@ -36,13 +36,13 @@ export const STATUS_BAR_CLASS: Record<BookingStatus, string> = {
   NO_SHOW: "bar-no-show",
 };
 
-/** Solid (light-theme) status colours — Apple system palette. */
+/** Solid (light-theme) status colours — emerald & graphite palette. */
 export const STATUS_BAR_COLOR: Record<BookingStatus, string> = {
-  RESERVED: "#0a7aff",
-  CHECKED_IN: "#34c759",
-  CHECKED_OUT: "#8e8e93",
-  CANCELLED: "#ff3b30",
-  NO_SHOW: "#ff9500",
+  RESERVED: "#1c86a8",
+  CHECKED_IN: "#2e9e4f",
+  CHECKED_OUT: "#7f8f87",
+  CANCELLED: "#cf3b3b",
+  NO_SHOW: "#d97a1e",
 };
 
 /** Solid-dot classes matching STATUS_BAR_COLOR, for legend / filter swatches. */

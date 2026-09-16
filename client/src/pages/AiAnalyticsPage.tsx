@@ -99,10 +99,10 @@ const KIND_ICON: Record<AiInsightKind, typeof Info> = {
   info: Info,
 };
 const SEVERITY: Record<AiInsightSeverity, { label: string; tint: string; dot: string }> = {
-  critical: { label: "Критично", tint: "tint-rose", dot: "bg-[#ff3b30]" },
-  warning: { label: "Внимание", tint: "tint-amber", dot: "bg-[#ff9500]" },
-  good: { label: "Возможность", tint: "tint-emerald", dot: "bg-[#34c759]" },
-  neutral: { label: "На заметку", tint: "tint-slate", dot: "bg-[#8e8e93]" },
+  critical: { label: "Критично", tint: "tint-rose", dot: "bg-destructive" },
+  warning: { label: "Внимание", tint: "tint-amber", dot: "bg-warning" },
+  good: { label: "Возможность", tint: "tint-emerald", dot: "bg-success" },
+  neutral: { label: "На заметку", tint: "tint-slate", dot: "bg-muted-foreground" },
 };
 
 function CountUp({ value, suffix, className }: { value: number; suffix?: string; className?: string }) {
@@ -184,13 +184,13 @@ export default function AiAnalyticsPage() {
   const [askError, setAskError] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const gridStroke = theme === "dark" ? "#2c2c2e" : "#e8e8ed";
-  const tickColor = theme === "dark" ? "#86868b" : "#6e6e73";
+  const gridStroke = theme === "dark" ? "#24342e" : "#dfe9e4";
+  const tickColor = theme === "dark" ? "#8fa59b" : "#5f7168";
   const tooltipStyle = {
     borderRadius: 12,
-    border: `1px solid ${theme === "dark" ? "#424245" : "#d6d6d6"}`,
-    background: theme === "dark" ? "#1d1d1f" : "#ffffff",
-    color: theme === "dark" ? "#f5f5f7" : "#1d1d1f",
+    border: `1px solid ${theme === "dark" ? "#24342e" : "#d5ded9"}`,
+    background: theme === "dark" ? "#14201b" : "#ffffff",
+    color: theme === "dark" ? "#e9f1ed" : "#14201b",
     fontSize: 13,
     boxShadow: theme === "dark" ? "0 0 0 1px rgba(255,255,255,0.08), 0 24px 64px -16px rgba(0,0,0,0.85)" : "0 8px 24px rgba(0,0,0,0.08)",
   };
@@ -386,7 +386,7 @@ export default function AiAnalyticsPage() {
                       return [fmt(v), labels[name] ?? name];
                     }}
                   />
-                  <ReferenceLine x={today} stroke="#ff3b30" strokeDasharray="3 3" label={{ value: "сегодня", position: "insideTopRight", fontSize: 11, fill: "#ff3b30" }} />
+                  <ReferenceLine x={today} stroke="var(--color-destructive)" strokeDasharray="3 3" label={{ value: "сегодня", position: "insideTopRight", fontSize: 11, fill: "var(--color-destructive)" }} />
                   <Area type="monotone" dataKey="band" stroke="none" fill="var(--color-primary)" fillOpacity={0.12} isAnimationActive={false} />
                   <Line type="monotone" dataKey="actual" stroke="var(--color-primary)" strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--color-card)" }} />
                   <Line type="monotone" dataKey="forecast" stroke="var(--color-primary)" strokeWidth={2} strokeDasharray="5 4" dot={false} activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--color-card)" }} />
@@ -528,7 +528,7 @@ export default function AiAnalyticsPage() {
                   />
                   <Bar dataKey="avgOccupancy" radius={[6, 6, 0, 0]} barSize={28}>
                     {(data?.weekdays ?? []).map((w) => (
-                      <Cell key={w.weekday} fill={w.weekday === 5 || w.weekday === 6 ? (theme === "dark" ? "#409cff" : "#0a52b8") : "var(--color-primary)"} fillOpacity={w.weekday === 5 || w.weekday === 6 ? 1 : 0.75} />
+                      <Cell key={w.weekday} fill={w.weekday === 5 || w.weekday === 6 ? (theme === "dark" ? "#3fb4d6" : "#1c86a8") : "var(--color-primary)"} fillOpacity={w.weekday === 5 || w.weekday === 6 ? 1 : 0.75} />
                     ))}
                   </Bar>
                 </BarChart>

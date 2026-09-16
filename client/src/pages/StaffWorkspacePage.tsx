@@ -130,7 +130,7 @@ export default function StaffWorkspacePage() {
             {shiftLoading ? (
               <Skeleton className="h-9 w-40" />
             ) : shift ? (
-              <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3.5 py-2 text-[13px] font-medium text-emerald-600 dark:text-emerald-400">
+              <span className="flex items-center gap-1.5 rounded-full bg-success/10 px-3.5 py-2 text-[13px] font-medium text-success">
                 <LockOpen className="h-3.5 w-3.5" /> Смена открыта · {formatDateTime(shift.openedAt)}
               </span>
             ) : (
@@ -254,13 +254,13 @@ export default function StaffWorkspacePage() {
               <ul className="space-y-2">
                 {todayReports.map((r) => (
                   <li key={`a-${r.id}`} className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-2"><LogIn className="h-3.5 w-3.5 text-sky-500" /> {r.guestName || "Гость"} · номер {r.room.roomNumber}</span>
+                    <span className="flex items-center gap-2"><LogIn className="h-3.5 w-3.5 text-success" /> {r.guestName || "Гость"} · номер {r.room.roomNumber}</span>
                     <span className="tabular-nums text-muted-foreground">{formatMoney(r.price, r.currency)}</span>
                   </li>
                 ))}
                 {todayDepartures.map((r) => (
                   <li key={`d-${r.id}`} className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-2"><LogOut className="h-3.5 w-3.5 text-violet-500" /> {r.guestName || "Гость"} · номер {r.room.roomNumber}</span>
+                    <span className="flex items-center gap-2"><LogOut className="h-3.5 w-3.5 text-warning" /> {r.guestName || "Гость"} · номер {r.room.roomNumber}</span>
                     <span className="tabular-nums text-muted-foreground">выезд</span>
                   </li>
                 ))}

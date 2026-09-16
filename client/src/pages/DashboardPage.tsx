@@ -95,7 +95,7 @@ function rangeForPreset(key: PresetKey): { from: string; to: string } {
 }
 
 const fmt = (n: number) => Math.round(n).toLocaleString("ru-RU");
-const BAR_COLORS = ["#2d6cb3", "#0ea5e9", "#f59e0b", "#10b981", "#8b5cf6", "#ec4899", "#ef4444"];
+const BAR_COLORS = ["#0e7c5b", "#1c86a8", "#c47a12", "#6c6cc4", "#9a4a9c", "#cf3b3b", "#7f8f87"];
 
 function shortDay(iso: string) {
   const d = new Date(iso);
@@ -149,17 +149,17 @@ export default function DashboardPage() {
   const { data: todayExpenses } = useExpenses({ from: today, to: today, branchId });
   const { data: activity } = useAudit({ page: 1 });
 
-  const gridStroke = theme === "dark" ? "var(--color-secondary)" : "#ececf0";
-  const tickColor = theme === "dark" ? "#8e8e99" : "#9a9aa5";
+  const gridStroke = theme === "dark" ? "var(--color-secondary)" : "#dfe9e4";
+  const tickColor = theme === "dark" ? "#8fa59b" : "#7a8c83";
   const tooltipStyle = {
     borderRadius: 12,
-    border: `1px solid ${theme === "dark" ? "var(--color-border)" : "#e6e6ea"}`,
+    border: `1px solid ${theme === "dark" ? "var(--color-border)" : "#d5ded9"}`,
     background: "var(--color-card)",
     color: "var(--color-foreground)",
     fontSize: 13,
     boxShadow: theme === "dark" ? "0 0 0 1px rgba(255,255,255,0.08), 0 24px 64px -16px rgba(0,0,0,0.85)" : "0 8px 24px rgba(16,24,40,0.08)",
   };
-  const chartCursor = { fill: theme === "dark" ? "#18181d" : "#f5f5f7" };
+  const chartCursor = { fill: theme === "dark" ? "#101a16" : "#eef3f0" };
 
   const delta = data?.previous.deltaPct ?? null;
   const timeSeries = data?.timeSeries ?? [];
@@ -285,7 +285,7 @@ export default function DashboardPage() {
                     <span
                       className={cn(
                         "flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-semibold",
-                        delta >= 0 ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10" : "text-destructive bg-destructive/10"
+                        delta >= 0 ? "text-success bg-success/10" : "text-destructive bg-destructive/10"
                       )}
                     >
                       {delta >= 0 ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}

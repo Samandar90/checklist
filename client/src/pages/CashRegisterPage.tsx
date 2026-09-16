@@ -120,7 +120,7 @@ export default function CashRegisterPage() {
             <>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="flex items-center gap-2 text-[13px] font-medium text-foreground">
-                  <LockOpen className="h-4 w-4 text-emerald-500" /> Смена открыта
+                  <LockOpen className="h-4 w-4 text-success" /> Смена открыта
                 </CardTitle>
                 <Badge className="tint-emerald">{formatDateTime(active.openedAt)}</Badge>
               </CardHeader>
@@ -129,12 +129,12 @@ export default function CashRegisterPage() {
                 <Row
                   label="Приход (нал.)"
                   value={`+${formatMoney(active.cashIn ?? 0, active.currency)}`}
-                  valueClass="text-emerald-600 dark:text-emerald-400"
+                  valueClass="text-success"
                 />
                 <Row
                   label="Расход (нал.)"
                   value={`-${formatMoney(active.cashOut ?? 0, active.currency)}`}
-                  valueClass="text-rose-600 dark:text-rose-400"
+                  valueClass="text-destructive"
                 />
                 <div className="border-t border-border pt-2.5">
                   <Row
@@ -208,7 +208,7 @@ export default function CashRegisterPage() {
                     <span
                       className={cn(
                         "font-semibold",
-                        diff === 0 ? "text-muted-foreground" : diff > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+                        diff === 0 ? "text-muted-foreground" : diff > 0 ? "text-success" : "text-destructive"
                       )}
                     >
                       {diff > 0 ? "+" : ""}

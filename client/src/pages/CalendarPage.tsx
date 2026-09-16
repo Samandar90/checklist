@@ -67,10 +67,10 @@ function dayStartMs(d: string | Date) {
 /** Heatmap classes for the occupancy % cell. */
 function heat(pct: number): string {
   if (pct === 0) return "text-muted-foreground/60";
-  if (pct < 40) return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
-  if (pct < 70) return "bg-amber-500/15 text-amber-600 dark:text-amber-400";
-  if (pct < 90) return "bg-orange-500/20 text-orange-600 dark:text-orange-400";
-  return "bg-rose-500/25 text-rose-600 dark:text-rose-400";
+  if (pct < 40) return "bg-success/10 text-success";
+  if (pct < 70) return "bg-warning/15 text-warning";
+  if (pct < 90) return "bg-warning/35 text-warning";
+  return "bg-destructive/25 text-destructive";
 }
 
 interface Group {
@@ -702,10 +702,10 @@ export default function CalendarPage() {
               {/* Маркер текущего времени */}
               {todayIndex >= 0 && (
                 <div
-                  className="pointer-events-none absolute top-0 z-20 h-full w-px bg-[#ff3b30]/80"
+                  className="pointer-events-none absolute top-0 z-20 h-full w-px bg-destructive/80"
                   style={{ left: LABEL_W + todayIndex * CELL_W + (new Date().getHours() / 24) * CELL_W }}
                 >
-                  <span className="absolute -left-[3.5px] -top-1 h-2 w-2 rounded-full bg-[#ff3b30]" />
+                  <span className="absolute -left-[3.5px] -top-1 h-2 w-2 rounded-full bg-destructive" />
                 </div>
               )}
               {/* Заголовок: синяя полоса дней + свободно + загрузка % (sticky).

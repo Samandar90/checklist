@@ -63,9 +63,9 @@ export default function LoginPage() {
   return (
     <div className="relative grid min-h-screen w-full bg-background text-foreground lg:grid-cols-2">
         {/* ЛЕВАЯ ПАНЕЛЬ — брендовый hero (скрыта на мобильных) */}
-        <div className="relative hidden flex-col justify-between bg-black p-12 text-white dark:bg-card lg:flex xl:p-16">
+        <div className="relative hidden flex-col justify-between bg-sidebar p-12 text-white dark:bg-card lg:flex xl:p-16">
           <div className="flex items-center gap-3 animate-fade-in">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-black">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
               <Hotel className="h-5 w-5" />
             </div>
             <div>

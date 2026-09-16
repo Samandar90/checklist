@@ -5,63 +5,66 @@
 
 @theme {
   /*
-   * Apple (España) — "a cathedral of white space with whispered headlines".
-   * Borderless white tiles on a #f5f5f7 canvas, ink text, ONE accent
-   * (#0071e3, filled buttons only), pill buttons, generous 22–28px radii,
-   * no shadows or strokes on cards — sections are separated by colour, not
-   * lines. SF Pro where the OS has it, Inter everywhere else.
+   * Emerald & graphite — mint canvas, white tiles, ink-green text, ONE accent
+   * (#0e7c5b emerald, filled buttons only), a graphite-green sidebar band,
+   * pill buttons, generous 22–28px radii, no shadows or strokes on cards —
+   * sections are separated by colour, not lines. SF Pro where the OS has it,
+   * Inter everywhere else.
    */
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", system-ui, "Segoe UI", sans-serif;
   --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", system-ui, sans-serif;
 
   /* Hairline — the only stroke colour in the system. */
-  --color-border: #d6d6d6;
-  --color-input: #d6d6d6;
-  --color-ring: #0071e3;
+  --color-border: #d5ded9;
+  --color-input: #d5ded9;
+  --color-ring: #0e7c5b;
 
   /* Canvas + ink. */
-  --color-background: #f5f5f7;
-  --color-foreground: #1d1d1f;
+  --color-background: #eef3f0;
+  --color-foreground: #0f1f1a;
 
-  /* Electric blue: reserved for filled buttons. Link blue: inline text links. */
-  --color-primary: #0071e3;
-  --color-primary-hover: #0077ed;
+  /* Emerald: reserved for filled buttons. Link green: inline text links. */
+  --color-primary: #0e7c5b;
+  --color-primary-hover: #0a6a4d;
   --color-primary-foreground: #ffffff;
-  --color-link: #0066cc;
+  --color-link: #0b6b4f;
 
-  /* Cool wash — hover states, segmented tracks, quiet fills. */
-  --color-secondary: #e8e8ed;
-  --color-secondary-hover: #dcdce1;
-  --color-secondary-foreground: #1d1d1f;
+  /* Mint wash — hover states, segmented tracks, quiet fills. */
+  --color-secondary: #dfe9e4;
+  --color-secondary-hover: #d0ddd6;
+  --color-secondary-foreground: #0f1f1a;
 
-  /* Faded surface + mid grey. */
-  --color-muted: #fafafc;
-  --color-muted-foreground: #6e6e73;
+  /* Faded surface + mid grey-green. */
+  --color-muted: #f6f9f7;
+  --color-muted-foreground: #5f7168;
 
-  --color-accent: #e8e8ed;
-  --color-accent-foreground: #1d1d1f;
+  --color-accent: #dfe9e4;
+  --color-accent-foreground: #0f1f1a;
 
-  --color-destructive: #e30000;
+  --color-destructive: #cf3b3b;
   --color-destructive-foreground: #ffffff;
 
-  --color-success: #248a3d;
+  --color-success: #2e9e4f;
   --color-success-foreground: #ffffff;
 
-  /* Ember — badges and validation surfaces. */
-  --color-warning: #b64400;
+  /* Amber — badges and validation surfaces. */
+  --color-warning: #c47a12;
   --color-warning-foreground: #ffffff;
 
-  --color-info: #0071e3;
+  /* Teal — informational; keeps "reserved" apart from the green accent. */
+  --color-info: #1c86a8;
   --color-info-foreground: #ffffff;
 
   /* Paper. */
   --color-card: #ffffff;
-  --color-card-foreground: #1d1d1f;
+  --color-card-foreground: #0f1f1a;
 
-  /* Sidebar is a white band beside the canvas — separated by colour, no rule. */
-  --color-sidebar: #ffffff;
-  --color-sidebar-foreground: #474747;
-  --color-sidebar-active: #1d1d1f;
+  /* Sidebar is a graphite-green band beside the mint canvas — dark in both themes. */
+  --color-sidebar: #10221c;
+  --color-sidebar-foreground: #a7bdb3;
+  --color-sidebar-active: #ffffff;
+  --color-sidebar-hover: #1b3129;
+  --color-sidebar-border: #223a32;
 
   /*
    * Radius scale — nothing interactive below 10px, cards at 22px, sheets at
@@ -168,49 +171,51 @@
 }
 
 /*
- * Dark — Apple's own dark palette: true black canvas, #1d1d1f tiles,
- * #f5f5f7 ink, #86868b secondary, system blue for the accent.
+ * Dark — deep forest canvas, moss tiles, mint ink, muted sage secondary,
+ * bright emerald for the accent (dark text on it for contrast).
  */
 .dark {
-  --color-border: #424245;
-  --color-input: #424245;
-  --color-ring: #2997ff;
-  --color-background: #000000;
-  --color-foreground: #f5f5f7;
+  --color-border: #24342e;
+  --color-input: #24342e;
+  --color-ring: #2fc48d;
+  --color-background: #0a1210;
+  --color-foreground: #e9f1ed;
 
-  --color-primary: #0a84ff;
-  --color-primary-hover: #3395ff;
-  --color-primary-foreground: #ffffff;
-  --color-link: #2997ff;
+  --color-primary: #2fc48d;
+  --color-primary-hover: #4ad39f;
+  --color-primary-foreground: #03211a;
+  --color-link: #5fd6a6;
 
-  --color-secondary: #2c2c2e;
-  --color-secondary-hover: #3a3a3c;
-  --color-secondary-foreground: #f5f5f7;
+  --color-secondary: #1d2b26;
+  --color-secondary-hover: #26362f;
+  --color-secondary-foreground: #e9f1ed;
 
-  --color-muted: #161617;
-  --color-muted-foreground: #86868b;
+  --color-muted: #101a16;
+  --color-muted-foreground: #8fa59b;
 
-  --color-accent: #2c2c2e;
-  --color-accent-foreground: #f5f5f7;
+  --color-accent: #1d2b26;
+  --color-accent-foreground: #e9f1ed;
 
-  --color-destructive: #ff453a;
+  --color-destructive: #e5484d;
   --color-destructive-foreground: #ffffff;
 
-  --color-success: #30d158;
-  --color-success-foreground: #06150f;
+  --color-success: #4fd28f;
+  --color-success-foreground: #04200f;
 
-  --color-warning: #ff9f0a;
-  --color-warning-foreground: #1a1203;
+  --color-warning: #e8a63a;
+  --color-warning-foreground: #1f1300;
 
-  --color-info: #0a84ff;
-  --color-info-foreground: #ffffff;
+  --color-info: #3fb4d6;
+  --color-info-foreground: #06232c;
 
-  --color-card: #1d1d1f;
-  --color-card-foreground: #f5f5f7;
+  --color-card: #14201b;
+  --color-card-foreground: #e9f1ed;
 
-  --color-sidebar: #161617;
-  --color-sidebar-foreground: #a1a1a6;
-  --color-sidebar-active: #f5f5f7;
+  --color-sidebar: #060d0b;
+  --color-sidebar-foreground: #8fa59b;
+  --color-sidebar-active: #e9f1ed;
+  --color-sidebar-hover: #142019;
+  --color-sidebar-border: #1c2a25;
 }
 
 * {
@@ -265,21 +270,21 @@ h1, h2, h3, .font-display {
  * meaning needs it (booking / payment status). Muted, pastel, theme-aware.
  * Literal hex on purpose: color-mix(var(--x)) gets inlined at build time.
  */
-.tint-indigo { background: color-mix(in srgb, #0071e3 11%, transparent); color: #0066cc; }
-.tint-violet { background: color-mix(in srgb, #8b5cf6 11%, transparent); color: #6d3fd9; }
-.tint-sky { background: color-mix(in srgb, #0ea5e9 11%, transparent); color: #0a7bb3; }
-.tint-emerald { background: color-mix(in srgb, #10b981 11%, transparent); color: #1b8a4b; }
-.tint-amber { background: color-mix(in srgb, #f59e0b 13%, transparent); color: #b64400; }
-.tint-rose { background: color-mix(in srgb, #f43f5e 11%, transparent); color: #c41e3a; }
-.tint-slate { background: color-mix(in srgb, #64748b 12%, transparent); color: #4b5563; }
+.tint-indigo { background: color-mix(in srgb, #1c86a8 11%, transparent); color: #0b5f78; }
+.tint-violet { background: color-mix(in srgb, #9a4a9c 11%, transparent); color: #6f2f72; }
+.tint-sky { background: color-mix(in srgb, #6c6cc4 11%, transparent); color: #4747a0; }
+.tint-emerald { background: color-mix(in srgb, #2e9e4f 11%, transparent); color: #1b6e35; }
+.tint-amber { background: color-mix(in srgb, #c47a12 13%, transparent); color: #8a5208; }
+.tint-rose { background: color-mix(in srgb, #cf3b3b 11%, transparent); color: #9b2323; }
+.tint-slate { background: color-mix(in srgb, #7f8f87 12%, transparent); color: #4b5a53; }
 
-.dark .tint-indigo { background: color-mix(in srgb, #2997ff 18%, transparent); color: #6cb6ff; }
-.dark .tint-violet { background: color-mix(in srgb, #a78bfa 18%, transparent); color: #c4b5fd; }
-.dark .tint-sky { background: color-mix(in srgb, #38bdf8 18%, transparent); color: #7dd3fc; }
-.dark .tint-emerald { background: color-mix(in srgb, #34d399 18%, transparent); color: #6ee7b7; }
-.dark .tint-amber { background: color-mix(in srgb, #fbbf24 18%, transparent); color: #fcd34d; }
-.dark .tint-rose { background: color-mix(in srgb, #fb7185 18%, transparent); color: #fda4af; }
-.dark .tint-slate { background: color-mix(in srgb, #94a3b8 18%, transparent); color: #cbd5e1; }
+.dark .tint-indigo { background: color-mix(in srgb, #3fb4d6 18%, transparent); color: #9fdff0; }
+.dark .tint-violet { background: color-mix(in srgb, #d08ad2 18%, transparent); color: #ecc4ed; }
+.dark .tint-sky { background: color-mix(in srgb, #9d9df0 18%, transparent); color: #c9c9f8; }
+.dark .tint-emerald { background: color-mix(in srgb, #4fd28f 18%, transparent); color: #b7f0cf; }
+.dark .tint-amber { background: color-mix(in srgb, #e8a63a 18%, transparent); color: #ffe0a8; }
+.dark .tint-rose { background: color-mix(in srgb, #f0605a 18%, transparent); color: #ffc3c0; }
+.dark .tint-slate { background: color-mix(in srgb, #8fa59b 18%, transparent); color: #cfdcd6; }
 
 /* Solid status fills for selected states where a tint wouldn't read. */
 .status-success { background: var(--color-success); color: var(--color-success-foreground); }
@@ -291,7 +296,7 @@ h1, h2, h3, .font-display {
  * Surfaces. The glass-* names are kept so the whole app re-skins from here.
  *
  * Card = a borderless white tile resting on the canvas. No stroke, no
- * shadow — the colour step from #f5f5f7 to #ffffff IS the edge.
+ * shadow — the colour step from #eef3f0 to #ffffff IS the edge.
  */
 .glass-card {
   background-color: var(--color-card);
@@ -315,22 +320,22 @@ h1, h2, h3, .font-display {
   border: 1px solid var(--color-border);
 }
 .glass-field:hover:not(:focus):not([data-state="open"]) {
-  border-color: #b8b8bd;
+  border-color: #b9c9c1;
 }
 .dark .glass-field:hover:not(:focus):not([data-state="open"]) {
-  border-color: #5a5a5e;
+  border-color: #3a4f47;
 }
 .glass-field:focus,
 .glass-field:focus-visible,
 .glass-field[data-state="open"] {
   outline: none;
   border-color: var(--color-ring);
-  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.18);
+  box-shadow: 0 0 0 4px rgba(14, 124, 91, 0.18);
 }
 .dark .glass-field:focus,
 .dark .glass-field:focus-visible,
 .dark .glass-field[data-state="open"] {
-  box-shadow: 0 0 0 4px rgba(41, 151, 255, 0.28);
+  box-shadow: 0 0 0 4px rgba(47, 196, 141, 0.28);
 }
 
 /* Ghost pill — hairline, transparent, fills with cool wash on hover. */
@@ -388,18 +393,30 @@ h1, h2, h3, .font-display {
 
 /* Sticky bars — apple.com's nav treatment: translucent canvas, saturated blur, no rule. */
 .glass-bar {
-  background-color: rgba(245, 245, 247, 0.82);
+  background-color: rgba(238, 243, 240, 0.82);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   backdrop-filter: saturate(180%) blur(20px);
 }
 .dark .glass-bar {
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: rgba(10, 18, 16, 0.8);
 }
 
-/* Sidebar — a white band next to the canvas. Colour, not a border, separates it. */
+/*
+ * Sidebar — a graphite band next to the mint canvas. Colour, not a border,
+ * separates it. The band is dark in BOTH themes, so the ink/surface tokens
+ * are re-mapped inside it: every text-foreground / bg-secondary /
+ * border-border in the sidebar resolves to a band-safe value without
+ * touching a single component class.
+ */
 .glass-sidebar {
   background-color: var(--color-sidebar);
   border-right: 0;
+  --color-background: var(--color-sidebar);
+  --color-foreground: var(--color-sidebar-active);
+  --color-muted-foreground: var(--color-sidebar-foreground);
+  --color-secondary: var(--color-sidebar-hover);
+  --color-secondary-hover: var(--color-sidebar-hover);
+  --color-border: var(--color-sidebar-border);
 }
 
 ::-webkit-scrollbar {
@@ -407,21 +424,21 @@ h1, h2, h3, .font-display {
   height: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #c7c7cc;
+  background: #b9c9c1;
   border-radius: 8px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #aeaeb2;
+  background: #9fb2a9;
   background-clip: padding-box;
 }
 .dark ::-webkit-scrollbar-thumb {
-  background: #48484a;
+  background: #2a3a34;
   background-clip: padding-box;
 }
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #636366;
+  background: #3a4f47;
   background-clip: padding-box;
 }
 ::-webkit-scrollbar-track {
@@ -509,13 +526,13 @@ label[for] {
 }
 .loader-ring {
   border-radius: 9999px;
-  background: conic-gradient(from 90deg, transparent 0deg, transparent 90deg, #1d1d1f 340deg, #1d1d1f);
+  background: conic-gradient(from 90deg, transparent 0deg, transparent 90deg, #0f1f1a 340deg, #0f1f1a);
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
   mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
   animation: loader-spin 0.85s linear infinite;
 }
 .dark .loader-ring {
-  background: conic-gradient(from 90deg, transparent 0deg, transparent 90deg, #f5f5f7 340deg, #f5f5f7);
+  background: conic-gradient(from 90deg, transparent 0deg, transparent 90deg, #e9f1ed 340deg, #e9f1ed);
 }
 
 /*
@@ -563,35 +580,35 @@ label[for] {
   background-color: rgba(255, 255, 255, 0.025);
 }
 .day-today {
-  background-color: rgba(0, 113, 227, 0.045);
+  background-color: rgba(14, 124, 91, 0.06);
 }
 .dark .day-today {
-  background-color: rgba(10, 132, 255, 0.08);
+  background-color: rgba(47, 196, 141, 0.1);
 }
 /* The clicked day: a tinted band with crisp edges running the full board height. */
 .day-selected {
-  background-color: rgba(0, 113, 227, 0.075);
-  box-shadow: inset 1px 0 0 rgba(0, 113, 227, 0.55), inset -1px 0 0 rgba(0, 113, 227, 0.55);
+  background-color: rgba(14, 124, 91, 0.09);
+  box-shadow: inset 1px 0 0 rgba(14, 124, 91, 0.55), inset -1px 0 0 rgba(14, 124, 91, 0.55);
 }
 .dark .day-selected {
-  background-color: rgba(10, 132, 255, 0.13);
-  box-shadow: inset 1px 0 0 rgba(41, 151, 255, 0.65), inset -1px 0 0 rgba(41, 151, 255, 0.65);
+  background-color: rgba(47, 196, 141, 0.16);
+  box-shadow: inset 1px 0 0 rgba(47, 196, 141, 0.65), inset -1px 0 0 rgba(47, 196, 141, 0.65);
 }
 
 /*
  * Reservation bar palettes — Apple system colours. --bar paints the slanted
  * check-in stripe (and legend dots), --bar-tint the body, --bar-text the label.
  */
-.bar-reserved { --bar: #0a7aff; --bar-tint: rgba(10, 122, 255, 0.3); --bar-text: #063f8f; }
-.bar-checked-in { --bar: #34c759; --bar-tint: rgba(52, 199, 89, 0.36); --bar-text: #125a2c; }
-.bar-checked-out { --bar: #8e8e93; --bar-tint: rgba(142, 142, 147, 0.36); --bar-text: #3a3a3c; }
-.bar-cancelled { --bar: #ff3b30; --bar-tint: rgba(255, 59, 48, 0.28); --bar-text: #8f1f19; }
-.bar-no-show { --bar: #ff9500; --bar-tint: rgba(255, 149, 0, 0.34); --bar-text: #7a4600; }
-.dark .bar-reserved { --bar: #409cff; --bar-tint: rgba(64, 156, 255, 0.42); --bar-text: #d6e9ff; }
-.dark .bar-checked-in { --bar: #30d158; --bar-tint: rgba(48, 209, 88, 0.42); --bar-text: #d3f7dc; }
-.dark .bar-checked-out { --bar: #98989d; --bar-tint: rgba(152, 152, 157, 0.42); --bar-text: #ececf0; }
-.dark .bar-cancelled { --bar: #ff453a; --bar-tint: rgba(255, 69, 58, 0.4); --bar-text: #ffd9d6; }
-.dark .bar-no-show { --bar: #ff9f0a; --bar-tint: rgba(255, 159, 10, 0.42); --bar-text: #ffe9c2; }
+.bar-reserved { --bar: #1c86a8; --bar-tint: rgba(28, 134, 168, 0.3); --bar-text: #0b4457; }
+.bar-checked-in { --bar: #2e9e4f; --bar-tint: rgba(46, 158, 79, 0.36); --bar-text: #114d25; }
+.bar-checked-out { --bar: #7f8f87; --bar-tint: rgba(127, 143, 135, 0.36); --bar-text: #2f3b36; }
+.bar-cancelled { --bar: #cf3b3b; --bar-tint: rgba(207, 59, 59, 0.28); --bar-text: #7a1c1c; }
+.bar-no-show { --bar: #d97a1e; --bar-tint: rgba(217, 122, 30, 0.34); --bar-text: #6b3a06; }
+.dark .bar-reserved { --bar: #3fb4d6; --bar-tint: rgba(63, 180, 214, 0.42); --bar-text: #d8f2fa; }
+.dark .bar-checked-in { --bar: #4fd28f; --bar-tint: rgba(79, 210, 143, 0.42); --bar-text: #d6f7e5; }
+.dark .bar-checked-out { --bar: #8fa59b; --bar-tint: rgba(143, 165, 155, 0.42); --bar-text: #e9f1ed; }
+.dark .bar-cancelled { --bar: #f0605a; --bar-tint: rgba(240, 96, 90, 0.4); --bar-text: #ffdcda; }
+.dark .bar-no-show { --bar: #e8a63a; --bar-tint: rgba(232, 166, 58, 0.42); --bar-text: #ffedc9; }
 
 /*
  * Recharts chrome follows the theme. The library paints tooltip items in the

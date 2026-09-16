@@ -65,7 +65,7 @@ function rangeForPreset(key: PresetKey): { from: string; to: string } {
 }
 
 const fmt = (n: number) => Math.round(n).toLocaleString("ru-RU");
-const BAR_COLORS = ["#2d6cb3", "#0ea5e9", "#f59e0b", "#10b981", "#8b5cf6", "#ec4899", "#ef4444"];
+const BAR_COLORS = ["#0e7c5b", "#1c86a8", "#c47a12", "#6c6cc4", "#9a4a9c", "#cf3b3b", "#7f8f87"];
 function shortDay(iso: string) {
   return new Date(iso).toLocaleDateString("ru-RU", { day: "2-digit", month: "short" });
 }
@@ -92,11 +92,11 @@ export default function AnalyticsPage() {
   const { data: allReports } = useReports({ branchId });
   const { theme } = useTheme();
 
-  const gridStroke = theme === "dark" ? "var(--color-secondary)" : "#ececf0";
-  const tickColor = theme === "dark" ? "#8e8e99" : "#9a9aa5";
+  const gridStroke = theme === "dark" ? "var(--color-secondary)" : "#dfe9e4";
+  const tickColor = theme === "dark" ? "#8fa59b" : "#7a8c83";
   const tooltipStyle = {
     borderRadius: 12,
-    border: `1px solid ${theme === "dark" ? "var(--color-border)" : "#e6e6ea"}`,
+    border: `1px solid ${theme === "dark" ? "var(--color-border)" : "#d5ded9"}`,
     background: "var(--color-card)",
     color: "var(--color-foreground)",
     fontSize: 13,
@@ -287,15 +287,15 @@ export default function AnalyticsPage() {
               <AreaChart data={forecast} margin={{ left: 8, right: 8, top: 8 }}>
                 <defs>
                   <linearGradient id="fc" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#10b981" stopOpacity={0.3} />
-                    <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+                    <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
                 <XAxis dataKey="date" tickFormatter={shortDay} tick={{ fontSize: 11, fill: tickColor }} tickLine={false} axisLine={false} minTickGap={24} />
                 <YAxis tickFormatter={compactNumber} tick={{ fontSize: 11, fill: tickColor }} tickLine={false} axisLine={false} width={60} />
                 <Tooltip formatter={(v: number) => [fmt(v), "Бронь"]} labelFormatter={(l) => shortDay(String(l))} contentStyle={tooltipStyle} />
-                <Area type="monotone" dataKey="total" stroke="#10b981" strokeWidth={2} fill="url(#fc)" />
+                <Area type="monotone" dataKey="total" stroke="var(--color-primary)" strokeWidth={2} fill="url(#fc)" />
               </AreaChart>
             </ResponsiveContainer>
           )}

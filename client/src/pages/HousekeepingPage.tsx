@@ -29,7 +29,7 @@ const statusMeta: Record<HKStatus, { label: string; tint: string }> = {
 };
 const priorityMeta: Record<HKPriority, { label: string; cls: string }> = {
   Low: { label: "Низкий", cls: "text-muted-foreground" },
-  Medium: { label: "Средний", cls: "text-amber-600 dark:text-amber-400" },
+  Medium: { label: "Средний", cls: "text-warning" },
   High: { label: "Высокий", cls: "text-destructive" },
 };
 const kanbanCols: HKStatus[] = ["Dirty", "Cleaning", "Inspection", "Clean"];

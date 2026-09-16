@@ -136,7 +136,7 @@ export default function ReservationCard({
       {/* оплата: красная точка — долг, оранжевая — частичная */}
       {(debt > 0 || partial) && (
         <span
-          className={cn("absolute z-10 h-2 w-2 rounded-full ring-2 ring-card", debt > 0 ? "bg-[#ff3b30]" : "bg-[#ff9500]")}
+          className={cn("absolute z-10 h-2 w-2 rounded-full ring-2 ring-card", debt > 0 ? "bg-destructive" : "bg-warning")}
           style={{ top: -2, right: rb ? rb / 2 - 2 : 0 }}
         />
       )}
