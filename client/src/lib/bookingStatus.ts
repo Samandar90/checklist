@@ -38,11 +38,11 @@ export const STATUS_BAR_CLASS: Record<BookingStatus, string> = {
 
 /** Solid (light-theme) status colours — muted operational palette. */
 export const STATUS_BAR_COLOR: Record<BookingStatus, string> = {
-  RESERVED: "#4d6fd2",
-  CHECKED_IN: "#2f8b69",
-  CHECKED_OUT: "#788394",
-  CANCELLED: "#c75059",
-  NO_SHOW: "#be7d28",
+  RESERVED: "#4268dc",
+  CHECKED_IN: "#258a60",
+  CHECKED_OUT: "#6d788b",
+  CANCELLED: "#d34b58",
+  NO_SHOW: "#c67d18",
 };
 
 /** Solid-dot classes matching STATUS_BAR_COLOR, for legend / filter swatches. */

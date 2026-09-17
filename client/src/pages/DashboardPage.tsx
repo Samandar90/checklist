@@ -95,7 +95,7 @@ function rangeForPreset(key: PresetKey): { from: string; to: string } {
 }
 
 const fmt = (n: number) => Math.round(n).toLocaleString("ru-RU");
-const BAR_COLORS = ["#4b5fc7", "#4f86a0", "#b2864b", "#4e8a74", "#7b70a3", "#b75b65", "#7c8697"];
+const BAR_COLORS = ["#4059d7", "#3f88aa", "#bd822f", "#318764", "#7768a8", "#c15361", "#6d788b"];
 
 function shortDay(iso: string) {
   const d = new Date(iso);

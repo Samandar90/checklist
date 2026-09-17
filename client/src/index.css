@@ -15,42 +15,42 @@
   /* Hairline — the only stroke colour in the system. */
   --color-border: #dfe3ea;
   --color-input: #dfe3ea;
-  --color-ring: #5064d8;
+  --color-ring: #4059d7;
 
   /* Canvas + ink. */
   --color-background: #f2f4f7;
   --color-foreground: #18202f;
 
   /* Sapphire: actions and selected controls only. */
-  --color-primary: #4b5fc7;
-  --color-primary-hover: #3d4fac;
+  --color-primary: #4059d7;
+  --color-primary-hover: #3148be;
   --color-primary-foreground: #ffffff;
-  --color-link: #4056bd;
+  --color-link: #3550c7;
 
   /* Pearl wash — hover states, segmented tracks, quiet fills. */
-  --color-secondary: #e8ebf1;
-  --color-secondary-hover: #dde2ea;
+  --color-secondary: #e5e9f3;
+  --color-secondary-hover: #d9dfed;
   --color-secondary-foreground: #18202f;
 
   /* Faded surface + blue-grey supporting text. */
   --color-muted: #f8f9fb;
   --color-muted-foreground: #697386;
 
-  --color-accent: #e8ebf1;
+  --color-accent: #e5e9f3;
   --color-accent-foreground: #18202f;
 
-  --color-destructive: #c94f58;
+  --color-destructive: #d14956;
   --color-destructive-foreground: #ffffff;
 
-  --color-success: #2e8b68;
+  --color-success: #238760;
   --color-success-foreground: #ffffff;
 
   /* Amber — badges and validation surfaces. */
-  --color-warning: #b97a24;
+  --color-warning: #c17a16;
   --color-warning-foreground: #ffffff;
 
   /* Cornflower — informational; distinct from booking state green. */
-  --color-info: #4d72c8;
+  --color-info: #3d6fd8;
   --color-info-foreground: #ffffff;
 
   /* Paper. */
@@ -174,14 +174,14 @@
 .dark {
   --color-border: #293141;
   --color-input: #293141;
-  --color-ring: #8190f5;
+  --color-ring: #8d9cff;
   --color-background: #0c1119;
   --color-foreground: #eef1f6;
 
-  --color-primary: #8190f5;
-  --color-primary-hover: #93a0ff;
+  --color-primary: #8d9cff;
+  --color-primary-hover: #a1adff;
   --color-primary-foreground: #111735;
-  --color-link: #a1adff;
+  --color-link: #aeb8ff;
 
   --color-secondary: #202735;
   --color-secondary-hover: #2a3344;
@@ -193,16 +193,16 @@
   --color-accent: #202735;
   --color-accent-foreground: #eef1f6;
 
-  --color-destructive: #ee6b72;
+  --color-destructive: #ff737c;
   --color-destructive-foreground: #ffffff;
 
-  --color-success: #55c79b;
+  --color-success: #4ed39d;
   --color-success-foreground: #09291f;
 
-  --color-warning: #dfa650;
+  --color-warning: #edaa43;
   --color-warning-foreground: #2a1b05;
 
-  --color-info: #7899e8;
+  --color-info: #7da4ff;
   --color-info-foreground: #101a36;
 
   --color-card: #151c27;
@@ -267,21 +267,21 @@ h1, h2, h3, .font-display {
  * meaning needs it (booking / payment status). Muted, pastel, theme-aware.
  * Literal hex on purpose: color-mix(var(--x)) gets inlined at build time.
  */
-.tint-indigo { background: color-mix(in srgb, #596dcf 11%, transparent); color: #3b4ba0; }
-.tint-violet { background: color-mix(in srgb, #8073a8 11%, transparent); color: #5b4f82; }
-.tint-sky { background: color-mix(in srgb, #4d72c8 11%, transparent); color: #355497; }
-.tint-emerald { background: color-mix(in srgb, #2e8b68 11%, transparent); color: #1e664b; }
-.tint-amber { background: color-mix(in srgb, #b97a24 13%, transparent); color: #81500f; }
-.tint-rose { background: color-mix(in srgb, #c94f58 11%, transparent); color: #92343b; }
-.tint-slate { background: color-mix(in srgb, #7c8697 12%, transparent); color: #515b6b; }
+.tint-indigo { background: color-mix(in srgb, #4059d7 15%, transparent); color: #2f45ac; }
+.tint-violet { background: color-mix(in srgb, #7968a9 15%, transparent); color: #594982; }
+.tint-sky { background: color-mix(in srgb, #3d6fd8 15%, transparent); color: #2856ac; }
+.tint-emerald { background: color-mix(in srgb, #238760 15%, transparent); color: #176346; }
+.tint-amber { background: color-mix(in srgb, #c17a16 16%, transparent); color: #85500a; }
+.tint-rose { background: color-mix(in srgb, #d14956 15%, transparent); color: #96313b; }
+.tint-slate { background: color-mix(in srgb, #6f7b8e 15%, transparent); color: #4b5668; }
 
-.dark .tint-indigo { background: color-mix(in srgb, #8190f5 18%, transparent); color: #cbd1ff; }
-.dark .tint-violet { background: color-mix(in srgb, #ad9bd2 18%, transparent); color: #ddd2f3; }
-.dark .tint-sky { background: color-mix(in srgb, #7899e8 18%, transparent); color: #c8d7fb; }
-.dark .tint-emerald { background: color-mix(in srgb, #55c79b 18%, transparent); color: #bdeedb; }
-.dark .tint-amber { background: color-mix(in srgb, #dfa650 18%, transparent); color: #f7d9a7; }
-.dark .tint-rose { background: color-mix(in srgb, #ee6b72 18%, transparent); color: #ffc7ca; }
-.dark .tint-slate { background: color-mix(in srgb, #99a3b4 18%, transparent); color: #d6dbe4; }
+.dark .tint-indigo { background: color-mix(in srgb, #8d9cff 24%, transparent); color: #d8ddff; }
+.dark .tint-violet { background: color-mix(in srgb, #b19ee2 24%, transparent); color: #e6ddf8; }
+.dark .tint-sky { background: color-mix(in srgb, #7da4ff 24%, transparent); color: #d5e2ff; }
+.dark .tint-emerald { background: color-mix(in srgb, #4ed39d 24%, transparent); color: #c6f5e2; }
+.dark .tint-amber { background: color-mix(in srgb, #edaa43 24%, transparent); color: #ffe1ad; }
+.dark .tint-rose { background: color-mix(in srgb, #ff737c 24%, transparent); color: #ffd1d4; }
+.dark .tint-slate { background: color-mix(in srgb, #a3aec0 24%, transparent); color: #e0e4eb; }
 
 /* Solid status fills for selected states where a tint wouldn't read. */
 .status-success { background: var(--color-success); color: var(--color-success-foreground); }
@@ -327,12 +327,12 @@ h1, h2, h3, .font-display {
 .glass-field[data-state="open"] {
   outline: none;
   border-color: var(--color-ring);
-  box-shadow: 0 0 0 4px rgba(80, 100, 216, 0.16);
+  box-shadow: 0 0 0 4px rgba(64, 89, 215, 0.2);
 }
 .dark .glass-field:focus,
 .dark .glass-field:focus-visible,
 .dark .glass-field[data-state="open"] {
-  box-shadow: 0 0 0 4px rgba(129, 144, 245, 0.24);
+  box-shadow: 0 0 0 4px rgba(141, 156, 255, 0.28);
 }
 
 /* Ghost pill — hairline, transparent, fills with cool wash on hover. */
@@ -523,13 +523,13 @@ label[for] {
 }
 .loader-ring {
   border-radius: 9999px;
-  background: conic-gradient(from 90deg, transparent 0deg, transparent 90deg, #4b5fc7 340deg, #4b5fc7);
+  background: conic-gradient(from 90deg, transparent 0deg, transparent 90deg, #4059d7 340deg, #4059d7);
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
   mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
   animation: loader-spin 0.85s linear infinite;
 }
 .dark .loader-ring {
-  background: conic-gradient(from 90deg, transparent 0deg, transparent 90deg, #8190f5 340deg, #8190f5);
+  background: conic-gradient(from 90deg, transparent 0deg, transparent 90deg, #8d9cff 340deg, #8d9cff);
 }
 
 /*
@@ -577,35 +577,35 @@ label[for] {
   background-color: rgba(255, 255, 255, 0.025);
 }
 .day-today {
-  background-color: rgba(75, 95, 199, 0.065);
+  background-color: rgba(64, 89, 215, 0.085);
 }
 .dark .day-today {
-  background-color: rgba(129, 144, 245, 0.1);
+  background-color: rgba(141, 156, 255, 0.14);
 }
 /* The clicked day: a tinted band with crisp edges running the full board height. */
 .day-selected {
-  background-color: rgba(75, 95, 199, 0.1);
-  box-shadow: inset 1px 0 0 rgba(75, 95, 199, 0.5), inset -1px 0 0 rgba(75, 95, 199, 0.5);
+  background-color: rgba(64, 89, 215, 0.14);
+  box-shadow: inset 1px 0 0 rgba(64, 89, 215, 0.68), inset -1px 0 0 rgba(64, 89, 215, 0.68);
 }
 .dark .day-selected {
-  background-color: rgba(129, 144, 245, 0.15);
-  box-shadow: inset 1px 0 0 rgba(129, 144, 245, 0.62), inset -1px 0 0 rgba(129, 144, 245, 0.62);
+  background-color: rgba(141, 156, 255, 0.2);
+  box-shadow: inset 1px 0 0 rgba(141, 156, 255, 0.78), inset -1px 0 0 rgba(141, 156, 255, 0.78);
 }
 
 /*
  * Reservation bar palettes — Apple system colours. --bar paints the slanted
  * check-in stripe (and legend dots), --bar-tint the body, --bar-text the label.
  */
-.bar-reserved { --bar: #4d6fd2; --bar-tint: #d9e2fb; --bar-text: #263f87; }
-.bar-checked-in { --bar: #2f8b69; --bar-tint: #d6ede4; --bar-text: #1c5c44; }
-.bar-checked-out { --bar: #788394; --bar-tint: #e2e5ea; --bar-text: #47515f; }
-.bar-cancelled { --bar: #c75059; --bar-tint: #f5dcde; --bar-text: #7f3036; }
-.bar-no-show { --bar: #be7d28; --bar-tint: #f3e3c9; --bar-text: #71460d; }
-.dark .bar-reserved { --bar: #829cf2; --bar-tint: #26365f; --bar-text: #dce4ff; }
-.dark .bar-checked-in { --bar: #5ac79d; --bar-tint: #1d493a; --bar-text: #d0f4e6; }
-.dark .bar-checked-out { --bar: #9ca8ba; --bar-tint: #37404e; --bar-text: #edf0f5; }
-.dark .bar-cancelled { --bar: #ec737a; --bar-tint: #542d32; --bar-text: #ffe2e4; }
-.dark .bar-no-show { --bar: #dfa650; --bar-tint: #554020; --bar-text: #fbe8c7; }
+.bar-reserved { --bar: #4268dc; --bar-tint: #cbd8ff; --bar-text: #1e377f; }
+.bar-checked-in { --bar: #258a60; --bar-tint: #c6ead9; --bar-text: #15573e; }
+.bar-checked-out { --bar: #6d788b; --bar-tint: #d7dce5; --bar-text: #3f4959; }
+.bar-cancelled { --bar: #d34b58; --bar-tint: #f5d0d4; --bar-text: #832b34; }
+.bar-no-show { --bar: #c67d18; --bar-tint: #f5dfbb; --bar-text: #754507; }
+.dark .bar-reserved { --bar: #91a8ff; --bar-tint: #2b427f; --bar-text: #edf1ff; }
+.dark .bar-checked-in { --bar: #55d09e; --bar-tint: #1e5844; --bar-text: #dbf8ec; }
+.dark .bar-checked-out { --bar: #a6b1c2; --bar-tint: #404a5b; --bar-text: #f3f5f8; }
+.dark .bar-cancelled { --bar: #ff7b84; --bar-tint: #683139; --bar-text: #ffeaec; }
+.dark .bar-no-show { --bar: #efad47; --bar-tint: #67491b; --bar-text: #fff0d2; }
 
 /*
  * Recharts chrome follows the theme. The library paints tooltip items in the

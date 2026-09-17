@@ -528,7 +528,7 @@ export default function AiAnalyticsPage() {
                   />
                   <Bar dataKey="avgOccupancy" radius={[6, 6, 0, 0]} barSize={28}>
                     {(data?.weekdays ?? []).map((w) => (
-                      <Cell key={w.weekday} fill={w.weekday === 5 || w.weekday === 6 ? (theme === "dark" ? "#9ca8ba" : "#788394") : "var(--color-primary)"} fillOpacity={w.weekday === 5 || w.weekday === 6 ? 1 : 0.78} />
+                      <Cell key={w.weekday} fill={w.weekday === 5 || w.weekday === 6 ? (theme === "dark" ? "#a6b1c2" : "#6d788b") : "var(--color-primary)"} fillOpacity={w.weekday === 5 || w.weekday === 6 ? 1 : 0.82} />
                     ))}
                   </Bar>
                 </BarChart>
