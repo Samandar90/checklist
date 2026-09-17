@@ -184,13 +184,13 @@ export default function AiAnalyticsPage() {
   const [askError, setAskError] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const gridStroke = theme === "dark" ? "#24342e" : "#dfe9e4";
-  const tickColor = theme === "dark" ? "#8fa59b" : "#5f7168";
+  const gridStroke = theme === "dark" ? "#293141" : "#e3e6ec";
+  const tickColor = theme === "dark" ? "#99a3b4" : "#697386";
   const tooltipStyle = {
     borderRadius: 12,
-    border: `1px solid ${theme === "dark" ? "#24342e" : "#d5ded9"}`,
-    background: theme === "dark" ? "#14201b" : "#ffffff",
-    color: theme === "dark" ? "#e9f1ed" : "#14201b",
+    border: `1px solid ${theme === "dark" ? "#293141" : "#dfe3ea"}`,
+    background: theme === "dark" ? "#151c27" : "#ffffff",
+    color: theme === "dark" ? "#eef1f6" : "#18202f",
     fontSize: 13,
     boxShadow: theme === "dark" ? "0 0 0 1px rgba(255,255,255,0.08), 0 24px 64px -16px rgba(0,0,0,0.85)" : "0 8px 24px rgba(0,0,0,0.08)",
   };
@@ -528,7 +528,7 @@ export default function AiAnalyticsPage() {
                   />
                   <Bar dataKey="avgOccupancy" radius={[6, 6, 0, 0]} barSize={28}>
                     {(data?.weekdays ?? []).map((w) => (
-                      <Cell key={w.weekday} fill={w.weekday === 5 || w.weekday === 6 ? (theme === "dark" ? "#3fb4d6" : "#1c86a8") : "var(--color-primary)"} fillOpacity={w.weekday === 5 || w.weekday === 6 ? 1 : 0.75} />
+                      <Cell key={w.weekday} fill={w.weekday === 5 || w.weekday === 6 ? (theme === "dark" ? "#9ca8ba" : "#788394") : "var(--color-primary)"} fillOpacity={w.weekday === 5 || w.weekday === 6 ? 1 : 0.78} />
                     ))}
                   </Bar>
                 </BarChart>

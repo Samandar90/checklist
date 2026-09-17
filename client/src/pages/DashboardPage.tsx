@@ -95,7 +95,7 @@ function rangeForPreset(key: PresetKey): { from: string; to: string } {
 }
 
 const fmt = (n: number) => Math.round(n).toLocaleString("ru-RU");
-const BAR_COLORS = ["#0e7c5b", "#1c86a8", "#c47a12", "#6c6cc4", "#9a4a9c", "#cf3b3b", "#7f8f87"];
+const BAR_COLORS = ["#4b5fc7", "#4f86a0", "#b2864b", "#4e8a74", "#7b70a3", "#b75b65", "#7c8697"];
 
 function shortDay(iso: string) {
   const d = new Date(iso);
@@ -149,17 +149,17 @@ export default function DashboardPage() {
   const { data: todayExpenses } = useExpenses({ from: today, to: today, branchId });
   const { data: activity } = useAudit({ page: 1 });
 
-  const gridStroke = theme === "dark" ? "var(--color-secondary)" : "#dfe9e4";
-  const tickColor = theme === "dark" ? "#8fa59b" : "#7a8c83";
+  const gridStroke = theme === "dark" ? "var(--color-secondary)" : "#e3e6ec";
+  const tickColor = theme === "dark" ? "#99a3b4" : "#747e8e";
   const tooltipStyle = {
     borderRadius: 12,
-    border: `1px solid ${theme === "dark" ? "var(--color-border)" : "#d5ded9"}`,
+    border: `1px solid ${theme === "dark" ? "var(--color-border)" : "#dfe3ea"}`,
     background: "var(--color-card)",
     color: "var(--color-foreground)",
     fontSize: 13,
     boxShadow: theme === "dark" ? "0 0 0 1px rgba(255,255,255,0.08), 0 24px 64px -16px rgba(0,0,0,0.85)" : "0 8px 24px rgba(16,24,40,0.08)",
   };
-  const chartCursor = { fill: theme === "dark" ? "#101a16" : "#eef3f0" };
+  const chartCursor = { fill: theme === "dark" ? "#121822" : "#f2f4f7" };
 
   const delta = data?.previous.deltaPct ?? null;
   const timeSeries = data?.timeSeries ?? [];
