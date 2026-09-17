@@ -267,21 +267,21 @@ h1, h2, h3, .font-display {
  * meaning needs it (booking / payment status). Muted, pastel, theme-aware.
  * Literal hex on purpose: color-mix(var(--x)) gets inlined at build time.
  */
-.tint-indigo { background: color-mix(in srgb, #4059d7 15%, transparent); color: #2f45ac; }
-.tint-violet { background: color-mix(in srgb, #7968a9 15%, transparent); color: #594982; }
-.tint-sky { background: color-mix(in srgb, #3d6fd8 15%, transparent); color: #2856ac; }
-.tint-emerald { background: color-mix(in srgb, #238760 15%, transparent); color: #176346; }
-.tint-amber { background: color-mix(in srgb, #c17a16 16%, transparent); color: #85500a; }
-.tint-rose { background: color-mix(in srgb, #d14956 15%, transparent); color: #96313b; }
-.tint-slate { background: color-mix(in srgb, #6f7b8e 15%, transparent); color: #4b5668; }
+.tint-indigo { background: color-mix(in srgb, #3155e7 24%, transparent); color: #203cae; }
+.tint-violet { background: color-mix(in srgb, #7659b8 23%, transparent); color: #513c8e; }
+.tint-sky { background: color-mix(in srgb, #316ee0 24%, transparent); color: #1f50b1; }
+.tint-emerald { background: color-mix(in srgb, #138a5b 24%, transparent); color: #0d6542; }
+.tint-amber { background: color-mix(in srgb, #c97a0a 25%, transparent); color: #844d05; }
+.tint-rose { background: color-mix(in srgb, #d94452 23%, transparent); color: #9d2c37; }
+.tint-slate { background: color-mix(in srgb, #64748b 23%, transparent); color: #435066; }
 
-.dark .tint-indigo { background: color-mix(in srgb, #8d9cff 24%, transparent); color: #d8ddff; }
-.dark .tint-violet { background: color-mix(in srgb, #b19ee2 24%, transparent); color: #e6ddf8; }
-.dark .tint-sky { background: color-mix(in srgb, #7da4ff 24%, transparent); color: #d5e2ff; }
-.dark .tint-emerald { background: color-mix(in srgb, #4ed39d 24%, transparent); color: #c6f5e2; }
-.dark .tint-amber { background: color-mix(in srgb, #edaa43 24%, transparent); color: #ffe1ad; }
-.dark .tint-rose { background: color-mix(in srgb, #ff737c 24%, transparent); color: #ffd1d4; }
-.dark .tint-slate { background: color-mix(in srgb, #a3aec0 24%, transparent); color: #e0e4eb; }
+.dark .tint-indigo { background: color-mix(in srgb, #8d9cff 32%, transparent); color: #e2e6ff; }
+.dark .tint-violet { background: color-mix(in srgb, #b19ee2 31%, transparent); color: #eee7ff; }
+.dark .tint-sky { background: color-mix(in srgb, #7da4ff 32%, transparent); color: #e1eaff; }
+.dark .tint-emerald { background: color-mix(in srgb, #4ed39d 32%, transparent); color: #d4f9ea; }
+.dark .tint-amber { background: color-mix(in srgb, #edaa43 32%, transparent); color: #ffebc9; }
+.dark .tint-rose { background: color-mix(in srgb, #ff737c 32%, transparent); color: #ffe0e2; }
+.dark .tint-slate { background: color-mix(in srgb, #a3aec0 32%, transparent); color: #edf0f5; }
 
 /* Solid status fills for selected states where a tint wouldn't read. */
 .status-success { background: var(--color-success); color: var(--color-success-foreground); }
@@ -593,19 +593,33 @@ label[for] {
 }
 
 /*
- * Reservation bar palettes — Apple system colours. --bar paints the slanted
- * check-in stripe (and legend dots), --bar-tint the body, --bar-text the label.
+ * Reservation bar palettes. Dense boards need decisive colour: --bar paints
+ * legend dots, --bar-edge the slanted check-in edge and --bar-fill the body.
+ * A restrained top highlight keeps the solid fill dimensional, not flat.
  */
-.bar-reserved { --bar: #4268dc; --bar-tint: #cbd8ff; --bar-text: #1e377f; }
-.bar-checked-in { --bar: #258a60; --bar-tint: #c6ead9; --bar-text: #15573e; }
-.bar-checked-out { --bar: #6d788b; --bar-tint: #d7dce5; --bar-text: #3f4959; }
-.bar-cancelled { --bar: #d34b58; --bar-tint: #f5d0d4; --bar-text: #832b34; }
-.bar-no-show { --bar: #c67d18; --bar-tint: #f5dfbb; --bar-text: #754507; }
-.dark .bar-reserved { --bar: #91a8ff; --bar-tint: #2b427f; --bar-text: #edf1ff; }
-.dark .bar-checked-in { --bar: #55d09e; --bar-tint: #1e5844; --bar-text: #dbf8ec; }
-.dark .bar-checked-out { --bar: #a6b1c2; --bar-tint: #404a5b; --bar-text: #f3f5f8; }
-.dark .bar-cancelled { --bar: #ff7b84; --bar-tint: #683139; --bar-text: #ffeaec; }
-.dark .bar-no-show { --bar: #efad47; --bar-tint: #67491b; --bar-text: #fff0d2; }
+.bar-reserved { --bar: #3155e7; --bar-edge: #203fb8; --bar-fill: #4265e6; --bar-highlight: #5475ee; --bar-soft: #e2e8ff; --bar-soft-text: #243ca2; --bar-text: #ffffff; }
+.bar-checked-in { --bar: #138a5b; --bar-edge: #096c45; --bar-fill: #0f8053; --bar-highlight: #188d5e; --bar-soft: #d9f1e7; --bar-soft-text: #0d6542; --bar-text: #ffffff; }
+.bar-checked-out { --bar: #64748b; --bar-edge: #46566c; --bar-fill: #6d7d93; --bar-highlight: #7c8ba0; --bar-soft: #e1e5eb; --bar-soft-text: #435066; --bar-text: #ffffff; }
+.bar-cancelled { --bar: #d94452; --bar-edge: #ad2d39; --bar-fill: #df505d; --bar-highlight: #e7606b; --bar-soft: #f8dfe2; --bar-soft-text: #9d2c37; --bar-text: #ffffff; }
+.bar-no-show { --bar: #c97a0a; --bar-edge: #965905; --bar-fill: #d38414; --bar-highlight: #df9528; --bar-soft: #f7e7cc; --bar-soft-text: #844d05; --bar-text: #2d1b00; }
+.dark .bar-reserved { --bar: #6382ff; --bar-edge: #3f5fdf; --bar-fill: #526fe4; --bar-highlight: #6883ed; --bar-soft: #273665; --bar-soft-text: #dce3ff; --bar-text: #ffffff; }
+.dark .bar-checked-in { --bar: #36c68d; --bar-edge: #159467; --bar-fill: #16865b; --bar-highlight: #219567; --bar-soft: #1c503e; --bar-soft-text: #d1f8e9; --bar-text: #ffffff; }
+.dark .bar-checked-out { --bar: #94a3b8; --bar-edge: #65748a; --bar-fill: #718096; --bar-highlight: #8190a5; --bar-soft: #3c4657; --bar-soft-text: #eef1f6; --bar-text: #ffffff; }
+.dark .bar-cancelled { --bar: #ff6673; --bar-edge: #d53a48; --bar-fill: #df4b58; --bar-highlight: #ec5d69; --bar-soft: #613038; --bar-soft-text: #ffe3e6; --bar-text: #ffffff; }
+.dark .bar-no-show { --bar: #f2aa3a; --bar-edge: #bd7610; --bar-fill: #cf8318; --bar-highlight: #dc962c; --bar-soft: #604619; --bar-soft-text: #ffedcf; --bar-text: #241500; }
+
+.status-filter {
+  background: var(--bar-soft);
+  color: var(--bar-soft-text);
+}
+.status-filter:hover {
+  filter: saturate(1.12) brightness(0.98);
+}
+.status-filter[data-active="true"] {
+  background: var(--bar);
+  color: var(--bar-text);
+  box-shadow: 0 5px 14px -8px var(--bar);
+}
 
 /*
  * Recharts chrome follows the theme. The library paints tooltip items in the

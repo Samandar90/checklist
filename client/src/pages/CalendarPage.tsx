@@ -38,7 +38,7 @@ import { useBranches, useMyBranches } from "@/hooks/useBranches";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCalendar } from "@/hooks/useCalendar";
 import { useUpdateReport, useDeleteReport } from "@/hooks/useReports";
-import { STATUS_META, STATUS_DOT_CLASS, holdsRoom } from "@/lib/bookingStatus";
+import { STATUS_META, STATUS_BAR_CLASS, STATUS_DOT_CLASS, holdsRoom } from "@/lib/bookingStatus";
 import { MonthlyReport, Room, BookingStatus, bookingStatuses } from "@/types";
 import { getErrorMessage } from "@/lib/api";
 import { cn, formatDate, formatMoney, isoDay, nightsBetween, pluralRu, reportDebt, paymentStatusClass } from "@/lib/utils";
@@ -652,9 +652,11 @@ export default function CalendarPage() {
                 key={s.status}
                 onClick={() => setStatusFilter(active ? null : s.status)}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12.5px] font-medium transition-colors",
-                  active ? "bg-foreground text-background" : "bg-secondary/70 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  "status-filter flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12.5px] font-semibold transition-[filter,transform,box-shadow]",
+                  STATUS_BAR_CLASS[s.status],
+                  active && "scale-[1.02]"
                 )}
+                data-active={active}
               >
                 <span className={cn("h-2.5 w-2.5 rounded-full", STATUS_DOT_CLASS[s.status])} />
                 {s.label}
@@ -1133,4 +1135,3 @@ function FreeCellCard({ room, day, x, y }: { room: Room; day: Date; x: number; y
     </div>
   );
 }
-

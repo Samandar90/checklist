@@ -14,10 +14,9 @@ const STRIPE = 3;
  * check-out edge falls "/" through the middle of the departure cell, so two
  * adjacent stays (checkout + same-day check-in) tessellate along one diagonal.
  *
- * Painted the way Apple Calendar paints events: a pastel tint body with the
- * saturated status colour kept for a slanted stripe on the check-in edge and
- * for the label. On a dense board that reads far calmer than solid bars, and
- * the stripe still marks every arrival at a glance. Colours come from the
+ * Painted as a confident solid status band with a subtle top highlight and a
+ * darker slanted check-in edge. This remains legible when the board is dense
+ * and makes each operational state identifiable at a glance. Colours come from
  * .bar-* classes (CSS variables, light + dark) — see index.css.
  *
  * Deliberately dumb: no action buttons, no dropdown, no inline edit affordance.
@@ -114,13 +113,13 @@ export default function ReservationCard({
       style={{ left, width, top: 4, height: ROW_H - 8, touchAction: "none" }}
     >
       {/* скошенная кромка заезда — насыщенный цвет статуса */}
-      <span className="absolute inset-0" style={{ clipPath: clipStripe, background: "var(--bar)" }} />
-      {/* тело — пастельная заливка, цветной текст */}
+      <span className="absolute inset-0" style={{ clipPath: clipStripe, background: "var(--bar-edge)" }} />
+      {/* тело — насыщенная заливка с мягким верхним бликом */}
       <span
         className="absolute inset-0 flex items-center gap-1.5 overflow-hidden whitespace-nowrap text-[12px] font-semibold"
         style={{
           clipPath: clipBody,
-          background: "var(--bar-tint)",
+          background: "linear-gradient(180deg, var(--bar-highlight), var(--bar-fill))",
           color: "var(--bar-text)",
           paddingLeft: (lt ? lt * 0.8 : 0) + STRIPE + 5,
           paddingRight: rb ? rb * 0.8 + 3 : 6,
@@ -128,7 +127,7 @@ export default function ReservationCard({
       >
         <span className="truncate">{label}</span>
         {showPrice && (
-          <span className="ml-auto shrink-0 text-[11px] font-medium opacity-70">
+          <span className="ml-auto shrink-0 text-[11px] font-medium opacity-90">
             {Math.round(booking.price / 1000)}к
           </span>
         )}

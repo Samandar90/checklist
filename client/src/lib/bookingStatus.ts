@@ -21,10 +21,10 @@ export const STATUS_OPTIONS: { value: BookingStatus; label: string }[] = (
 ).map((value) => ({ value, label: STATUS_META[value].label }));
 
 /**
- * Chessboard bar palette — Apple Calendar treatment: a pastel tint body with
- * the saturated colour kept for a slanted accent stripe and the label text.
+ * Chessboard bar palette — solid operational bands with a darker slanted edge
+ * and white text, so bookings remain distinct on a dense board.
  * Each class only sets CSS variables (see .bar-* in index.css, light + dark);
- * ReservationCard paints with var(--bar) / var(--bar-tint) / var(--bar-text).
+ * ReservationCard paints with the fill, edge and text variables from there.
  * RESERVED = blue, CHECKED_IN = green, CHECKED_OUT = grey — the three states
  * staff scan for; CANCELLED / NO_SHOW are red / orange terminal states.
  */
@@ -38,11 +38,11 @@ export const STATUS_BAR_CLASS: Record<BookingStatus, string> = {
 
 /** Solid (light-theme) status colours — muted operational palette. */
 export const STATUS_BAR_COLOR: Record<BookingStatus, string> = {
-  RESERVED: "#4268dc",
-  CHECKED_IN: "#258a60",
-  CHECKED_OUT: "#6d788b",
-  CANCELLED: "#d34b58",
-  NO_SHOW: "#c67d18",
+  RESERVED: "#3155e7",
+  CHECKED_IN: "#138a5b",
+  CHECKED_OUT: "#64748b",
+  CANCELLED: "#d94452",
+  NO_SHOW: "#c97a0a",
 };
 
 /** Solid-dot classes matching STATUS_BAR_COLOR, for legend / filter swatches. */
