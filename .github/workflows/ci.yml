@@ -1,0 +1,93 @@
+# Continuous integration: every push to main and every pull request is checked
+# on a clean machine with the same Node the production image uses (node:20 in
+# the Dockerfile). Server and client run as two parallel jobs so a failure is
+# reported next to the commit within a couple of minutes.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push to the same branch cancels the run still going for the old one.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  server:
+    name: Server — types, migrations, tests, build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    env:
+      # A throw-away SQLite file: migrations are applied to it from scratch,
+      # which is exactly what the Render container does on every deploy.
+      DATABASE_URL: file:./ci.db
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Migrations apply to an empty database
+        run: npx prisma migrate deploy
+
+      # Fails when schema.prisma was edited without a matching migration —
+      # the change would otherwise be silently missing in production.
+      - name: Schema matches the migrations
+        run: >-
+          npx prisma migrate diff
+          --from-migrations prisma/migrations
+          --to-schema-datamodel prisma/schema.prisma
+          --shadow-database-url file:./shadow.db
+          --exit-code
+
+      - name: Type check
+        run: npx tsc -p tsconfig.json --noEmit
+
+      - name: Unit tests
+        run: npx vitest run
+
+      - name: Build
+        run: npm run build
+
+  client:
+    name: Client — types, lint, tests, build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc -p tsconfig.app.json --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
