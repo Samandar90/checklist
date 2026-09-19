@@ -4,6 +4,10 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
+    branch: main
+    # Deploy a commit only after its GitHub checks (the CI workflow in
+    # .github/workflows/ci.yml) have passed — a red build never reaches production.
+    autoDeployTrigger: checksPass
     plan: starter
     healthCheckPath: /api/health
     envVars:
