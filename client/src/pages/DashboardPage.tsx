@@ -181,10 +181,11 @@ export default function DashboardPage() {
     return (monthReports ?? []).filter((r) => r.date.slice(0, 10) > today && r.date.slice(0, 10) <= limit);
   }, [monthReports, today]);
 
-  const occupiedNow = data?.totals.rooms
-    ? Math.round(((data.occupancy ?? 0) / 100) * data.totals.rooms)
-    : 0;
-  const freeRooms = Math.max(0, (data?.totals.rooms ?? 0) - occupiedNow);
+  // Загрузка считается от продаваемой ёмкости (без ночей «номер не работает»),
+  // поэтому и занятые/свободные выводим от неё же, а не от общего числа номеров.
+  const sellableRooms = Math.round(data?.sellableRooms ?? data?.totals.rooms ?? 0);
+  const occupiedNow = sellableRooms ? Math.round(((data?.occupancy ?? 0) / 100) * sellableRooms) : 0;
+  const freeRooms = Math.max(0, sellableRooms - occupiedNow);
 
   const todayExpenseSum = (todayExpenses ?? []).reduce((s, e) => s + e.amount, 0);
 

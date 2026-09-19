@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { activeBlockWhere, blockIsActive, blockRange, describeBlock, isRoomBlockKind } from "./roomBlocks";
+import { activeBlockWhere, blockIsActive, blockRange, describeBlock, isRoomBlockKind, unsellableNightsWithin } from "./roomBlocks";
 
 const d = (iso: string) => new Date(iso);
 const now = d("2026-09-19T12:00:00");
@@ -55,5 +55,31 @@ describe("isRoomBlockKind / describeBlock", () => {
     expect(describeBlock({ kind: "HOLD", guestName: "Иванов" })).toBe("временное хранение, Иванов");
     expect(describeBlock({ kind: "OUT_OF_ORDER" })).toBe("номер не работает");
     expect(describeBlock({ kind: "BLOCK", guestName: null })).toBe("даты заблокированы");
+  });
+});
+
+describe("unsellableNightsWithin (out-of-order nights leave the sellable capacity)", () => {
+  const from = d("2026-09-01T00:00:00");
+  const to = d("2026-10-01T00:00:00");
+
+  it("counts only the out-of-order nights that fall inside the window", () => {
+    const blocks = [
+      // 3 nights fully inside
+      { kind: "OUT_OF_ORDER", startDate: d("2026-09-10T00:00:00"), endDate: d("2026-09-13T00:00:00") },
+      // straddles the end: 28, 29, 30 September → 3 nights, the October ones are out
+      { kind: "OUT_OF_ORDER", startDate: d("2026-09-28T00:00:00"), endDate: d("2026-10-05T00:00:00") },
+      // entirely before the window
+      { kind: "OUT_OF_ORDER", startDate: d("2026-08-20T00:00:00"), endDate: d("2026-08-25T00:00:00") },
+    ];
+    expect(unsellableNightsWithin(blocks, from, to)).toBe(6);
+  });
+
+  it("ignores holds and blocked dates — those rooms stay in the inventory", () => {
+    const blocks = [
+      { kind: "HOLD", startDate: d("2026-09-10T00:00:00"), endDate: d("2026-09-13T00:00:00") },
+      { kind: "BLOCK", startDate: d("2026-09-10T00:00:00"), endDate: d("2026-09-13T00:00:00") },
+    ];
+    expect(unsellableNightsWithin(blocks, from, to)).toBe(0);
+    expect(unsellableNightsWithin([], from, to)).toBe(0);
   });
 });

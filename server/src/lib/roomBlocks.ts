@@ -6,7 +6,7 @@
  * src/lib/roomBlocks.ts.
  */
 
-import { nightRange } from "./bookings";
+import { nightRange, nightsWithinWindow } from "./bookings";
 
 export const ROOM_BLOCK_KINDS = ["HOLD", "BLOCK", "OUT_OF_ORDER"] as const;
 export type RoomBlockKind = (typeof ROOM_BLOCK_KINDS)[number];
@@ -51,4 +51,20 @@ export function blockRange(block: { startDate: Date; endDate: Date }): { start: 
 export function describeBlock(block: { kind: string; guestName?: string | null }): string {
   const label = isRoomBlockKind(block.kind) ? ROOM_BLOCK_LABELS[block.kind] : block.kind;
   return block.guestName ? `${label}, ${block.guestName}` : label;
+}
+
+/**
+ * Room-nights taken out of sale by out-of-order rooms inside the half-open
+ * window [windowStart, windowEnd). A broken room is not sellable, so the
+ * dashboard subtracts these from capacity; a hold or blocked dates keep the
+ * room in the inventory (someone chose not to sell it) and are not counted.
+ */
+export function unsellableNightsWithin(
+  blocks: { kind: string; startDate: Date; endDate: Date }[],
+  windowStart: Date,
+  windowEnd: Date
+): number {
+  return blocks
+    .filter((b) => b.kind === "OUT_OF_ORDER")
+    .reduce((sum, b) => sum + nightsWithinWindow(b.startDate, b.endDate, windowStart, windowEnd), 0);
 }

@@ -3,6 +3,7 @@ import { prisma } from "../prisma";
 import { requireSuperAdmin } from "../middleware/auth";
 import { ROOM_HOLDING_STATUSES } from "../statuses";
 import { nightsWithinWindow, outstandingDebt } from "../lib/bookings";
+import { unsellableNightsWithin } from "../lib/roomBlocks";
 
 const router = Router();
 router.use(requireSuperAdmin);
@@ -81,7 +82,7 @@ router.get("/", async (req, res, next) => {
       ],
     };
 
-    const [totalBranches, totalAdmins, totalRooms, roomsInScope, reports, expenses, prevAgg, todayAgg, staysInWindow] =
+    const [totalBranches, totalAdmins, totalRooms, roomsInScope, reports, expenses, prevAgg, todayAgg, staysInWindow, outOfOrder] =
       await Promise.all([
         prisma.branch.count(),
         prisma.admin.count(),
@@ -108,6 +109,18 @@ router.get("/", async (req, res, next) => {
           where: occupancyWhere,
           select: { date: true, checkOut: true },
         }),
+        // «Номер не работает» выводит номер из продажи: его ночи вычитаются из
+        // ёмкости, иначе сломанный номер занижает загрузку всей сети. Границы
+        // расширены на день: сравниваем метки как есть, точный счёт ночей ниже.
+        prisma.roomBlock.findMany({
+          where: {
+            ...(branchId ? { branchId } : {}),
+            kind: "OUT_OF_ORDER",
+            startDate: { lt: new Date(toExclusive.getTime() + DAY_MS) },
+            endDate: { gt: new Date(fromInclusive.getTime() - DAY_MS) },
+          },
+          select: { kind: true, startDate: true, endDate: true },
+        }),
       ]);
 
     const revenue = reports.reduce((sum, r) => sum + r.price, 0);
@@ -127,8 +140,15 @@ router.get("/", async (req, res, next) => {
         sum + nightsWithinWindow(new Date(r.date), r.checkOut ? new Date(r.checkOut) : null, fromInclusive, toExclusive),
       0
     );
-    const capacity = roomsInScope * rangeDays;
+    // Sellable capacity: every room-night in the window minus the nights rooms
+    // stood out of order. A hold or blocked dates stay in the denominator — the
+    // room could have been sold, someone chose not to.
+    const outOfOrderNights = unsellableNightsWithin(outOfOrder, fromInclusive, toExclusive);
+    const capacity = Math.max(0, roomsInScope * rangeDays - outOfOrderNights);
     const occupancy = capacity > 0 ? Math.min(100, (occupiedNights / capacity) * 100) : 0;
+    // Average sellable rooms per night — what "occupied now / free now" on the
+    // dashboard should be derived from, not the raw room count.
+    const sellableRooms = capacity / rangeDays;
 
     const byExpense: Record<string, Bucket> = {};
     for (const e of expenses) {
@@ -185,6 +205,8 @@ router.get("/", async (req, res, next) => {
       netProfit,
       totalDebt,
       occupancy,
+      sellableRooms,
+      outOfOrderNights,
       today: { revenue: todayAgg._sum.price ?? 0, reports: todayAgg._count },
       previous: { revenue: prevRevenue, deltaPct },
       timeSeries: Object.values(series).sort((a, b) => a.date.localeCompare(b.date)),

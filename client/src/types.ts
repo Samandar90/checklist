@@ -237,6 +237,9 @@ export interface DashboardStats {
   netProfit: number;
   totalDebt: number;
   occupancy: number;
+  /** Средняя продаваемая ёмкость за период: номера в охвате минус ночи «не работает». */
+  sellableRooms?: number;
+  outOfOrderNights?: number;
   today: { revenue: number; reports: number };
   previous: { revenue: number; deltaPct: number | null };
   timeSeries: { date: string; total: number; count: number }[];
