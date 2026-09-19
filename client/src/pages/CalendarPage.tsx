@@ -70,13 +70,11 @@ function dayStartMs(d: string | Date) {
   return x.getTime();
 }
 
-/** Heatmap classes for the occupancy % cell. */
+/** Occupancy % cell: low load is the problem — 0–49% red, 50–79% yellow, 80%+ green. */
 function heat(pct: number): string {
-  if (pct === 0) return "text-muted-foreground/60";
-  if (pct < 40) return "bg-success/10 text-success";
-  if (pct < 70) return "bg-warning/15 text-warning";
-  if (pct < 90) return "bg-warning/35 text-warning";
-  return "bg-destructive/25 text-destructive";
+  if (pct < 50) return "bg-destructive/15 text-destructive";
+  if (pct < 80) return "bg-warning/20 text-warning";
+  return "bg-success/15 text-success";
 }
 
 interface Group {
