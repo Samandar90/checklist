@@ -338,8 +338,8 @@ export default function CalendarPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, daysInMonth, monthStartMs]);
 
-  // Ночи, закрытые блокировками (хранение / даты / не работает): это не брони
-  // и в загрузку они не идут, но номер на эти ночи не свободен.
+  // Ночи, закрытые блокировками (хранение / даты / не работает): это не брони,
+  // но номер на эти ночи не продаётся — он не свободен и идёт в загрузку.
   const blockedByDay = useMemo(() => {
     const arr: Set<string>[] = Array.from({ length: daysInMonth }, () => new Set<string>());
     for (const bl of data?.blocks ?? []) {
@@ -351,7 +351,10 @@ export default function CalendarPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, daysInMonth, monthStartMs]);
 
-  /** Сколько номеров нельзя продать в эту ночь: занятые бронью или закрытые блокировкой. */
+  /**
+   * Сколько номеров нельзя продать в эту ночь: занятые бронью или закрытые
+   * блокировкой. От этого числа считаются и «свободно», и загрузка %.
+   */
   const unavailableByDay = useMemo(
     () =>
       occupiedByDay.map((set, i) => {
@@ -528,13 +531,11 @@ export default function CalendarPage() {
 
   // Quick stats strip.
   const stats = useMemo(() => {
-    const occToday = todayIndex >= 0 ? occupiedByDay[todayIndex].size : 0;
+    const occToday = todayIndex >= 0 ? unavailableByDay[todayIndex] : 0;
     const occPctToday = totalRooms && todayIndex >= 0 ? Math.round((occToday / totalRooms) * 100) : 0;
     const avg =
       totalRooms && daysInMonth
-        ? Math.round(
-            (occupiedByDay.reduce((s, set) => s + set.size, 0) / (totalRooms * daysInMonth)) * 100
-          )
+        ? Math.round((unavailableByDay.reduce((s, n) => s + n, 0) / (totalRooms * daysInMonth)) * 100)
         : 0;
     let arrivals = 0;
     let departures = 0;
@@ -561,7 +562,7 @@ export default function CalendarPage() {
       avgRate: arrivals ? Math.round(revenueToday / arrivals) : 0,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [occupiedByDay, unavailableByDay, totalRooms, todayIndex, daysInMonth, data]);
+  }, [unavailableByDay, totalRooms, todayIndex, daysInMonth, data]);
 
   function shiftMonth(delta: number) {
     setCursor((c) => {
@@ -814,7 +815,7 @@ export default function CalendarPage() {
                 </div>
                 {days.map((d, i) => {
                   const weekend = d.getDay() === 0 || d.getDay() === 6;
-                  const occ = totalRooms ? Math.round((occupiedByDay[i].size / totalRooms) * 100) : 0;
+                  const occ = totalRooms ? Math.round((unavailableByDay[i] / totalRooms) * 100) : 0;
                   const free = totalRooms - unavailableByDay[i];
                   return (
                     <div key={i} style={{ width: CELL_W, minWidth: CELL_W }} className={cn("board-cell", dayCellClass(i, weekend))}>
