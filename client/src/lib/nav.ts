@@ -15,7 +15,6 @@ import {
   Sparkles,
   Brush,
   BarChart3,
-  Wand2,
   GanttChartSquare,
   LayoutGrid,
 } from "lucide-react";
@@ -45,7 +44,6 @@ export const superAdminSections: NavSection[] = [
     label: "Операции",
     items: [
       { to: "/calendar", label: "Шахматка", icon: CalendarRange },
-      { to: "/smart-assign", label: "Умное распределение номеров", icon: Wand2 },
       { to: "/finance", label: "Финансовый центр", icon: Banknote },
       { to: "/cash-register", label: "Касса (смены)", icon: Banknote },
       { to: "/reports", label: "Ежемесячные отчёты", icon: ClipboardList },
@@ -80,7 +78,6 @@ export const adminSections: NavSection[] = [
     items: [
       { to: "/staff", label: "Рабочее место", icon: LayoutGrid },
       { to: "/calendar", label: "Шахматка", icon: CalendarRange },
-      { to: "/smart-assign", label: "Умное распределение номеров", icon: Wand2 },
       { to: "/cash-register", label: "Касса", icon: Banknote },
       { to: "/my-reports", label: "Мои отчёты", icon: ClipboardList },
       { to: "/my-expenses", label: "Расходы за смену", icon: Wallet },

@@ -26,7 +26,6 @@ const BackupPage = lazy(() => import("@/pages/BackupPage"));
 const MyReportsPage = lazy(() => import("@/pages/MyReportsPage"));
 const MyExpensesPage = lazy(() => import("@/pages/MyExpensesPage"));
 const CashRegisterPage = lazy(() => import("@/pages/CashRegisterPage"));
-const SmartAssignPage = lazy(() => import("@/pages/SmartAssignPage"));
 const TimelinePage = lazy(() => import("@/pages/TimelinePage"));
 const WorkspacePage = lazy(() => import("@/pages/WorkspacePage"));
 const StaffWorkspacePage = lazy(() => import("@/pages/StaffWorkspacePage"));
@@ -74,7 +73,6 @@ export default function App() {
             <Route element={<ProtectedRoute allow={["SUPER_ADMIN", "ADMIN"]} />}>
               <Route element={<Layout />}>
                 <Route path="/calendar" element={<CalendarPage />} />
-                <Route path="/smart-assign" element={<SmartAssignPage />} />
                 <Route path="/cash-register" element={<CashRegisterPage />} />
               </Route>
             </Route>
