@@ -1,26 +1,46 @@
 import { z } from "zod";
 
+// bcrypt хэширует только первые 72 байта пароля — остальное молча отбрасывается.
+// Кириллица занимает 2 байта на символ, так что пароль из 50 русских букв на деле
+// защищён лишь первыми 36. Отклоняем такие пароли явно, а не ослабляем молча.
+const BCRYPT_MAX_BYTES = 72;
+const password = (min: number, message: string) =>
+  z
+    .string()
+    .min(min, message)
+    .refine(
+      (v) => Buffer.byteLength(v, "utf8") <= BCRYPT_MAX_BYTES,
+      "Пароль слишком длинный (не больше 72 латинских или 36 русских символов)"
+    );
+
+// Ограничения длины свободного текста: без них одним запросом можно записать в
+// SQLite (и в журнал аудита, и в ночные бэкапы) мегабайты в одно поле.
+const NAME_MAX = 200;
+const NOTE_MAX = 2000;
+const CURRENCY_MAX = 10;
+const TOO_LONG = "Слишком длинное значение";
+
 export const branchSchema = z.object({
-  name: z.string().trim().min(1, "Название обязательно"),
+  name: z.string().trim().min(1, "Название обязательно").max(NAME_MAX, TOO_LONG),
 });
 
 export const adminCreateSchema = z.object({
-  fullName: z.string().trim().min(1, "ФИО обязательно"),
-  phone: z.string().trim().min(1, "Телефон обязателен"),
+  fullName: z.string().trim().min(1, "ФИО обязательно").max(NAME_MAX, TOO_LONG),
+  phone: z.string().trim().min(1, "Телефон обязателен").max(NAME_MAX, TOO_LONG),
   branchId: z.string().trim().min(1, "Филиал обязателен"),
   // Every branch this admin should work in. Optional — if omitted, defaults to just branchId.
   branchIds: z.array(z.string().trim().min(1)).optional(),
-  username: z.string().trim().min(3, "Логин должен быть не короче 3 символов"),
-  password: z.string().min(6, "Пароль должен быть не короче 6 символов"),
+  username: z.string().trim().min(3, "Логин должен быть не короче 3 символов").max(NAME_MAX, TOO_LONG),
+  password: password(6, "Пароль должен быть не короче 6 символов"),
 });
 
 export const adminUpdateSchema = z.object({
-  fullName: z.string().trim().min(1, "ФИО обязательно"),
-  phone: z.string().trim().min(1, "Телефон обязателен"),
+  fullName: z.string().trim().min(1, "ФИО обязательно").max(NAME_MAX, TOO_LONG),
+  phone: z.string().trim().min(1, "Телефон обязателен").max(NAME_MAX, TOO_LONG),
   branchId: z.string().trim().min(1, "Филиал обязателен"),
   branchIds: z.array(z.string().trim().min(1)).optional(),
-  username: z.string().trim().min(3, "Логин должен быть не короче 3 символов"),
-  password: z.string().min(6, "Пароль должен быть не короче 6 символов").optional().or(z.literal("")),
+  username: z.string().trim().min(3, "Логин должен быть не короче 3 символов").max(NAME_MAX, TOO_LONG),
+  password: password(6, "Пароль должен быть не короче 6 символов").optional().or(z.literal("")),
 });
 
 export const loginSchema = z.object({
@@ -30,17 +50,17 @@ export const loginSchema = z.object({
 
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, "Укажите текущий пароль"),
-  newPassword: z.string().min(6, "Новый пароль должен быть не короче 6 символов"),
+  newPassword: password(6, "Новый пароль должен быть не короче 6 символов"),
 });
 
 export const roomSchema = z.object({
-  roomNumber: z.string().trim().min(1, "Номер комнаты обязателен"),
-  type: z.string().trim().optional().nullable(),
+  roomNumber: z.string().trim().min(1, "Номер комнаты обязателен").max(NAME_MAX, TOO_LONG),
+  type: z.string().trim().max(NAME_MAX, TOO_LONG).optional().nullable(),
   branchId: z.string().trim().min(1, "Филиал обязателен"),
 });
 
 export const sourceSchema = z.object({
-  name: z.string().trim().min(1, "Название обязательно"),
+  name: z.string().trim().min(1, "Название обязательно").max(NAME_MAX, TOO_LONG),
 });
 
 export const paymentMethods = ["Наличные", "Карта", "Терминал"] as const;
@@ -63,13 +83,13 @@ export const reportSchema = z
       .refine((v) => !v || !Number.isNaN(new Date(v).getTime()), "Некорректная дата выезда")
       .optional()
       .nullable(),
-    guestName: z.string().trim().optional().nullable(),
+    guestName: z.string().trim().max(NAME_MAX, TOO_LONG).optional().nullable(),
     branchId: z.string().trim().min(1, "Филиал обязателен"),
     adminId: z.string().trim().min(1, "Администратор обязателен"),
     roomId: z.string().trim().min(1, "Номер обязателен"),
     sourceId: z.string().trim().min(1, "Источник бронирования обязателен"),
     price: z.number({ invalid_type_error: "Цена должна быть числом" }).finite("Некорректная цена").positive("Цена должна быть положительной"),
-    currency: z.string().trim().min(1, "Валюта обязательна"),
+    currency: z.string().trim().min(1, "Валюта обязательна").max(CURRENCY_MAX, TOO_LONG),
     paymentMethod: z.enum(paymentMethods, {
       errorMap: () => ({ message: "Выберите способ оплаты" }),
     }),
@@ -78,7 +98,7 @@ export const reportSchema = z
     }).default("Оплачено"),
     status: z.enum(bookingStatuses).default("RESERVED"),
     paidAmount: z.number({ invalid_type_error: "Сумма должна быть числом" }).finite("Некорректная сумма").min(0).optional().nullable(),
-    notes: z.string().trim().optional().nullable(),
+    notes: z.string().trim().max(NOTE_MAX, TOO_LONG).optional().nullable(),
   })
   .superRefine((data, ctx) => {
     if (data.checkOut) {
@@ -129,18 +149,18 @@ export const expenseSchema = z.object({
     errorMap: () => ({ message: "Выберите категорию" }),
   }),
   amount: z.number({ invalid_type_error: "Сумма должна быть числом" }).finite("Некорректная сумма").positive("Сумма должна быть положительной"),
-  currency: z.string().trim().min(1, "Валюта обязательна"),
-  note: z.string().trim().optional().nullable(),
+  currency: z.string().trim().min(1, "Валюта обязательна").max(CURRENCY_MAX, TOO_LONG),
+  note: z.string().trim().max(NOTE_MAX, TOO_LONG).optional().nullable(),
 });
 
 export const cashShiftOpenSchema = z.object({
   openingAmount: z.number({ invalid_type_error: "Укажите сумму" }).finite("Некорректная сумма").min(0, "Сумма не может быть отрицательной"),
-  currency: z.string().trim().min(1, "Валюта обязательна"),
+  currency: z.string().trim().min(1, "Валюта обязательна").max(CURRENCY_MAX, TOO_LONG),
   branchId: z.string().trim().optional().nullable(), // филиал смены (для мульти-филиальных админов)
-  notes: z.string().trim().optional().nullable(),
+  notes: z.string().trim().max(NOTE_MAX, TOO_LONG).optional().nullable(),
 });
 
 export const cashShiftCloseSchema = z.object({
   closingAmount: z.number({ invalid_type_error: "Укажите сумму" }).finite("Некорректная сумма").min(0, "Сумма не может быть отрицательной"),
-  notes: z.string().trim().optional().nullable(),
+  notes: z.string().trim().max(NOTE_MAX, TOO_LONG).optional().nullable(),
 });

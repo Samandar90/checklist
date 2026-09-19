@@ -1,5 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { cashShiftCloseSchema, cashShiftOpenSchema, expenseSchema, reportSchema } from "./validation";
+import {
+  adminCreateSchema,
+  adminUpdateSchema,
+  cashShiftCloseSchema,
+  cashShiftOpenSchema,
+  changePasswordSchema,
+  expenseSchema,
+  reportSchema,
+} from "./validation";
 
 /**
  * Schema-level guards for the money- and date-critical inputs. These run before
@@ -100,5 +108,36 @@ describe("money fields reject non-finite amounts", () => {
     expect(cashShiftOpenSchema.safeParse({ openingAmount: inf, currency: "UZS" }).success).toBe(false);
     expect(cashShiftCloseSchema.safeParse({ closingAmount: inf }).success).toBe(false);
     expect(cashShiftOpenSchema.safeParse({ openingAmount: 0, currency: "UZS" }).success).toBe(true);
+  });
+});
+
+describe("passwords stay within bcrypt's 72-byte limit", () => {
+  const admin = { fullName: "Ali", phone: "+998", branchId: "b1", username: "ali" };
+
+  it("accepts 72 ASCII bytes and rejects 73", () => {
+    expect(adminCreateSchema.safeParse({ ...admin, password: "a".repeat(72) }).success).toBe(true);
+    expect(adminCreateSchema.safeParse({ ...admin, password: "a".repeat(73) }).success).toBe(false);
+  });
+
+  it("counts Cyrillic as two bytes per character", () => {
+    expect(changePasswordSchema.safeParse({ currentPassword: "x", newPassword: "п".repeat(36) }).success).toBe(true);
+    expect(changePasswordSchema.safeParse({ currentPassword: "x", newPassword: "п".repeat(37) }).success).toBe(false);
+  });
+
+  it("still lets an admin update keep the password blank", () => {
+    expect(adminUpdateSchema.safeParse({ ...admin, password: "" }).success).toBe(true);
+  });
+});
+
+describe("free-text fields are length-capped", () => {
+  const expense = { date: "2026-07-01", category: "Прочее", amount: 1, currency: "UZS" };
+
+  it("rejects an oversized note", () => {
+    expect(expenseSchema.safeParse({ ...expense, note: "x".repeat(2000) }).success).toBe(true);
+    expect(expenseSchema.safeParse({ ...expense, note: "x".repeat(2001) }).success).toBe(false);
+  });
+
+  it("rejects a bogus currency code", () => {
+    expect(cashShiftOpenSchema.safeParse({ openingAmount: 0, currency: "X".repeat(11) }).success).toBe(false);
   });
 });
