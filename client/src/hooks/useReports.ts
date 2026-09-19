@@ -17,6 +17,8 @@ export interface ReportInput {
   status?: BookingStatus;
   paidAmount?: number | null;
   notes?: string | null;
+  /** Оформление из временного хранения: сервер снимает это хранение той же транзакцией. */
+  holdId?: string | null;
 }
 
 export type BulkBookingAction = "CHECK_IN" | "CHECK_OUT" | "CANCEL" | "NO_SHOW" | "DELETE" | "MOVE_ROOM";

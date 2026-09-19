@@ -7,6 +7,7 @@ import {
   changePasswordSchema,
   expenseSchema,
   reportSchema,
+  roomBlockSchema,
 } from "./validation";
 
 /**
@@ -139,5 +140,29 @@ describe("free-text fields are length-capped", () => {
 
   it("rejects a bogus currency code", () => {
     expect(cashShiftOpenSchema.safeParse({ openingAmount: 0, currency: "X".repeat(11) }).success).toBe(false);
+  });
+});
+
+describe("roomBlockSchema (hold / blocked dates / out of order)", () => {
+  const valid = { branchId: "b1", roomId: "r1", kind: "BLOCK" as const, startDate: "2026-09-21", endDate: "2026-09-22" };
+
+  it("accepts a one-night block", () => {
+    expect(roomBlockSchema.parse(valid).kind).toBe("BLOCK");
+  });
+
+  it("rejects an end date that is not after the start (a block closes whole nights)", () => {
+    expect(() => roomBlockSchema.parse({ ...valid, endDate: "2026-09-21" })).toThrow();
+    expect(() => roomBlockSchema.parse({ ...valid, endDate: "2026-09-20" })).toThrow();
+  });
+
+  it("rejects an unknown kind and an unparsable date", () => {
+    expect(() => roomBlockSchema.parse({ ...valid, kind: "MAINTENANCE" })).toThrow();
+    expect(() => roomBlockSchema.parse({ ...valid, startDate: "not-a-date" })).toThrow();
+  });
+
+  it("requires a deadline for a hold, but not for the other kinds", () => {
+    expect(() => roomBlockSchema.parse({ ...valid, kind: "HOLD" })).toThrow();
+    expect(roomBlockSchema.parse({ ...valid, kind: "HOLD", holdUntil: "2026-09-20T18:00" }).holdUntil).toBe("2026-09-20T18:00");
+    expect(roomBlockSchema.parse({ ...valid, kind: "OUT_OF_ORDER" }).holdUntil).toBeUndefined();
   });
 });

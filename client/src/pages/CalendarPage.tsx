@@ -32,14 +32,20 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-import BookingDialog, { BookingDraft } from "@/components/BookingDialog";
-import BookingWizard from "@/components/BookingWizard";
+import BookingDialog from "@/components/BookingDialog";
+import BookingWizard, { WizardDraft } from "@/components/BookingWizard";
+import RoomBlockCard from "@/components/RoomBlockCard";
+import RoomBlockDialog from "@/components/RoomBlockDialog";
+import RoomBlockModal from "@/components/RoomBlockModal";
+import CellActionMenu from "@/components/CellActionMenu";
 import { useBranches, useMyBranches } from "@/hooks/useBranches";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCalendar } from "@/hooks/useCalendar";
 import { useUpdateReport, useDeleteReport } from "@/hooks/useReports";
+import { useDeleteRoomBlock } from "@/hooks/useRoomBlocks";
 import { STATUS_META, STATUS_BAR_CLASS, STATUS_DOT_CLASS, holdsRoom } from "@/lib/bookingStatus";
-import { MonthlyReport, Room, BookingStatus, bookingStatuses } from "@/types";
+import { BLOCK_KINDS, BLOCK_META } from "@/lib/roomBlocks";
+import { MonthlyReport, Room, RoomBlock, RoomBlockKind, BookingStatus, bookingStatuses } from "@/types";
 import { getErrorMessage } from "@/lib/api";
 import { cn, formatDate, formatMoney, isoDay, nightsBetween, pluralRu, reportDebt, paymentStatusClass } from "@/lib/utils";
 
@@ -116,9 +122,20 @@ export default function CalendarPage() {
   const deleteReport = useDeleteReport();
   // Drag-to-select on the grid → new booking.
   const [drag, setDrag] = useState<{ roomId: string; a: number; b: number } | null>(null);
-  const [draft, setDraft] = useState<BookingDraft | null>(null);
+  const [draft, setDraft] = useState<WizardDraft | null>(null);
   const [editing, setEditing] = useState<MonthlyReport | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
+  // Выделение свободных дат открывает меню действий (как в классических PMS):
+  // новая бронь, временное хранение, блокировка дат или «номер не работает».
+  const [cellMenu, setCellMenu] = useState<{ roomId: string; a: number; b: number; x: number; y: number } | null>(null);
+  const [blockDialog, setBlockDialog] = useState<{
+    kind: RoomBlockKind;
+    draft: { roomId: string; startDate: string; endDate: string } | null;
+    editing: RoomBlock | null;
+  } | null>(null);
+  const [selectedBlock, setSelectedBlock] = useState<RoomBlock | null>(null);
+  const [deleteBlockTarget, setDeleteBlockTarget] = useState<RoomBlock | null>(null);
+  const deleteRoomBlock = useDeleteRoomBlock();
   // Drag an existing booking to move / resize it.
   const [move, setMove] = useState<{
     booking: MonthlyReport;
@@ -221,9 +238,9 @@ export default function CalendarPage() {
     dragRef.current = drag;
   }, [drag]);
 
-  // Finalize a drag-selection on mouse release anywhere → open the create dialog.
+  // Finalize a drag-selection on mouse release anywhere → open the action menu.
   useEffect(() => {
-    function finish() {
+    function finish(e: PointerEvent) {
       const d = dragRef.current;
       if (!d) return;
       dragRef.current = null;
@@ -234,11 +251,7 @@ export default function CalendarPage() {
         toast.error("Номер занят на выбранные даты");
         return;
       }
-      const checkOut = new Date(days[b]);
-      checkOut.setDate(checkOut.getDate() + 1);
-      setEditing(null);
-      setDraft({ roomId: d.roomId, date: isoDay(days[a]), checkOut: isoDay(checkOut) });
-      setBookingOpen(true);
+      setCellMenu({ roomId: d.roomId, a, b, x: e.clientX, y: e.clientY });
     }
     window.addEventListener("pointerup", finish);
     window.addEventListener("pointercancel", finish);
@@ -327,6 +340,30 @@ export default function CalendarPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, daysInMonth, monthStartMs]);
 
+  // Ночи, закрытые блокировками (хранение / даты / не работает): это не брони
+  // и в загрузку они не идут, но номер на эти ночи не свободен.
+  const blockedByDay = useMemo(() => {
+    const arr: Set<string>[] = Array.from({ length: daysInMonth }, () => new Set<string>());
+    for (const bl of data?.blocks ?? []) {
+      const start = dayIndex(bl.startDate);
+      const end = dayIndex(bl.endDate);
+      for (let d = Math.max(0, start); d < Math.min(daysInMonth, end); d++) arr[d].add(bl.roomId);
+    }
+    return arr;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, daysInMonth, monthStartMs]);
+
+  /** Сколько номеров нельзя продать в эту ночь: занятые бронью или закрытые блокировкой. */
+  const unavailableByDay = useMemo(
+    () =>
+      occupiedByDay.map((set, i) => {
+        const u = new Set(set);
+        for (const id of blockedByDay[i]) u.add(id);
+        return u.size;
+      }),
+    [occupiedByDay, blockedByDay]
+  );
+
   const totalRooms = data?.rooms.length ?? 0;
 
   const bookingsByRoom = useMemo(() => {
@@ -350,13 +387,33 @@ export default function CalendarPage() {
     return [s, b.checkOut ? dayIndex(b.checkOut) : s + 1];
   };
 
+  const blocksByRoom = useMemo(() => {
+    const map = new Map<string, RoomBlock[]>();
+    for (const bl of data?.blocks ?? []) {
+      if (!map.has(bl.roomId)) map.set(bl.roomId, []);
+      map.get(bl.roomId)!.push(bl);
+    }
+    return map;
+  }, [data]);
+  const blocksRef = useRef(blocksByRoom);
+  useEffect(() => {
+    blocksRef.current = blocksByRoom;
+  });
+  const blockSpan = (bl: RoomBlock): [number, number] => [dayIndex(bl.startDate), dayIndex(bl.endDate)];
+
   /** Is [start, end) free in this room (ignoring one booking by id)? */
   function rangeFree(roomId: string, start: number, end: number, ignoreId?: string) {
     const list = bookingsRef.current.get(roomId) ?? [];
-    return !list.some((b) => {
+    const bookingBusy = list.some((b) => {
       if (ignoreId && b.id === ignoreId) return false;
       if (!holdsRoom(b.status)) return false; // mirrors the server: cancelled/no-show don't block
       const [s, e] = spanOf(b);
+      return start < e && s < end;
+    });
+    if (bookingBusy) return false;
+    // Блокировки закрывают ночи так же, как брони (на сервере — roomAvailability).
+    return !(blocksRef.current.get(roomId) ?? []).some((bl) => {
+      const [s, e] = blockSpan(bl);
       return start < e && s < end;
     });
   }
@@ -497,7 +554,7 @@ export default function CalendarPage() {
     }
     return {
       occPctToday,
-      freeToday: todayIndex >= 0 ? totalRooms - occToday : null,
+      freeToday: todayIndex >= 0 ? totalRooms - unavailableByDay[todayIndex] : null,
       bookings: data?.bookings.length ?? 0,
       avg,
       arrivals,
@@ -506,7 +563,7 @@ export default function CalendarPage() {
       avgRate: arrivals ? Math.round(revenueToday / arrivals) : 0,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [occupiedByDay, totalRooms, todayIndex, daysInMonth, data]);
+  }, [occupiedByDay, unavailableByDay, totalRooms, todayIndex, daysInMonth, data]);
 
   function shiftMonth(delta: number) {
     setCursor((c) => {
@@ -531,6 +588,17 @@ export default function CalendarPage() {
     }
   }
 
+  async function handleDeleteBlockConfirmed() {
+    if (!deleteBlockTarget) return;
+    try {
+      await deleteRoomBlock.mutateAsync(deleteBlockTarget.id);
+      toast.success("Блокировка снята");
+      setDeleteBlockTarget(null);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  }
+
   const q = search.trim().toLowerCase();
   function matches(b: MonthlyReport) {
     if (statusFilter && b.status !== statusFilter) return false;
@@ -543,6 +611,10 @@ export default function CalendarPage() {
   const filterActive = Boolean(statusFilter || q);
 
   const gridWidth = LABEL_W + daysInMonth * CELL_W;
+
+  const cellMenuRoom = cellMenu ? data?.rooms.find((r) => r.id === cellMenu.roomId) ?? null : null;
+  // Как и selectedReport: модалка показывает живые данные запроса, а не снимок клика.
+  const selectedBlockLive = selectedBlock ? data?.blocks?.find((b) => b.id === selectedBlock.id) ?? selectedBlock : null;
 
   const statCards = [
     { label: "Загрузка сейчас", value: `${stats.occPctToday}%`, icon: TrendingUp, tint: "tint-indigo" },
@@ -664,6 +736,22 @@ export default function CalendarPage() {
             );
           })}
         </div>
+        {/* Блокировки — не фильтр, а легенда: штриховка на шахматке */}
+        <div className="flex flex-wrap items-center gap-1.5 border-l border-border/70 pl-3">
+          {BLOCK_KINDS.map((k) => (
+            <span
+              key={k}
+              title={BLOCK_META[k].hint}
+              className={cn("flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium text-muted-foreground", BLOCK_META[k].barClass)}
+            >
+              <span
+                className="h-2.5 w-2.5 rounded-[3px]"
+                style={{ background: "repeating-linear-gradient(135deg, var(--bar-fill) 0 2px, var(--bar-highlight) 2px 4px)" }}
+              />
+              {BLOCK_META[k].label}
+            </span>
+          ))}
+        </div>
         {filterActive && (
           <button
             onClick={() => {
@@ -687,7 +775,7 @@ export default function CalendarPage() {
           </button>
         )}
         <span className="ml-auto hidden items-center gap-1.5 text-xs text-muted-foreground md:flex">
-          <MousePointerClick className="h-3.5 w-3.5" /> 1 клетка = 1 ночь · клик или протяжка по свободным дням — новая бронь
+          <MousePointerClick className="h-3.5 w-3.5" /> 1 клетка = 1 ночь · клик или протяжка по свободным дням — меню действий
         </span>
       </div>
 
@@ -729,7 +817,7 @@ export default function CalendarPage() {
                 {days.map((d, i) => {
                   const weekend = d.getDay() === 0 || d.getDay() === 6;
                   const occ = totalRooms ? Math.round((occupiedByDay[i].size / totalRooms) * 100) : 0;
-                  const free = totalRooms - occupiedByDay[i].size;
+                  const free = totalRooms - unavailableByDay[i];
                   return (
                     <div key={i} style={{ width: CELL_W, minWidth: CELL_W }} className={cn("board-cell", dayCellClass(i, weekend))}>
                       {/* Дата как в Apple Calendar: день недели над числом; сегодня — синим,
@@ -805,7 +893,7 @@ export default function CalendarPage() {
                     {/* Зажмите и тяните строку группы — горизонтальная прокрутка */}
                     <div onPointerDown={startPan} style={{ touchAction: "pan-y" }} className="flex cursor-grab select-none active:cursor-grabbing">
                       {days.map((d, i) => {
-                        const occInGroup = g.rooms.filter((r) => occupiedByDay[i].has(r.id)).length;
+                        const occInGroup = g.rooms.filter((r) => occupiedByDay[i].has(r.id) || blockedByDay[i].has(r.id)).length;
                         const free = g.rooms.length - occInGroup;
                         return (
                           <div
@@ -855,7 +943,7 @@ export default function CalendarPage() {
                         <div className="absolute inset-0 flex">
                           {days.map((d, i) => {
                             const weekend = d.getDay() === 0 || d.getDay() === 6;
-                            const free = !occupiedByDay[i].has(room.id);
+                            const free = !occupiedByDay[i].has(room.id) && !blockedByDay[i].has(room.id);
                             return (
                               <div
                                 key={i}
@@ -933,6 +1021,22 @@ export default function CalendarPage() {
                               />
                             );
                           })}
+                        {/* блокировки: хранение / закрытые даты / номер не работает */}
+                        {(blocksByRoom.get(room.id) ?? []).map((bl) => {
+                          const [s0, e0] = blockSpan(bl);
+                          return (
+                            <RoomBlockCard
+                              key={bl.id}
+                              block={bl}
+                              startIdx={s0}
+                              endIdx={e0}
+                              daysInMonth={daysInMonth}
+                              cellWidth={CELL_W}
+                              dimmed={filterActive}
+                              onOpen={() => setSelectedBlock(bl)}
+                            />
+                          );
+                        })}
                         {/* бронь, перетаскиваемая в этот номер из другого ряда */}
                         {move && move.targetRoomId === room.id && move.booking.roomId !== room.id && (
                           <ReservationCard
@@ -1002,7 +1106,79 @@ export default function CalendarPage() {
       {hover && !move && !selected && <HoverCard booking={hover.b} x={hover.x} y={hover.y} />}
 
       {/* Превью свободной ячейки */}
-      {freeHover && !move && !drag && !selected && <FreeCellCard {...freeHover} />}
+      {freeHover && !move && !drag && !selected && !cellMenu && <FreeCellCard {...freeHover} />}
+
+      {/* Меню действий по выделенным свободным датам */}
+      {cellMenu && cellMenuRoom && (
+        <CellActionMenu
+          room={cellMenuRoom}
+          start={days[cellMenu.a]}
+          end={new Date(cursor.year, cursor.month, cellMenu.b + 2)}
+          x={cellMenu.x}
+          y={cellMenu.y}
+          onClose={() => setCellMenu(null)}
+          onAction={(action) => {
+            const date = isoDay(days[cellMenu.a]);
+            const checkOut = isoDay(new Date(cursor.year, cursor.month, cellMenu.b + 2));
+            setCellMenu(null);
+            if (action === "BOOKING") {
+              setEditing(null);
+              setDraft({ roomId: cellMenuRoom.id, date, checkOut });
+              setBookingOpen(true);
+            } else {
+              setBlockDialog({ kind: action, draft: { roomId: cellMenuRoom.id, startDate: date, endDate: checkOut }, editing: null });
+            }
+          }}
+        />
+      )}
+
+      {/* Детали блокировки: снять, изменить, для хранения — оформить бронь */}
+      <RoomBlockModal
+        block={selectedBlockLive}
+        open={!!selectedBlock}
+        onOpenChange={(o) => !o && setSelectedBlock(null)}
+        onEdit={(bl) => {
+          setSelectedBlock(null);
+          setBlockDialog({ kind: bl.kind, draft: null, editing: bl });
+        }}
+        onConvert={(bl) => {
+          setSelectedBlock(null);
+          setEditing(null);
+          setDraft({
+            roomId: bl.roomId,
+            date: isoDay(new Date(bl.startDate)),
+            checkOut: isoDay(new Date(bl.endDate)),
+            guestName: bl.guestName ?? undefined,
+            holdId: bl.id,
+          });
+          setBookingOpen(true);
+        }}
+        onDeleteRequest={(bl) => {
+          setSelectedBlock(null);
+          setDeleteBlockTarget(bl);
+        }}
+      />
+
+      {effectiveBranchId && blockDialog && (
+        <RoomBlockDialog
+          open
+          onOpenChange={(o) => !o && setBlockDialog(null)}
+          kind={blockDialog.kind}
+          branchId={effectiveBranchId}
+          rooms={data?.rooms ?? []}
+          draft={blockDialog.draft}
+          editing={blockDialog.editing}
+        />
+      )}
+
+      <ConfirmDeleteDialog
+        open={!!deleteBlockTarget}
+        onOpenChange={(open) => !open && setDeleteBlockTarget(null)}
+        onConfirm={handleDeleteBlockConfirmed}
+        loading={deleteRoomBlock.isPending}
+        title="Снять блокировку?"
+        description="Номер снова будет доступен для продажи на эти даты."
+      />
 
       {/* Детали брони — единственное место, откуда выполняются все действия */}
       <ReservationModal

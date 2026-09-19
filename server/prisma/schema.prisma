@@ -19,6 +19,7 @@ model Branch {
   integrationAccounts IntegrationAccount[]
   expenses     Expense[]
   cashShifts   CashShift[]
+  roomBlocks   RoomBlock[]
 }
 
 model Admin {
@@ -36,6 +37,7 @@ model Admin {
   reports    MonthlyReport[]
   expenses   Expense[]
   cashShifts CashShift[]
+  roomBlocks RoomBlock[]
   user       User?
 }
 
@@ -60,6 +62,33 @@ model Room {
   branch  Branch          @relation(fields: [branchId], references: [id], onDelete: Cascade)
   reports MonthlyReport[]
   roomMappings RoomMapping[]
+  blocks  RoomBlock[]
+}
+
+/// Операционная недоступность номера, не являющаяся бронью и не участвующая
+/// в выручке/долгах: временное хранение (HOLD — держим номер за гостем до
+/// holdUntil), блокировка дат (BLOCK) и «номер не работает» (OUT_OF_ORDER).
+/// Ночи [startDate, endDate) закрыты для продажи так же, как у брони.
+model RoomBlock {
+  id        String    @id @default(cuid())
+  branchId  String
+  roomId    String
+  kind      String // HOLD | BLOCK | OUT_OF_ORDER
+  startDate DateTime // первая закрытая ночь
+  endDate   DateTime // исключительно: утро, когда номер снова в продаже
+  guestName String? // HOLD: за кем держим номер
+  note      String?
+  holdUntil DateTime? // HOLD: до какого момента держим; после — не блокирует
+  createdByAdminId String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @updatedAt
+
+  branch    Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  room      Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  createdBy Admin? @relation(fields: [createdByAdminId], references: [id], onDelete: SetNull)
+
+  @@index([roomId, startDate])
+  @@index([branchId, startDate])
 }
 
 model BookingSource {

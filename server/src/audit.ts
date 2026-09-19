@@ -28,6 +28,9 @@ const FIELD_LABELS: Record<string, string> = {
   category: "Категория",
   amount: "Сумма",
   note: "Заметка",
+  startDate: "Начало",
+  endDate: "Окончание",
+  holdUntil: "Хранить до",
   name: "Название",
   fullName: "ФИО",
   phone: "Телефон",
@@ -41,21 +44,26 @@ const ENTITY_LABELS: Record<string, string> = {
   admin: "администратора",
   room: "номер",
   source: "источник",
+  roomBlock: "блокировку номера",
 };
 
 const MONEY_FIELDS = new Set(["price", "paidAmount", "amount"]);
-const DATE_FIELDS = new Set(["date", "checkOut"]);
+const DATE_FIELDS = new Set(["date", "checkOut", "startDate", "endDate"]);
+const DATETIME_FIELDS = new Set(["holdUntil"]);
+const isoMinute = (value: unknown) => new Date(value as string).toISOString().slice(0, 16).replace("T", " ");
 
 function formatValue(field: string, value: unknown): string {
   if (value === null || value === undefined || value === "") return "—";
   if (MONEY_FIELDS.has(field)) return Number(value).toLocaleString("ru-RU");
   if (DATE_FIELDS.has(field)) return new Date(value as string).toISOString().slice(0, 10);
+  if (DATETIME_FIELDS.has(field)) return isoMinute(value);
   return String(value);
 }
 
 function normalize(field: string, value: unknown): string {
   if (value === null || value === undefined) return "";
   if (DATE_FIELDS.has(field)) return new Date(value as string).toISOString().slice(0, 10);
+  if (DATETIME_FIELDS.has(field)) return isoMinute(value);
   return String(value);
 }
 

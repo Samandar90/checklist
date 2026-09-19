@@ -5,6 +5,8 @@ import { requireSuperAdmin } from "../middleware/auth";
 import { recordAudit, buildChanges, summarize } from "../audit";
 import { resolveBranchId, hasBranchAccess } from "../branchScope";
 import { ROOM_HOLDING_STATUSES } from "../statuses";
+import { findRoomConflict, busyMessage } from "../roomAvailability";
+import { activeBlockWhere } from "../lib/roomBlocks";
 import {
   DAY_MS,
   isBookingStatus,
@@ -33,38 +35,8 @@ const router = Router();
 // Night maths, overlap and paid-amount normalization live in ../lib/bookings
 // (pure + unit-tested). A room is only freed by a cancellation or a no-show;
 // every other status still holds the nights (shared statuses — see ../statuses).
+// Availability (bookings AND room blocks) is checked in ../roomAvailability.
 
-/**
- * Find an active booking that overlaps [start, end) on the same room, or null.
- * Prevents double-booking one room for the same nights (adapted from the review's
- * core invariant; enforced in the app layer because SQLite has no exclusion constraints).
- */
-async function findRoomConflict(roomId: string, start: Date, end: Date, excludeId: string | null) {
-  const candidates = await prisma.monthlyReport.findMany({
-    where: {
-      roomId,
-      status: { in: ROOM_HOLDING_STATUSES },
-      date: { lt: end }, // existing.start < new.end (cheap pre-filter; exact end check below)
-      ...(excludeId ? { id: { not: excludeId } } : {}),
-    },
-    include: { room: true },
-    orderBy: { date: "asc" },
-  });
-  return (
-    candidates.find((r) => {
-      const range = nightRange(new Date(r.date), r.checkOut ? new Date(r.checkOut) : null);
-      return range.end.getTime() > start.getTime(); // existing.end > new.start
-    }) ?? null
-  );
-}
-
-const dmy = (d: Date) => d.toLocaleDateString("ru-RU");
-
-type Conflict = NonNullable<Awaited<ReturnType<typeof findRoomConflict>>>;
-const busyMessage = (c: Conflict, tail: string) =>
-  `Номер ${c.room.roomNumber} уже занят на эти даты (${dmy(new Date(c.date))}${
-    c.checkOut ? `–${dmy(new Date(c.checkOut))}` : ""
-  }${c.guestName ? `, ${c.guestName}` : ""}). ${tail}`;
 
 const stayRange = (r: { date: Date; checkOut: Date | null }) =>
   nightRange(new Date(r.date), r.checkOut ? new Date(r.checkOut) : null);
@@ -256,7 +228,7 @@ router.patch("/:id/status", async (req, res, next) => {
     // Возврат такой брони в работу проходит ту же проверку пересечений, что и создание.
     if (revivesRoomHold(existing.status, status)) {
       const { start, end } = stayRange(existing);
-      const conflict = await findRoomConflict(existing.roomId, start, end, existing.id);
+      const conflict = await findRoomConflict(existing.roomId, start, end, { bookingId: existing.id });
       if (conflict) {
         return res.status(409).json({ message: busyMessage(conflict, "Вернуть бронь в работу нельзя.") });
       }
@@ -332,13 +304,9 @@ router.post("/bulk", async (req, res, next) => {
         .filter((r) => ROOM_HOLDING_STATUSES.includes(r.status))
         .map((r) => ({ id: r.id, ...nightRange(new Date(r.date), r.checkOut ? new Date(r.checkOut) : null) }));
       for (const m of moving) {
-        const conflict = await findRoomConflict(roomId, m.start, m.end, m.id);
+        const conflict = await findRoomConflict(roomId, m.start, m.end, { bookingId: m.id });
         if (conflict) {
-          return res.status(409).json({
-            message: `Номер ${room.roomNumber} уже занят на эти даты (${dmy(new Date(conflict.date))}${
-              conflict.checkOut ? `–${dmy(new Date(conflict.checkOut))}` : ""
-            }${conflict.guestName ? `, ${conflict.guestName}` : ""}). Перенос отменён.`,
-          });
+          return res.status(409).json({ message: busyMessage(conflict, "Перенос отменён.") });
         }
       }
       for (let i = 0; i < moving.length; i++) {
@@ -375,7 +343,7 @@ router.post("/bulk", async (req, res, next) => {
       .filter((r) => revivesRoomHold(r.status, status))
       .map((r) => ({ id: r.id, roomId: r.roomId, ...stayRange(r) }));
     for (const m of reviving) {
-      const conflict = await findRoomConflict(m.roomId, m.start, m.end, m.id);
+      const conflict = await findRoomConflict(m.roomId, m.start, m.end, { bookingId: m.id });
       if (conflict) {
         return res.status(409).json({ message: busyMessage(conflict, "Изменение статуса отменено.") });
       }
@@ -433,20 +401,36 @@ router.get("/calendar", async (req, res, next) => {
       ],
     };
 
-    const [rooms, candidates] = await Promise.all([
+    const now = new Date();
+    const [rooms, candidates, blockCandidates] = await Promise.all([
       prisma.room.findMany({ where: { branchId }, orderBy: { createdAt: "asc" } }),
       prisma.monthlyReport.findMany({
         where: { branchId, ...overlapsWindow },
         include: { room: true, admin: true, source: true, branch: true },
         orderBy: { date: "asc" },
       }),
+      // Блокировки (хранение / закрытые даты / номер не работает) закрывают те же
+      // ночи, что и брони. Просроченные хранения уже никого не держат — их нет.
+      prisma.roomBlock.findMany({
+        where: {
+          branchId,
+          startDate: { lt: toExclusive },
+          endDate: { gt: new Date(from.getTime() - DAY_MS) },
+          ...activeBlockWhere(now),
+        },
+        include: { room: true, createdBy: true },
+        orderBy: { startDate: "asc" },
+      }),
     ]);
 
     const bookings = candidates.filter((r) =>
       stayOverlapsWindow(new Date(r.date), r.checkOut ? new Date(r.checkOut) : null, from, toExclusive)
     );
+    const blocks = blockCandidates.filter((b) =>
+      stayOverlapsWindow(new Date(b.startDate), new Date(b.endDate), from, toExclusive)
+    );
 
-    res.json({ rooms, bookings });
+    res.json({ rooms, bookings, blocks });
   } catch (err) {
     next(err);
   }
@@ -474,17 +458,24 @@ router.post("/", async (req, res, next) => {
       return res.status(400).json({ message: "Номер не принадлежит выбранному филиалу" });
     }
 
-    const { start, end } = nightRange(new Date(data.date), data.checkOut ? new Date(data.checkOut) : null);
-    const conflict = await findRoomConflict(data.roomId, start, end, null);
-    if (conflict) {
-      return res.status(409).json({
-        message: `Номер ${conflict.room.roomNumber} уже занят на эти даты (${dmy(new Date(conflict.date))}${
-          conflict.checkOut ? `–${dmy(new Date(conflict.checkOut))}` : ""
-        }${conflict.guestName ? `, ${conflict.guestName}` : ""}). Выберите другой номер или даты.`,
-      });
+    // Оформление брони из временного хранения: само хранение держит эти ночи,
+    // поэтому его исключаем из проверки и снимаем той же транзакцией, что
+    // создаёт бронь — номер ни на миг не остаётся ни свободным, ни занятым дважды.
+    const holdId = typeof req.body.holdId === "string" && req.body.holdId ? req.body.holdId : null;
+    if (holdId) {
+      const hold = await prisma.roomBlock.findUnique({ where: { id: holdId } });
+      if (!hold || hold.kind !== "HOLD" || hold.roomId !== data.roomId) {
+        return res.status(400).json({ message: "Временное хранение не найдено или относится к другому номеру" });
+      }
     }
 
-    const report = await prisma.monthlyReport.create({
+    const { start, end } = nightRange(new Date(data.date), data.checkOut ? new Date(data.checkOut) : null);
+    const conflict = await findRoomConflict(data.roomId, start, end, { blockId: holdId });
+    if (conflict) {
+      return res.status(409).json({ message: busyMessage(conflict, "Выберите другой номер или даты.") });
+    }
+
+    const createReport = prisma.monthlyReport.create({
       data: {
         ...data,
         date: new Date(data.date),
@@ -493,6 +484,9 @@ router.post("/", async (req, res, next) => {
       },
       include: { branch: true, admin: true, room: true, source: true },
     });
+    const [report] = holdId
+      ? await prisma.$transaction([createReport, prisma.roomBlock.deleteMany({ where: { id: holdId } })])
+      : [await createReport];
     await recordAudit(req, {
       action: "CREATE",
       entity: "report",
@@ -504,7 +498,8 @@ router.post("/", async (req, res, next) => {
         "report",
         [],
         `${money(report.price)} ${report.currency}, номер ${report.room.roomNumber}` +
-          (req.user!.role === "ADMIN" ? "" : `, админ ${report.admin.fullName}`)
+          (req.user!.role === "ADMIN" ? "" : `, админ ${report.admin.fullName}`) +
+          (holdId ? ", из временного хранения" : "")
       ),
     });
     res.status(201).json(report);
@@ -550,14 +545,10 @@ router.put("/:id", async (req, res, next) => {
     // заметки или цены не должна упираться в гостя, которому номер уже продали.
     const { start, end } = nightRange(new Date(data.date), data.checkOut ? new Date(data.checkOut) : null);
     const conflict = ROOM_HOLDING_STATUSES.includes(data.status)
-      ? await findRoomConflict(data.roomId, start, end, req.params.id)
+      ? await findRoomConflict(data.roomId, start, end, { bookingId: req.params.id })
       : null;
     if (conflict) {
-      return res.status(409).json({
-        message: `Номер ${conflict.room.roomNumber} уже занят на эти даты (${dmy(new Date(conflict.date))}${
-          conflict.checkOut ? `–${dmy(new Date(conflict.checkOut))}` : ""
-        }${conflict.guestName ? `, ${conflict.guestName}` : ""}). Выберите другой номер или даты.`,
-      });
+      return res.status(409).json({ message: busyMessage(conflict, "Выберите другой номер или даты.") });
     }
 
     const report = await prisma.monthlyReport.update({

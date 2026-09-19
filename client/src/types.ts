@@ -173,9 +173,36 @@ export interface AuditResponse {
   pageSize: number;
 }
 
+export const roomBlockKinds = ["HOLD", "BLOCK", "OUT_OF_ORDER"] as const;
+export type RoomBlockKind = (typeof roomBlockKinds)[number];
+
+/**
+ * Номер закрыт для продажи без брони: временное хранение (HOLD — за гостем до
+ * holdUntil), заблокированные даты (BLOCK) или «номер не работает»
+ * (OUT_OF_ORDER). Ночи [startDate, endDate) заняты как у брони, денег нет.
+ */
+export interface RoomBlock {
+  id: string;
+  branchId: string;
+  roomId: string;
+  kind: RoomBlockKind;
+  startDate: string;
+  /** Исключительно — утро, когда номер снова в продаже. */
+  endDate: string;
+  guestName?: string | null;
+  note?: string | null;
+  holdUntil?: string | null;
+  createdByAdminId?: string | null;
+  createdAt: string;
+  updatedAt?: string | null;
+  room: Room;
+  createdBy?: Admin | null;
+}
+
 export interface CalendarResponse {
   rooms: Room[];
   bookings: MonthlyReport[];
+  blocks: RoomBlock[];
 }
 
 export interface BackupSnapshot {

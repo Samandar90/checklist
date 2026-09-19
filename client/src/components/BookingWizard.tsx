@@ -75,6 +75,9 @@ export interface WizardDraft {
   roomId: string;
   date: string;
   checkOut: string;
+  /** Оформление из временного хранения: гость и id хранения, которое снимет сервер. */
+  guestName?: string;
+  holdId?: string;
 }
 
 const STEPS = [
@@ -165,7 +168,7 @@ export default function BookingWizard({
       if (!open) seededKeyRef.current = null; // allow a fresh seed on next open
       return;
     }
-    const key = `${draft.roomId}|${draft.date}|${draft.checkOut}`;
+    const key = `${draft.roomId}|${draft.date}|${draft.checkOut}|${draft.holdId ?? ""}`;
     if (seededKeyRef.current === key) return; // already seeded this draft
     seededKeyRef.current = key;
 
@@ -178,7 +181,7 @@ export default function BookingWizard({
       // ignore corrupt draft
     }
     form.reset({
-      guestName: extra.guestName ?? "",
+      guestName: draft.guestName ?? extra.guestName ?? "",
       date: draft.date,
       checkOut: draft.checkOut,
       roomId: draft.roomId,
@@ -266,8 +269,8 @@ export default function BookingWizard({
       const total = values.pricePerNight * Math.max(1, nightsBetween(values.date, values.checkOut));
       const { pricePerNight, ...rest } = values;
       void pricePerNight;
-      await createReport.mutateAsync({ ...rest, price: total, branchId });
-      toast.success("Бронь создана");
+      await createReport.mutateAsync({ ...rest, price: total, branchId, holdId: draft?.holdId });
+      toast.success(draft?.holdId ? "Бронь оформлена, хранение снято" : "Бронь создана");
       localStorage.removeItem(DRAFT_KEY);
       onOpenChange(false);
     } catch (err) {

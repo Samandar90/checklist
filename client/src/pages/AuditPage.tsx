@@ -18,6 +18,7 @@ import {
   Megaphone,
   Banknote,
   KeyRound,
+  Lock,
 } from "lucide-react";
 
 import PageHeader from "@/components/PageHeader";
@@ -41,7 +42,7 @@ type Grouping = "day" | "actor";
 // сущностью не из этого списка отсеиваются фильтром ниже. Поэтому список обязан
 // перечислять ВСЕ сущности, которые пишет сервер (см. recordAudit в server/src):
 // открытие/закрытие смены писалось в базу, но в журнале не показывалось.
-const ENTITY_ORDER = ["report", "expense", "cashShift", "branch", "admin", "room", "source", "user"] as const;
+const ENTITY_ORDER = ["report", "expense", "cashShift", "branch", "admin", "room", "roomBlock", "source", "user"] as const;
 type EntityKey = (typeof ENTITY_ORDER)[number];
 
 const ENTITY_META: Record<EntityKey, { label: string; icon: typeof ClipboardList; tint: string }> = {
@@ -51,6 +52,7 @@ const ENTITY_META: Record<EntityKey, { label: string; icon: typeof ClipboardList
   branch:    { label: "Филиал",          icon: Building2,     tint: "tint-violet" },
   admin:     { label: "Администратор",   icon: Users,         tint: "tint-indigo" },
   room:      { label: "Номер",           icon: BedDouble,     tint: "tint-emerald" },
+  roomBlock: { label: "Блокировка номера", icon: Lock,        tint: "tint-violet" },
   source:    { label: "Источник",        icon: Megaphone,     tint: "tint-rose" },
   user:      { label: "Учётная запись",  icon: KeyRound,      tint: "tint-slate" },
 };

@@ -164,3 +164,52 @@ export const cashShiftCloseSchema = z.object({
   closingAmount: z.number({ invalid_type_error: "Укажите сумму" }).finite("Некорректная сумма").min(0, "Сумма не может быть отрицательной"),
   notes: z.string().trim().max(NOTE_MAX, TOO_LONG).optional().nullable(),
 });
+
+export const roomBlockKinds = ["HOLD", "BLOCK", "OUT_OF_ORDER"] as const;
+
+const blockDate = (label: string) =>
+  z
+    .string()
+    .trim()
+    .min(1, `${label} обязательна`)
+    .refine((v) => !Number.isNaN(new Date(v).getTime()), `Некорректная ${label.toLowerCase()}`);
+
+/**
+ * Блокировка номера: временное хранение / закрытые даты / номер не работает.
+ * Ночи считаются как у брони — [startDate, endDate), поэтому окончание строго
+ * позже начала. Хранение обязано знать, до какого момента держать номер.
+ */
+export const roomBlockSchema = z
+  .object({
+    branchId: z.string().trim().min(1, "Филиал обязателен"),
+    roomId: z.string().trim().min(1, "Номер обязателен"),
+    kind: z.enum(roomBlockKinds, { errorMap: () => ({ message: "Неизвестный тип блокировки" }) }),
+    startDate: blockDate("Дата начала"),
+    endDate: blockDate("Дата окончания"),
+    guestName: z.string().trim().max(NAME_MAX, TOO_LONG).optional().nullable(),
+    note: z.string().trim().max(NOTE_MAX, TOO_LONG).optional().nullable(),
+    holdUntil: z
+      .string()
+      .trim()
+      .refine((v) => !v || !Number.isNaN(new Date(v).getTime()), "Некорректный срок хранения")
+      .optional()
+      .nullable(),
+  })
+  .superRefine((data, ctx) => {
+    const start = new Date(data.startDate);
+    const end = new Date(data.endDate);
+    if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime()) && end <= start) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["endDate"],
+        message: "Дата окончания должна быть позже начала",
+      });
+    }
+    if (data.kind === "HOLD" && !data.holdUntil) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["holdUntil"],
+        message: "Укажите, до какого времени держать номер",
+      });
+    }
+  });

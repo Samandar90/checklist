@@ -64,6 +64,7 @@ const ENTITY_LABELS: Record<string, string> = {
   branch: "Филиал",
   admin: "Администратор",
   room: "Номер",
+  roomBlock: "Блокировка номера",
   source: "Источник",
   user: "Учётная запись",
 };

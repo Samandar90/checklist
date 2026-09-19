@@ -608,6 +608,15 @@ label[for] {
 .dark .bar-cancelled { --bar: #ff6673; --bar-edge: #d53a48; --bar-fill: #df4b58; --bar-highlight: #ec5d69; --bar-soft: #613038; --bar-soft-text: #ffe3e6; --bar-text: #ffffff; }
 .dark .bar-no-show { --bar: #f2aa3a; --bar-edge: #bd7610; --bar-fill: #cf8318; --bar-highlight: #dc962c; --bar-soft: #604619; --bar-soft-text: #ffedcf; --bar-text: #241500; }
 
+/* Блокировки номера (не брони) — штриховка на шахматке, см. RoomBlockCard:
+   хранение = фиолетовый, закрытые даты = графит, номер не работает = кирпич. */
+.bar-hold { --bar: #7c5cbf; --bar-edge: #5a3f96; --bar-fill: #8b6cd1; --bar-highlight: #a68de0; --bar-soft: #ebe4fa; --bar-soft-text: #4d3585; --bar-text: #ffffff; }
+.bar-block { --bar: #5b6b75; --bar-edge: #3f4c54; --bar-fill: #6b7b85; --bar-highlight: #8d9ba3; --bar-soft: #e3e8eb; --bar-soft-text: #3f4c54; --bar-text: #ffffff; }
+.bar-ooo { --bar: #9c3d2e; --bar-edge: #722a1f; --bar-fill: #a94a3a; --bar-highlight: #c46e60; --bar-soft: #f5e0dc; --bar-soft-text: #722a1f; --bar-text: #ffffff; }
+.dark .bar-hold { --bar: #a78bfa; --bar-edge: #7c5cbf; --bar-fill: #7b62c4; --bar-highlight: #9682d8; --bar-soft: #3b2f63; --bar-soft-text: #e9e1ff; --bar-text: #ffffff; }
+.dark .bar-block { --bar: #94a3b8; --bar-edge: #64748b; --bar-fill: #66757f; --bar-highlight: #808e97; --bar-soft: #3a444c; --bar-soft-text: #eef1f6; --bar-text: #ffffff; }
+.dark .bar-ooo { --bar: #e07a6a; --bar-edge: #a94a3a; --bar-fill: #a24b3d; --bar-highlight: #bd6657; --bar-soft: #5a2c25; --bar-soft-text: #ffe1dc; --bar-text: #ffffff; }
+
 .status-filter {
   background: var(--bar-soft);
   color: var(--bar-soft-text);

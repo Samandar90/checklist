@@ -1,12 +1,9 @@
 import { STATUS_META, STATUS_BAR_CLASS } from "@/lib/bookingStatus";
 import { MonthlyReport } from "@/types";
 import { cn, formatMoney, reportDebt } from "@/lib/utils";
+import { barGeometry, STRIPE } from "@/lib/barGeometry";
 
 const ROW_H = 40;
-/** Horizontal size of the slanted check-in / check-out edge, px. */
-const SLANT = 12;
-/** Width of the solid accent stripe along the check-in edge, px. */
-const STRIPE = 3;
 
 /**
  * A single reservation block on the chessboard, drawn as a parallelogram:
@@ -51,32 +48,10 @@ export default function ReservationCard({
   onLeave: () => void;
   onContextMenu: (e: React.MouseEvent) => void;
 }) {
-  // Half-day convention: the bar runs from the middle of the check-in cell to
-  // the middle of the check-out cell, clipped to the visible month.
-  const rawStart = checkInIdx + 0.5;
-  const rawEnd = checkOutIdx + 0.5;
-  const startUnit = Math.max(0, rawStart);
-  const endUnit = Math.min(daysInMonth, rawEnd);
-  if (endUnit <= startUnit) return null;
-
-  // Slanted only where the real check-in / check-out is visible in this month;
-  // a stay clipped by the month boundary gets a straight cut edge.
-  const slantLeft = rawStart >= 0;
-  const slantRight = rawEnd <= daysInMonth;
-
-  // The slant is centered on the half-cell line so neighbouring bars share one
-  // diagonal; ±1px keeps a hairline gap between them.
-  const leftBase = startUnit * cellWidth - (slantLeft ? SLANT / 2 : 0);
-  const rightBase = endUnit * cellWidth + (slantRight ? SLANT / 2 : 0);
-  const left = leftBase + 1;
-  const width = rightBase - leftBase - 2;
-
-  const lt = slantLeft ? SLANT : 0;
-  const rb = slantRight ? SLANT : 0;
-  // Whole block; the stripe alone (a 3px band parallel to the check-in edge);
-  // and the body — the block with its left edge pushed right by the stripe.
-  const clipStripe = `polygon(${lt}px 0%, ${lt + STRIPE}px 0%, ${STRIPE}px 100%, 0% 100%)`;
-  const clipBody = `polygon(${lt + STRIPE}px 0%, 100% 0%, calc(100% - ${rb}px) 100%, ${STRIPE}px 100%)`;
+  // Half-day convention shared with room blocks — see lib/barGeometry.
+  const geo = barGeometry(checkInIdx, checkOutIdx, daysInMonth, cellWidth);
+  if (!geo) return null;
+  const { left, width, slantRight, lt, rb, clipStripe, clipBody } = geo;
 
   const debt = reportDebt(booking);
   const partial = booking.paymentStatus === "Частично";
